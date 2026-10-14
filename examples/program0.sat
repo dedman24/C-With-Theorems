@@ -1,0 +1,49 @@
+// example of a program in the 'satisfiable' programming language.
+
+/*
+ * we provide various functions to test all kinds of things regarding the 'satisfiable' compiler.
+ * hopefully it works.
+ * provided here are examples of:
+ *  circuit definitions,
+ *  proofs using dependent types.
+ * I don't really like how satisfiable looks currently, but little can be done.
+ * it's one of those ugly programming languages you HAVE to use & get used to. 
+ * cry about it, see if I care.
+*/
+
+addsub : fn(src0: wire(n), src1: wire(n), sel: wire -> wire(n)) = 
+  src0 + (src1 ^ sel~extend(n)) + sel;
+
+addsub_correct__add : theorem(src0: wire(n), src1: wire(n) -> addsub(src0, src1, 0) == src0 + src1) = refl;
+
+// because negation is exactly defined as this.
+twoscomplement : theorem(src: wire(n) -> ~src + 1 == -src) = refl;
+
+// definition of XOR provided here to be helpful.
+xor1 : fn(src0: wire, src1: wire -> wire) =
+  match src0
+    0 = src1,
+    1 = ~src1;
+
+xor : fn(src0: wire(n), src1: wire(n) -> wire(n)) =
+  xor1~extend(n)(src0, src1);
+
+inversion1 : theorem(src: wire -> ~src == src ^ 1) =
+  xor1(src, 1)~refl;
+
+inversion : theorem(src: wire(n) -> ~src == src ^ 1~extend(n)) = 
+  inversion1~extend(n)(src);
+
+// NOTE: for ~xxx(...) to be valid in a proof, one needs a proof that, given x == y, op(a, x) == op(a, y).
+// this is true in add, but it's a special case of proofs the compiler handles on its own.
+// isn't this always true? given functions are pure, for the same a && x == y, op(a, x) == op(a, y) is always true.
+sub_from_xor_add : theorem(src0: wire(n), src1: wire(n) -> src0 + (src1 ^ 1~extend(n)) + 1 == src0 - src1) =
+  add(
+    src0, 
+    twoscomplement(src1)~rewrite(inversion(src1))
+  )~refl;
+
+// proof by equality with a proven theorem:
+//  this is stating that addsub(...), when expanded, is equal with a known theorem (that we know is true) & therefore the underlying proof is.
+addsub_correct__sub : theorem(src0: wire(n), src1: wire(n) -> addsub(src0, src1, 1) == src0 - src1) =
+  addsub(src0, src1, 1)~refl~replace(sub_from_xor_add(src0, src1));

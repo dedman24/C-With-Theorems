@@ -4,6 +4,7 @@
 // this library handles errors.
 
 #include "../fposT.h"                   // fpos type.
+#include "../variables.h"               // types.
 #include "../linking/rc.h"              // reference-counted strings.
 #include "../ansi_colours.h"            // terminal colours.
 #include "../linking/vfastarr.h"        // array type & ops.
@@ -18,20 +19,43 @@
 enum{
   SATISFIABLE_IMPOSSIBILITY__PARSE_OPTION,
   SATISFIABLE_IMPOSSIBILITY__TOK_H_RETURN_VALUE,
+  SATISFIABLE_IMPOSSIBILITY__NAME_H_DEFAULT,
+  SATISFIABLE_IMPOSSIBILITY__OP_TYPE
 };
 
+// lovely way of handling errors, isn't it?
 typedef enum{
   SATISFIABLE_ERROR__NONE,
   SATISFIABLE_ERROR__IMPOSSIBILITY,
+
+  SATISFIABLE_ERROR__INDENTATION_DEPTH_NEGATIVE,
+  SATISFIABLE_ERROR__INDENTATION_DEPTH_TOO_HIGH,
+
+  SATISFIABLE_ERROR__VALUE_UNDEFINED,
+  SATISFIABLE_ERROR__VALUE_UNASSIGNED,
   SATISFIABLE_ERROR__VALUE_TOO_FEW_BYTES,
+  SATISFIABLE_ERROR__VALUE_CHAR_TOO_LONG,
+  SATISFIABLE_ERROR__VALUE_CHAR_TOO_SHORT,
+  SATISFIABLE_ERROR__VALUE_CHAR_UNFINISHED,
+  SATISFIABLE_ERROR__VALUE_STRING_UNFINISHED,
   SATISFIABLE_ERROR__VALUE_FORMAT_UNKNOWN,
   SATISFIABLE_ERROR__VALUE_FORMAT_UNIMPLEMENTED,
-  SATISFIABLE_ERROR__INDENTATION_DEPTH_NEGATIVE,
+  SATISFIABLE_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE,
+
+  SATISFIABLE_ERROR__TYPE_INCOMPATIBLE_OP,
+  SATISFIABLE_ERROR__TYPE_INCOMPATIBLE_RETURN,
+
+  SATISFIABLE_ERROR__INTERPRETER_OP_UNIMPLEMENTED,
+  SATISFIABLE_ERROR__INTERPRETER_TOO_FEW_OPERANDS,
+  SATISFIABLE_ERROR__INTERPRETER_TYPE_UNSUPPORTED,
+  SATISFIABLE_ERROR__INTERPRETER_VARIABLE_MISSING,
+  SATISFIABLE_ERROR__INTERPRETER_ADJACENT_OPERANDS,
+
   SATISFIABLE_ERROR__INCLUDE_NO_LEADING_QUOTES,
   SATISFIABLE_ERROR__INCLUDE_NO_TRAILING_QUOTES,
   SATISFIABLE_ERROR__INCLUDE_SELF_REFERENCE,
   SATISFIABLE_ERROR__INCLUDE_UNKNOWN_FILE,
-// last bit used to mark error stuff.
+
   SATISFIABLE_ERROR__PARSE_UNIMPLEMENTED_OPTION,
   SATISFIABLE_ERROR__PARSE_REPEATED_OPTION,
   SATISFIABLE_ERROR__PARSE_UNKNOWN_OPTION,
@@ -41,29 +65,51 @@ typedef enum{
 
 typedef enum{
   SATISFIABLE_ERROR__COMPILER,
+  SATISFIABLE_ERROR__COMPILER_DESTRUCTION,            // while ctx is being destroyed.
   SATISFIABLE_ERROR__TYPECHECKER,
   SATISFIABLE_ERROR__PARSE
 } satisfiable_error_categoryT;
 
 const char* const restrict satisfiable_error_strings[] = {
-  [SATISFIABLE_ERROR__NONE]                         = "no error, you shouldn't be seeing this. contact devs.\n",
-  [SATISFIABLE_ERROR__IMPOSSIBILITY]                = "an 'impossibility', something that shouldn't happen, just did "
-                                                      "(Satisfiable version " SATISFIABLE_VERSION_STR "). "
-                                                      "contact devs. " 
-                                                      ANSI_COLOUR_RED "ERROR CODE: %08xh" ANSI_COLOUR_RESET ".\n",
-  [SATISFIABLE_ERROR__VALUE_TOO_FEW_BYTES]          = "immediate is read, but not entirely; only %u bytes are.\n",
-  [SATISFIABLE_ERROR__VALUE_FORMAT_UNKNOWN]         = "value assumes invalid format.\n",
-  [SATISFIABLE_ERROR__VALUE_FORMAT_UNIMPLEMENTED]   = "value assumes format that not yet implemented in the compiler.\n",             // lmfao what a copout.
-  [SATISFIABLE_ERROR__INDENTATION_DEPTH_NEGATIVE]   = "scope depth is negative, due to extra '}'.\n",
-  [SATISFIABLE_ERROR__INCLUDE_NO_LEADING_QUOTES]    = "'include' not followed by double-quote symbol (\").\n",
-  [SATISFIABLE_ERROR__INCLUDE_NO_TRAILING_QUOTES]   = "path specified by 'include' not followed by double-quote symbol (\").\n",
-  [SATISFIABLE_ERROR__INCLUDE_SELF_REFERENCE]       = "source file includes itself.\n",
-  [SATISFIABLE_ERROR__INCLUDE_UNKNOWN_FILE]         = "in 'include', file '%s' does not exist.\n",
-  [SATISFIABLE_ERROR__PARSE_UNIMPLEMENTED_OPTION]   = "command-line option '%s' is not implemented yet.\n",
-  [SATISFIABLE_ERROR__PARSE_REPEATED_OPTION]        = "command-line option '%s' is repeated twice.\n",
-  [SATISFIABLE_ERROR__PARSE_UNKNOWN_OPTION]         = "command-line option '%s' was not recognised by compiler.\n",
-  [SATISFIABLE_ERROR__PARSE_MISSING_SOURCE_FILE]    = "source file is missing.\n",
-  [SATISFIABLE_ERROR__PARSE_UNKNOWN_SOURCE_FILE]    = "source file '%s' could not be found.\n"
+  [SATISFIABLE_ERROR__NONE]                           = "no error, you shouldn't be seeing this. contact devs.\n",
+  [SATISFIABLE_ERROR__IMPOSSIBILITY]                  = "an 'impossibility', something that shouldn't happen, just did "
+                                                        "(Satisfiable version " SATISFIABLE_VERSION_STR "). "
+                                                        "contact devs. " 
+                                                        ANSI_COLOUR_RED "ERROR CODE: %08xh" ANSI_COLOUR_RESET ".\n",
+
+  [SATISFIABLE_ERROR__INDENTATION_DEPTH_NEGATIVE]     = "scope depth is negative, due to extra '}'.\n",
+  [SATISFIABLE_ERROR__INDENTATION_DEPTH_TOO_HIGH]     = "at end of tokenisation, indentation depth is not 0.\n",
+
+  [SATISFIABLE_ERROR__TYPE_INCOMPATIBLE_OP]           = "in expression, type %s is incompatible with type %s.\n",
+  [SATISFIABLE_ERROR__TYPE_INCOMPATIBLE_RETURN]       = "expected return type %s is incompatible with type %s.\n",
+
+  [SATISFIABLE_ERROR__INTERPRETER_OP_UNIMPLEMENTED]   = "operator is unimplemented.\n",
+  [SATISFIABLE_ERROR__INTERPRETER_TOO_FEW_OPERANDS]   = "too few operands present for op to be executed.\n",
+  [SATISFIABLE_ERROR__INTERPRETER_TYPE_UNSUPPORTED]   = "type '%s' does not support specified operation.\n",
+  [SATISFIABLE_ERROR__INTERPRETER_VARIABLE_MISSING]   = "could not find variable in variable_ctxT. contact devs.\n",
+  [SATISFIABLE_ERROR__INTERPRETER_ADJACENT_OPERANDS]  = "two operands are adjacent with no operator between them.\n",
+
+  [SATISFIABLE_ERROR__VALUE_UNDEFINED]                = "value is used before being defined.\n",        // definition ~ giving type to variable through ':'.
+  [SATISFIABLE_ERROR__VALUE_UNASSIGNED]               = "value is used before being assigned.\n",       // assignment ~ giving value to variable through '='.
+  [SATISFIABLE_ERROR__VALUE_TOO_FEW_BYTES]            = "immediate is read, but not entirely; only %u bytes are.\n",
+  [SATISFIABLE_ERROR__VALUE_CHAR_TOO_LONG]            = "single quotes hold too many characters.\n",
+  [SATISFIABLE_ERROR__VALUE_CHAR_TOO_SHORT]           = "data specified by single quotes does not occupy all of quotes.\n",
+  [SATISFIABLE_ERROR__VALUE_CHAR_UNFINISHED]          = "char is not properly terminated by final single quote character.\n",
+  [SATISFIABLE_ERROR__VALUE_STRING_UNFINISHED]        = "string is not properly terminated by final double quote character.\n",
+  [SATISFIABLE_ERROR__VALUE_FORMAT_UNKNOWN]           = "value assumes invalid format.\n",
+  [SATISFIABLE_ERROR__VALUE_FORMAT_UNIMPLEMENTED]     = "value assumes format that not yet implemented in the compiler.\n",   // lmfao what a copout.
+  [SATISFIABLE_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE]  = "unknown escape sequence.\n",
+
+  [SATISFIABLE_ERROR__INCLUDE_NO_LEADING_QUOTES]      = "'include' not followed by double-quote symbol (\").\n",
+  [SATISFIABLE_ERROR__INCLUDE_NO_TRAILING_QUOTES]     = "path specified by 'include' not followed by double-quote symbol (\").\n",
+  [SATISFIABLE_ERROR__INCLUDE_SELF_REFERENCE]         = "source file includes itself.\n",
+  [SATISFIABLE_ERROR__INCLUDE_UNKNOWN_FILE]           = "in 'include', file '%s' does not exist.\n",
+
+  [SATISFIABLE_ERROR__PARSE_UNIMPLEMENTED_OPTION]     = "command-line option '%s' is not implemented yet.\n",
+  [SATISFIABLE_ERROR__PARSE_REPEATED_OPTION]          = "command-line option '%s' is repeated twice.\n",
+  [SATISFIABLE_ERROR__PARSE_UNKNOWN_OPTION]           = "command-line option '%s' was not recognised by compiler.\n",
+  [SATISFIABLE_ERROR__PARSE_MISSING_SOURCE_FILE]      = "source file is missing.\n",
+  [SATISFIABLE_ERROR__PARSE_UNKNOWN_SOURCE_FILE]      = "source file '%s' could not be found.\n"
 };
 
 typedef struct{
@@ -167,6 +213,36 @@ static void satisfiable_error_report__str(
   const size_t len_message = strlen(satisfiable_error_strings[type]) + strlen(string);
   char* const restrict message = malloc(len_message + 1);
   sprintf(message, satisfiable_error_strings[type], string);
+
+  const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
+  ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
+  satisfiable_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+}
+
+static void satisfiable_error_report__type1(
+  const satisfiable_error_typeT type, const satisfiable_error_categoryT category, rcT* const restrict path,
+  const satisfiable_fposT line, const satisfiable_fposT offset,
+  satisfiable_error_ctxT* const restrict ctx,
+  const satisfiable_typeT type_data
+){
+  const size_t len_message = strlen(satisfiable_error_strings[type]) + strlen(satisfiable_type__strings[type_data]);
+  char* const restrict message = malloc(len_message + 1);
+  sprintf(message, satisfiable_error_strings[type], satisfiable_type__strings[type_data]);
+
+  const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
+  ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
+  satisfiable_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+}
+
+static void satisfiable_error_report__type2(
+  const satisfiable_error_typeT type, const satisfiable_error_categoryT category, rcT* const restrict path,
+  const satisfiable_fposT line, const satisfiable_fposT offset,
+  satisfiable_error_ctxT* const restrict ctx,
+  const satisfiable_typeT t0, const satisfiable_typeT t1
+){
+  const size_t len_message = strlen(satisfiable_error_strings[type]) + strlen(satisfiable_type__strings[t0]) + strlen(satisfiable_type__strings[t1]);
+  char* const restrict message = malloc(len_message + 1);
+  sprintf(message, satisfiable_error_strings[type], satisfiable_type__strings[t0], satisfiable_type__strings[t1]);
 
   const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));

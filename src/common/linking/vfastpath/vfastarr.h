@@ -15,6 +15,7 @@ void* vfastarr_append(void* restrict arr, const void* const restrict elem, const
 void* vfastarr_extend(void* restrict arr, const size_t c_elem, const size_t s_elem);              // extends array by cnt elements.
 void vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_elem);            // pops element from end of array.
 void vfastarr_remove(void* restrict arr, const size_t s_elem);                                    // removes element from end of array.
+void vfastarr_empty(void* restrict arr);                                                          // empties array.
 void* vfastarr_init(const size_t s_elem);                                                         // initialises array.
 void vfastarr_destroy(void* const arr);                                                           // destroys array.
 
@@ -90,6 +91,11 @@ void vfastarr_remove(void* restrict arr, const size_t s_elem){
 
   if(hdr->size < s_elem) return;
   hdr->size -= s_elem;
+}
+
+void vfastarr_empty(void* restrict arr){
+  vfastarr_hdrT* const hdr = (vfastarr_hdrT*)arr - 1;
+  hdr->size = 0;
 }
 
 void* vfastarr_init(const size_t s_elem){

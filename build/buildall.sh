@@ -11,6 +11,7 @@ else
   if [[ $# == 2 && "$2" == "debug" ]]; then
     gcc -fsanitize=address -g -std=c23 -o $1      \
       src/common/linking/vfastbst/vfastbst.c      \
+      src/common/linking/vfastext/vfastext.c      \
       src/common/linking/vfastrht/vfastrht.c      \
       src/common/linking/vfastpath/vfastpath.c    \
       src/common/linking/vfasttask/vfasttask.c    \
@@ -18,6 +19,7 @@ else
   elif [[ $# == 2 && "$2" == "fast" ]]; then
     gcc -O1 -std=c23 -o $1                        \
       src/common/linking/vfastbst/vfastbst.c      \
+      src/common/linking/vfastext/vfastext.c      \
       src/common/linking/vfastrht/vfastrht.c      \
       src/common/linking/vfastpath/vfastpath.c    \
       src/common/linking/vfasttask/vfasttask.c    \
@@ -27,6 +29,7 @@ else
   else
     gcc -flto -O3 -std=c23 -o $1                  \
       src/common/linking/vfastbst/vfastbst.c      \
+      src/common/linking/vfastext/vfastext.c      \
       src/common/linking/vfastrht/vfastrht.c      \
       src/common/linking/vfastpath/vfastpath.c    \
       src/common/linking/vfasttask/vfasttask.c    \

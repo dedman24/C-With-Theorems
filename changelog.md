@@ -1,9 +1,15 @@
-## Changelog 2026/10/something.
- - added build instructions to git.
- - fixed segfaulting when source file is missing.
- - fixed tokenisation segfaulting on names & values.
- - added build commands.
+### Changelog 2026/10/18.
  - updated README.md.
+ - added single & double quoted literals as variables (supports C-like escape sequences).
+ - added basic interpreter. it can execute little so far, but I'm going to work on it these next few days.
+ - added command-line REPL with 'satisfiable repl', which takes program input from stdin & executes it. Supports piping, like with python's REPL.
+bugs may be present, proper bugfixing will take place tmrw.
 
-I think I should have tokenisation output an AST _directly_, because I want to get to an interpreter ASAP.\
-After ASTs, the interpreter would be the thing to add.
+### Current errors:
+ - tokenise cannot find file.
+ - repl segfaults on tokenisation.
+
+### Things to add:
+ - more ops.
+ - first-class support for arrays & other types, perhaps even user-generated types, to ensure safety.
+ - more complex types, ultimately giving us dependent type support..

@@ -5,6 +5,7 @@
 
 #include "common/err/err.h"
 #include "common/output.h"
+#include "common/variables.h"
 
 satisfiable_outputT satisfiable_compile(const int argc, const char* const restrict argv[]);
 
@@ -13,6 +14,7 @@ satisfiable_outputT satisfiable_compile(const int argc, const char* const restri
 #define SATISFIABLE_IMPLEMENTATION
 #ifdef SATISFIABLE_IMPLEMENTATION
 
+#include "repl/repl.h"
 #include "parse/parse.h"
 #include "common/_common.h"
 #include "tokeniser/tokeniser.h"
@@ -26,12 +28,15 @@ satisfiable_outputT satisfiable_compile(const int argc, const char* const restri
     return NULL;
   }
 
-  satisfiable__fileT file = satisfiable_load__map(options->path_src, true);
-  if(!file.code){
-    satisfiable_error_report__str(SATISFIABLE_ERROR__PARSE_MISSING_SOURCE_FILE, SATISFIABLE_ERROR__PARSE, NULL, 0, 0, err, options->path_src);
-    satisfiable_error_print(err, true);
-    satisfiable_options_destroy(options, true);
-    return NULL;
+  satisfiable__fileT file;
+  if(options->op != SATISFIABLE_OPTIONS__REPL){
+    satisfiable_load__map(options->path_src, true);
+    if(!file.code){
+      satisfiable_error_report__str(SATISFIABLE_ERROR__PARSE_MISSING_SOURCE_FILE, SATISFIABLE_ERROR__PARSE, NULL, 0, 0, err, options->path_src);
+      satisfiable_error_print(err, true);
+      satisfiable_options_destroy(options, true);
+      return NULL;
+    }
   }
 
   satisfiable_outputT output;
@@ -42,7 +47,12 @@ satisfiable_outputT satisfiable_compile(const int argc, const char* const restri
     case SATISFIABLE_OPTIONS__CHECK:
     case SATISFIABLE_OPTIONS__COMPILE:
     case SATISFIABLE_OPTIONS__TOKENISE:
-      output = satisfiable_tokenise(file.code, options->path_src, strlen(options->path_src), err);
+      satisfiable_variable_ctxT* variables;
+      output = satisfiable_tokenise(file.code, options->path_src, strlen(options->path_src), &variables, err);
+      satisfiable_variable_ctx_destroy(variables, true);
+      break;
+    case SATISFIABLE_OPTIONS__REPL:
+      output = satisfiable_repl();
       break;
     default:
       satisfiable_error_report__u32(SATISFIABLE_ERROR__IMPOSSIBILITY, SATISFIABLE_ERROR__PARSE, NULL, 0, 0, err, SATISFIABLE_IMPOSSIBILITY__PARSE_OPTION);

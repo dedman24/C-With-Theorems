@@ -1,6 +1,7 @@
 #ifndef SATISFIABLE_TOKENISER_NAME_H_INCLUDED
 #define SATISFIABLE_TOKENISER_NAME_H_INCLUDED
 
+#include "types/chars.h"                  // char, string escape sequence handling.
 #include "types/vtypes.h"                 // value types.
 #include "../common/_common.h"            // error handling & more.
 
@@ -9,22 +10,19 @@
 #include "stdint.h"                       // integer types.
 #include "stdbool.h"                      // boolean types.
 #include "inttypes.h"                     // sscanf formats.
-#include <stdint.h>
-
-typedef satisfiable__representation_tokT satisfiable_nameT;
 
 typedef struct{
+  satisfiable_variable_ctxT* variables;   // NOTE: remember to extract this before deleting the whole name ctx.
   vfastbst_strT* names;
   vfastbst_strT values;
-  satisfiable_nameT id_name;
 } satisfiable_name_ctxT;
 
 static void satisfiable_name_ctx_init(satisfiable_name_ctxT* const restrict name){
+  name->variables = satisfiable_variable_ctx_init(NULL);
   name->names = vfastarr_init(sizeof(*name->names));
   name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
   name->names[0] = VFASTBST_STR_INIT;
   name->values = VFASTBST_STR_INIT;
-  name->id_name = 0;
 }
 
 // destroys name ctx, returns whether ctxdepth is 0 or not.
@@ -60,7 +58,7 @@ static size_t satisfiable_name_depth(satisfiable_name_ctxT* const restrict name)
 
 // searches for name, creates nameID if it doesn't find any.
 static satisfiable_nameT satisfiable_name_add(
-  const char* const restrict key, const size_t s_key, const size_t* const restrict debug,
+  const char* const restrict key, const size_t s_key,
   satisfiable_error_ctxT* const restrict err, satisfiable_name_ctxT* const restrict name
 ){
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
@@ -72,9 +70,9 @@ static satisfiable_nameT satisfiable_name_add(
       return (*curr_node)->obj;
   }
 
-  const satisfiable_nameT id = name->id_name++ | SATISFIABLE_TOK__NAME_BIT;
+  const satisfiable_nameT id = satisfiable_variable_name(name->variables) | SATISFIABLE_TOK__NAME_BIT;
   *curr_node = vfastbst_str_node_init(key, s_key, id);
-  
+  satisfiable_variable_add(name->variables, id, key, s_key, NULL, SATISFIABLE_TYPE__NONE, SATISFIABLE_QUALIFIER__NONE);
   return id;
 }
 
@@ -92,12 +90,14 @@ static int satisfiable_value_decode__binary(
 }
 
 static const void* satisfiable_value_decode(
-  const char* restrict data, size_t s_data, size_t* const restrict s_raw,
+  const char* restrict data, size_t s_data, size_t* const restrict s_raw, satisfiable_typeT* const restrict type_raw,
   satisfiable_error_ctxT* const restrict err, rcT* const restrict path, const satisfiable_fposT line, const satisfiable_fposT offset
 ){
-  const satisfiable_vtypeT type = satisfiable_vtype(data, s_data, err, path, line, offset);
-  if(type == SATISFIABLE_VTYPE__NONE) 
+  const satisfiable_typeT type = satisfiable_vtype(data, s_data, err, path, line, offset);
+  if(type == SATISFIABLE_TYPE__NONE) 
     return NULL;
+  *type_raw = type;
+
   int bytes_read, args_read;
   char* restrict raw;
   const bool negated = data[0] == '-';
@@ -105,7 +105,7 @@ static const void* satisfiable_value_decode(
   enum{ HEX, DECIMAL, OCTAL, BINARY } encoding;
   if(
     s_data > 2 && data[0] == 0 &&
-    type != SATISFIABLE_VTYPE__F8 && type != SATISFIABLE_VTYPE__F16 && type != SATISFIABLE_VTYPE__F32 && type != SATISFIABLE_VTYPE__F64
+    type != SATISFIABLE_TYPE__F8 && type != SATISFIABLE_TYPE__F16 && type != SATISFIABLE_TYPE__F32 && type != SATISFIABLE_TYPE__F64
   ){
     if(negated){ data++; s_data--; }
     
@@ -122,24 +122,32 @@ static const void* satisfiable_value_decode(
   else encoding = DECIMAL;
 
   switch(type){
-    case SATISFIABLE_VTYPE__F8:
-    case SATISFIABLE_VTYPE__F16:
+    case SATISFIABLE_TYPE__STRING:
+      raw = satisfiable_vtype_string(data + 1, s_data, s_raw, err, path, line, offset);
+      return raw;
+    case SATISFIABLE_TYPE__CHAR:
+      *s_raw = sizeof(char);
+      raw = malloc(sizeof(char));
+      *raw = satisfiable_vtype_char(data + 1, s_data - 1, true, NULL, err, path, line, offset);
+      return raw;
+    case SATISFIABLE_TYPE__F8:
+    case SATISFIABLE_TYPE__F16:
       satisfiable_error_report(SATISFIABLE_ERROR__VALUE_FORMAT_UNIMPLEMENTED, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
       return NULL;
-    case SATISFIABLE_VTYPE__F32:
+    case SATISFIABLE_TYPE__F32:
       *s_raw = sizeof(float);
       raw = malloc(sizeof(float));
       args_read = sscanf(data, "%f%n", (float*)raw, &bytes_read);
       break;
-    case SATISFIABLE_VTYPE__F64:
+    case SATISFIABLE_TYPE__F64:
       *s_raw = sizeof(double);
       raw = malloc(sizeof(double));
       args_read = sscanf(data, "%lf%n", (double*)raw, &bytes_read);
       break;
-    case SATISFIABLE_VTYPE__U8:
-    case SATISFIABLE_VTYPE__U16:
-    case SATISFIABLE_VTYPE__U32:
-    case SATISFIABLE_VTYPE__U64:
+    case SATISFIABLE_TYPE__U8:
+    case SATISFIABLE_TYPE__U16:
+    case SATISFIABLE_TYPE__U32:
+    case SATISFIABLE_TYPE__U64:
       *s_raw = sizeof(uint64_t);
       raw = malloc(sizeof(uint64_t));
       switch(encoding){
@@ -160,10 +168,10 @@ static const void* satisfiable_value_decode(
           break;
       }
       break;
-    case SATISFIABLE_VTYPE__I8:
-    case SATISFIABLE_VTYPE__I16:
-    case SATISFIABLE_VTYPE__I32:
-    case SATISFIABLE_VTYPE__I64:
+    case SATISFIABLE_TYPE__I8:
+    case SATISFIABLE_TYPE__I16:
+    case SATISFIABLE_TYPE__I32:
+    case SATISFIABLE_TYPE__I64:
       *s_raw = sizeof(int64_t);
       raw = malloc(sizeof(int64_t));
       switch(encoding){
@@ -184,7 +192,10 @@ static const void* satisfiable_value_decode(
           break;
       }
       break;
-    case SATISFIABLE_VTYPE__NONE:     // error reported by satisfiable_vtype.
+    case SATISFIABLE_TYPE__NONE:      // error reported by satisfiable_vtype.
+      return NULL;
+    default:                          // should not happen, very worrying if it does.
+      satisfiable_error_report__u32(SATISFIABLE_ERROR__IMPOSSIBILITY, SATISFIABLE_ERROR__COMPILER, path, line, offset, err, SATISFIABLE_IMPOSSIBILITY__NAME_H_DEFAULT);
       return NULL;
   }
 
@@ -199,7 +210,8 @@ static satisfiable_nameT satisfiable_value_add(
   satisfiable_error_ctxT* const restrict err, rcT* const restrict path, const satisfiable_fposT line, const satisfiable_fposT offset
 ){
   size_t s_raw;
-  const char* const restrict raw = satisfiable_value_decode(data, s_data, &s_raw, err, path, line, offset);
+  satisfiable_typeT type_raw;
+  const char* const restrict raw = satisfiable_value_decode(data, s_data, &s_raw, &type_raw, err, path, line, offset);
 
   vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
   if(*curr_node){
@@ -208,8 +220,9 @@ static satisfiable_nameT satisfiable_value_add(
   }
 // how are these handled? is 'rc' a proper way?
 // 'rc' undoubtedly adds overhead, we don't really care about it being referenced multiple times.
-  const satisfiable_nameT id = name->id_name++ | SATISFIABLE_TOK__NAME_BIT;
+  const satisfiable_nameT id = satisfiable_variable_name(name->variables) | SATISFIABLE_TOK__NAME_BIT;
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
+  satisfiable_variable_add(name->variables, id, raw, s_raw, (void*)raw, type_raw, SATISFIABLE_QUALIFIER__FREENAME | SATISFIABLE_QUALIFIER__CONST);
   return id;
 }
 

@@ -9,11 +9,12 @@
 #include "err/err.h"
 #include "fileops.h"
 #include "err/warn.h"
-#include "includeT.h"
+#include "variables.h"
 // later provided at link time.
 #include "linking/vfastarr.h"
 #include "linking/vfastqueue.h"
 #include "linking/vfastbst/vfastbst.h"
+#include "linking/vfastext/vfastext.h"
 #include "linking/vfastrht/vfastrht.h"
 #include "linking/vfastpath/vfastpath.h"
 #include "linking/vfasttask/vfasttask.h"

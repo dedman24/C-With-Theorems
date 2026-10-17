@@ -20,10 +20,15 @@ static void satisfiable_tokeniser_init(satisfiable_tokeniserT* const restrict to
   tokeniser->files = VFASTBST_RC_INIT;
 }
 
-static satisfiable_outputT satisfiable_tokeniser_destroy(satisfiable_tokeniserT* const restrict tokeniser){
-  if(!satisfiable_name_ctx_destroy(&tokeniser->name, false)){
-    
-  }
+static satisfiable_outputT satisfiable_tokeniser_destroy(
+  satisfiable_tokeniserT* const restrict tokeniser,  satisfiable_variable_ctxT** variables,
+  satisfiable_error_ctxT* const restrict err, rcT* const restrict path
+){
+  if(variables) *variables = tokeniser->name.variables;
+  else satisfiable_variable_ctx_destroy(tokeniser->name.variables, true);
+
+  if(!satisfiable_name_ctx_destroy(&tokeniser->name, false))
+    satisfiable_error_report(SATISFIABLE_ERROR__INDENTATION_DEPTH_NEGATIVE, SATISFIABLE_ERROR__COMPILER_DESTRUCTION, path, 0, 0, err);
   vfastbst_rc_destroy(&tokeniser->files);
   return (satisfiable_outputT)tokeniser->arr;
 }
@@ -70,11 +75,9 @@ static const char* satisfiable_tokenise__include(
   }
 
   vfastbst_rc_nodeT** const restrict success = vfastbst_rc_put_half(&tokeniser->files, finalpath);
-  satisfiable_includeT* restrict o_include;
+// error out if an include's argument is ever NULL.
+  satisfiable_tokT* new = NULL;
   if(!*success){
-    o_include = satisfiable_include_init();
-    *success = vfastbst_rc_node_init(finalpath, (satisfiable__representation_tokT)o_include);
-
     const satisfiable__fileT finalcode = satisfiable_load__map(finalpath->str, true);
     if(!finalcode.code){
       satisfiable_error_report__str(SATISFIABLE_ERROR__INCLUDE_UNKNOWN_FILE, SATISFIABLE_ERROR__COMPILER, path, *line, *offset, err, finalpath->str);
@@ -82,14 +85,19 @@ static const char* satisfiable_tokenise__include(
       return code;
     }
 
+    void* const restrict old = tokeniser->arr;
+    tokeniser->arr = vfastarr_init(sizeof(*tokeniser->arr));
     satisfiable_tokenise__single(finalcode.code, finalpath, s_finalpath - s_filename, err, tokeniser);
     satisfiable_load__unmap(finalcode);
+
+    new = tokeniser->arr; tokeniser->arr = old;
+    *success = vfastbst_rc_node_init(finalpath, (satisfiable__representation_tokT)new);
   }
   else
-    o_include = (satisfiable_includeT*)(*success)->obj;
+    new = (satisfiable_tokT*)(*success)->obj;
 
 // when processing stuff, the 'Include' token is followed by some ptr to data representing the file being included, whatever that is.
-  satisfiable_tokT info = satisfiable_tok_init((satisfiable__underlying_tokT)o_include, *line, *offset);
+  const satisfiable_tokT info = satisfiable_tok_init((satisfiable__underlying_tokT)new, *line, *offset);
   tokeniser->arr = vfastarr_append(tokeniser->arr, &info, sizeof(info));
 
   rc_disown(finalpath);
@@ -183,7 +191,7 @@ static void satisfiable_tokenise__single(
         code = satisfiable_tokenise__comment__multi(code + len, &line, &offset);
         continue;
       case SATISFIABLE_TOK__NAME:
-        const satisfiable_nameT name = satisfiable_name_add(code, len, &len, err, &tokeniser->name);
+        const satisfiable_nameT name = satisfiable_name_add(code, len, err, &tokeniser->name);
         tokeniser->arr = vfastarr_append(
           tokeniser->arr,
           &satisfiable_tok_init__macro(name, line, offset),
@@ -192,7 +200,7 @@ static void satisfiable_tokenise__single(
         offset += len; code += len;
         continue;
       case SATISFIABLE_TOK__VALUE:
-        const satisfiable_nameT value = satisfiable_value_add(code, len,  &tokeniser->name, err, path, line, offset);
+        const satisfiable_nameT value = satisfiable_value_add(code, len, &tokeniser->name, err, path, line, offset);
         tokeniser->arr = vfastarr_append(
           tokeniser->arr,
           &satisfiable_tok_init__macro(value, line, offset),
@@ -231,9 +239,8 @@ static void satisfiable_tokenise__single(
 }
 
 static satisfiable_outputT satisfiable_tokenise(
-  const char* restrict code,
-  const char* const restrict path, const size_t s_path,
-  satisfiable_error_ctxT* const restrict err
+  const char* restrict code, const char* const restrict path, const size_t s_path,
+  satisfiable_variable_ctxT** const restrict variables, satisfiable_error_ctxT* const restrict err
 ){
   rcT* const restrict rc_path = rc_make(path);
   satisfiable_tokeniserT tokeniser; satisfiable_tokeniser_init(&tokeniser);
@@ -246,9 +253,10 @@ static satisfiable_outputT satisfiable_tokenise(
 // myC would have all features zig does, basically native C interop (not 100% backwards compatibility though) & more.
 // I wouldn't like it if it didn't have dependent types, though I'd barely use them.
   satisfiable_tokenise__single(code, rc_path, s_path, err, &tokeniser);
+  satisfiable_outputT tokenised = satisfiable_tokeniser_destroy(&tokeniser, variables, err, rc_path);
   rc_disown(rc_path);
 // result of tokenisation.
-  return satisfiable_tokeniser_destroy(&tokeniser);
+  return tokenised;
 }
 
 #endif

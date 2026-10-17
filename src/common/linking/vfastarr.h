@@ -7,14 +7,16 @@
 #include "stddef.h"             // for size_t.
 #include "stdlib.h"             // for malloc, realloc.
 #include "string.h"             // for memcpy.
+#include "stdbool.h"            // for bool.
 
 // functions.
-size_t vfastarr_size(void* const restrict arr);                                                   // gets size of array.
-size_t vfastarr_elcnt(void* const restrict arr, const size_t s_elem);                             // gets No. of elements within array.
+size_t vfastarr_size(const void* const restrict arr);                                             // gets size of array.
+size_t vfastarr_elcnt(const void* const restrict arr, const size_t s_elem);                       // gets No. of elements within array.
 void* vfastarr_append(void* restrict arr, const void* const restrict elem, const size_t s_elem);  // appends element to array.
 void* vfastarr_extend(void* restrict arr, const size_t c_elem, const size_t s_elem);              // extends array by cnt elements.
-void vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_elem);            // pops element from end of array.
+bool vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_elem);            // pops element from end of array.
 void vfastarr_remove(void* restrict arr, const size_t s_elem);                                    // removes element from end of array.
+void vfastarr_empty(void* restrict arr);                                                          // empties array.
 void* vfastarr_init(const size_t s_elem);                                                         // initialises array.
 void vfastarr_destroy(void* const arr);                                                           // destroys array.
 
@@ -28,12 +30,12 @@ typedef struct{
 } vfastarr_hdrT;
 
 // returns size of array in No. of bytes the array actually holds.
-size_t vfastarr_size(void* const restrict arr){
-  vfastarr_hdrT* const restrict hdr = (vfastarr_hdrT*)arr - 1;
+size_t vfastarr_size(const void* const restrict arr){
+  const vfastarr_hdrT* const restrict hdr = (vfastarr_hdrT*)arr - 1;
   return hdr->size;
 }
 
-size_t vfastarr_elcnt(void* restrict arr, const size_t s_elem){
+size_t vfastarr_elcnt(const void* restrict arr, const size_t s_elem){
   return vfastarr_size(arr)/s_elem;
 }
 
@@ -74,15 +76,16 @@ void* vfastarr_extend(void* restrict arr, const size_t c_elem, const size_t s_el
   return arr;
 }
 
-void vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_elem){
+bool vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_elem){
   vfastarr_hdrT* const hdr = (vfastarr_hdrT*)arr - 1;
 
   if(hdr->size < s_elem){
     memset(elem, 0, s_elem);
-    return;
+    return false;
   }
   hdr->size -= s_elem;
   memcpy(elem, (char*)arr + hdr->size, s_elem);
+  return true;
 }
 
 void vfastarr_remove(void* restrict arr, const size_t s_elem){
@@ -90,6 +93,11 @@ void vfastarr_remove(void* restrict arr, const size_t s_elem){
 
   if(hdr->size < s_elem) return;
   hdr->size -= s_elem;
+}
+
+void vfastarr_empty(void* restrict arr){
+  vfastarr_hdrT* const hdr = (vfastarr_hdrT*)arr - 1;
+  hdr->size = 0;
 }
 
 void* vfastarr_init(const size_t s_elem){

@@ -2,7 +2,6 @@
 Satisfiable is a simple dependent-typed programming language that gets compiled down to SAT instances. It is meant to aide hardware designers into producing verifiably correct logic circuits. It is also quite simple.
 
 ## Building.
-
 To build Satisfiable,
 one just has to execute `./build/buildall.sh satisfiable`, which handles everything. I didn't use traditional build systems because I don't know how to use them (_cba to learn lol_) & a shell script works just fine.
 
@@ -10,11 +9,10 @@ one just has to execute `./build/buildall.sh satisfiable`, which handles everyth
 To compile a program, one writes `satisfiable [options] program_name.sat > output_file.cnf`. The compiler doesn't check what files end with so that `.sat` can be anything really. All output is written to stdout, save for errors which are written to stderr.
 
 The following mutually exclusive options can be used:
-
 * `help` ~ prints help string to stdout.
 * `version` ~ prints current version & copyright info to stdout.
 * `check` ~ type-checks the code without compiling to SAT formulae.
-
+* `repl` ~ executes command-line REPL, useful for debugging programs.
 If no options are explicited, all code is type-checked & compiled down to instances of the satisfiability problem.
 
 ## Syntax.
@@ -35,7 +33,7 @@ Theorems can be built on top of the various primitives that compose the instance
 Satisfiable compiles circuits down into instances of the _satisfiability_ problem (**not 3sat**).
 The difference between SAT & 3SAT is that in the former clauses have unbounded size. Converting between the two is trivial, however.
 
-Compiling to SAT matters because a lot of tooling exists around SAT solvers meant to prove the correctness of circuit design. While one may claim the Satisfiable specification (with all its theorems) alone is enough, one may wish to prove statements about circuits outside of the programming language; we allow for exactly this. It's also pretty neat imo.\
-It is possible one may find proving statements on certain SAT circuits using dedicated solvers much easier than proving them in Satisfiable.
+Compiling to SAT matters because a lot of tooling exists around SAT solvers meant to prove the correctness of circuit design. While one may claim the pure Satisfiable specification (with all its theorems) alone is enough, one may wish to prove statements about circuits outside of the programming language; we allow for exactly this. Compiling to sat is also pretty neat imo.\
+It is possible one may find proving statements on certain SAT circuits using dedicated solvers much easier than proving them in Satisfiable. Proving theorems in dependent-typed languages is infamously hard (otherwise there would be a thousand SeL4-like projects, everyone would code in Idris and there would be no bugs ever).
 
-One can turn off compilation to SAT by using `satisfiable check ...`, which just performs type checking. It prints whether it was successful or not to stderr.
+One can turn off compilation to SAT by using `satisfiable check source_file.sat`, which just performs type checking. It prints whether it was successful or not to stderr.

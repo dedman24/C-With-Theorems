@@ -16,63 +16,66 @@ typedef uintptr_t satisfiable__representation_tokT;
 
 // enum needs to be large enough to hold a ptr for code to properly handle 'include' statements.
 typedef enum: satisfiable__representation_tokT{
-    SATISFIABLE_TOK__ANDL = 64,
-    SATISFIABLE_TOK__COLON = 65,
-    SATISFIABLE_TOK__ROR = 24,
-    SATISFIABLE_TOK__CLOSED_ANGLE_BRACKET = 53,
-    SATISFIABLE_TOK__ROL = 48,
-    SATISFIABLE_TOK__UNARY_DECREMENT = 70,
-    SATISFIABLE_TOK__QUOTE = 37,
-    SATISFIABLE_TOK__CLOSED_ROUND_BRACKET = 17,
-    SATISFIABLE_TOK__SLASH = 43,
-    SATISFIABLE_TOK__AMPERSAND = 67,
-    SATISFIABLE_TOK__SHL = 26,
-    SATISFIABLE_TOK__IF = 54,
-    SATISFIABLE_TOK__IN = 52,
-    SATISFIABLE_TOK__EXCLAMATION = 3,
-    SATISFIABLE_TOK__PERIOD = 19,
-    SATISFIABLE_TOK__OPENED_ROUND_BRACKET = 5,
-    SATISFIABLE_TOK__EQ = 28,
-    SATISFIABLE_TOK__QUESTION = 7,
-    SATISFIABLE_TOK__MATCH = 13,
-    SATISFIABLE_TOK__ARROW = 8,
-    SATISFIABLE_TOK__BAR = 9,
-    SATISFIABLE_TOK__OPENED_ANGLE_BRACKET = 29,
-    SATISFIABLE_TOK__CLOSED_CURLY_BRACKET = 31,
-    SATISFIABLE_TOK__DOUBLE_QUOTE = 55,
-    SATISFIABLE_TOK__MINUS = 73,
-    SATISFIABLE_TOK__THEOREM = 34,
+    SATISFIABLE_TOK__THEOREM = 12,
+    SATISFIABLE_TOK__OPENED_MULTI_LINE_COMMENT = 25,
+    SATISFIABLE_TOK__IN = 26,
+    SATISFIABLE_TOK__RETURN = 0,
+    SATISFIABLE_TOK__ROL = 67,
+    SATISFIABLE_TOK__TYPEOF = 1,
+    SATISFIABLE_TOK__QUESTION = 27,
+    SATISFIABLE_TOK__QUOTE = 29,
+    SATISFIABLE_TOK__COLON = 31,
+    SATISFIABLE_TOK__COUNTOF = 2,
+    SATISFIABLE_TOK__ROR = 73,
+    SATISFIABLE_TOK__SHR = 52,
+    SATISFIABLE_TOK__UNARY_DECREMENT = 30,
+    SATISFIABLE_TOK__SLASH = 33,
+    SATISFIABLE_TOK__CLOSED_ANGLE_BRACKET = 15,
+    SATISFIABLE_TOK__AMPERSAND = 35,
+    SATISFIABLE_TOK__CARAT = 37,
+    SATISFIABLE_TOK__MINUS = 9,
+    SATISFIABLE_TOK__OPENED_SINGLE_LINE_COMMENT = 70,
+    SATISFIABLE_TOK__IF = 4,
+    SATISFIABLE_TOK__ORL = 18,
+    SATISFIABLE_TOK__ASSIGNMENT = 41,
+    SATISFIABLE_TOK__PLUS = 43,
     SATISFIABLE_TOK__CLOSED_SQUARE_BRACKET = 45,
-    SATISFIABLE_TOK__ASSIGNMENT = 47,
-    SATISFIABLE_TOK__PERCENT = 11,
-    SATISFIABLE_TOK__NOT = 36,
-    SATISFIABLE_TOK__OPENED_SINGLE_LINE_COMMENT = 40,
-    SATISFIABLE_TOK__ORL = 6,
-    SATISFIABLE_TOK__PLUS = 15,
-    SATISFIABLE_TOK__SORRY = 49,
-    SATISFIABLE_TOK__OPENED_SQUARE_BRACKET = 1,
-    SATISFIABLE_TOK__NEQ = 14,
-    SATISFIABLE_TOK__XORL = 2,
-    SATISFIABLE_TOK__OPENED_CURLY_BRACKET = 61,
-    SATISFIABLE_TOK__CARAT = 21,
-    SATISFIABLE_TOK__STAR = 25,
-    SATISFIABLE_TOK__ELSE = 0,
-    SATISFIABLE_TOK__TILDE = 35,
-    SATISFIABLE_TOK__SEMICOLON = 51,
-    SATISFIABLE_TOK__FOR = 38,
-    SATISFIABLE_TOK__INCLUDE = 42,
-    SATISFIABLE_TOK__OPENED_MULTI_LINE_COMMENT = 71,
-    SATISFIABLE_TOK__COMMA = 23,
-    SATISFIABLE_TOK__GTEQ = 27,
-    SATISFIABLE_TOK__BACKSLASH = 33,
-    SATISFIABLE_TOK__UNARY_INCREMENT = 12,
-    SATISFIABLE_TOK__RETURN = 4,
-    SATISFIABLE_TOK__EXISTS = 63,
-    SATISFIABLE_TOK__SHR = 50,
-    SATISFIABLE_TOK__SELF = 30,
-    SATISFIABLE_TOK__LTEQ = 39,
+    SATISFIABLE_TOK__CLOSED_ROUND_BRACKET = 47,
+    SATISFIABLE_TOK__SEMICOLON = 49,
+    SATISFIABLE_TOK__OPENED_ROUND_BRACKET = 51,
+    SATISFIABLE_TOK__UNARY_INCREMENT = 64,
+    SATISFIABLE_TOK__COMMA = 53,
+    SATISFIABLE_TOK__STAR = 55,
+    SATISFIABLE_TOK__SORRY = 6,
+    SATISFIABLE_TOK__OPENED_SQUARE_BRACKET = 57,
+    SATISFIABLE_TOK__NEQ = 3,
+    SATISFIABLE_TOK__OPENED_CURLY_BRACKET = 59,
+    SATISFIABLE_TOK__ANDL = 56,
+    SATISFIABLE_TOK__XORL = 74,
+    SATISFIABLE_TOK__PERCENT = 61,
+    SATISFIABLE_TOK__LTEQ = 17,
+    SATISFIABLE_TOK__ELSE = 5,
+    SATISFIABLE_TOK__MATCH = 7,
+    SATISFIABLE_TOK__GTEQ = 20,
+    SATISFIABLE_TOK__DOUBLE_QUOTE = 75,
+    SATISFIABLE_TOK__SHL = 58,
+    SATISFIABLE_TOK__OPENED_ANGLE_BRACKET = 21,
+    SATISFIABLE_TOK__CLOSED_CURLY_BRACKET = 79,
+    SATISFIABLE_TOK__BACKSLASH = 39,
+    SATISFIABLE_TOK__TILDE = 11,
+    SATISFIABLE_TOK__ARROW = 44,
+    SATISFIABLE_TOK__PERIOD = 13,
+    SATISFIABLE_TOK__BAR = 77,
+    SATISFIABLE_TOK__EXCLAMATION = 19,
+    SATISFIABLE_TOK__INCLUDE = 50,
+    SATISFIABLE_TOK__EQ = 62,
 // other types of tokens.
     SATISFIABLE_TOK__END = 80,
+// operators that differ not in form but semantics.
+    SATISFIABLE_TOK__NEG,                                           // unary -.
+    SATISFIABLE_TOK__POS,                                           // unary +.
+    SATISFIABLE_TOK__FIELDOF,                                       // binary ~.
+
     SATISFIABLE_TOK__EOF,
     SATISFIABLE_TOK__NAME,
     SATISFIABLE_TOK__VALUE,
@@ -84,6 +87,34 @@ typedef enum: satisfiable__representation_tokT{
     SATISFIABLE_TOK__SPECIAL_IMPOSSIBILITY,                         // impossible result.
     SATISFIABLE_TOK__NAME_BIT = UINTPTR_MAX & ~INTPTR_MAX           // in tokenised code, names have this bit set always.
 } satisfiable__underlying_tokT;
+
+// properties.
+// for x, y : satisfiable__underlying_tokT
+//  let a, b : satisfiable_tok__priorityT = satisfiable_tok__priority[x], satisfiable_tok__priority[y];
+//  if a < b then x is of lower priority wrt y; if a > b y is of lower priority wrt x.
+// Satisfiable is written so that everything is an operation with a given priority, and a simple operator priority parser can work through it.
+// this means that parsing is quite fast :DDD, while with C a full AST would've required building.
+typedef enum{
+    SATISFIABLE_PRIORITY__LOWEST,                                   //
+    SATISFIABLE_PRIORITY__EOL,                                      // ';', which is used to mark the end of lines of code.
+    SATISFIABLE_PRIORITY__MATCH,                                    // match.
+    SATISFIABLE_PRIORITY__LOGIC,                                    // '&&', '||' & so on.
+    SATISFIABLE_PRIORITY__EQUALITY,                                 // '==', '!=', '>=', '<='.
+    SATISFIABLE_PRIORITY__BITWISE,                                  // '&', '|', '^'.
+    SATISFIABLE_PRIORITY__MOD,                                      // '%'.
+    SATISFIABLE_PRIORITY__ARITHMETIC,                               // '+', '-'.
+    SATISFIABLE_PRIORITY__COMPLEX_ARITHMETIC,                       // '*', '/'.
+    SATISFIABLE_PRIORITY__TYPE,                                     // ':'.
+    SATISFIABLE_PRIORITY__UNARY,                                    // all unary ops.
+    SATISFIABLE_PRIORITY__UNARY_COMPLEX,                            // countof, typeof.
+    SATISFIABLE_PRIORITY__ELEMENTOF,                                // '.', binary '~'.
+    SATISFIABLE_PRIORITY__HIGHEST
+} satisfiable_tok__priorityT;
+
+#ifndef SATISFIABLE_IMPLEMENTATION
+extern const satisfiable_tok__priorityT satisfiable_tok__priority[];
+extern const char* const restrict satisfiable_tok__table[80];
+#endif
 
 // actual token type.
 typedef struct{
@@ -123,14 +154,14 @@ static satisfiable__underlying_tokT satisfiable_tok__hash(const char* str, const
     if(len > 127) return 0;
 // associated values generated for hash function.
     const uint8_t associated_values[] = {
-        210,135,212,50,177,176,115,106,44,190,143,111,105,8,93,28,
-        85,162,189,124,247,24,1,123,64,122,65,183,96,161,113,251,
-        26,230,0,232,68,194,222,159,55,237,201,108,240,225,110,250,
-        80,122,246,247,100,251,147,85,191,162,45,126,255,164,243,232,
-        66,9,1,184,152,18,230,87,23,135,205,124,221,144,255,77,
-        221,9,208,229,61,244,155,162,97,191,81,189,77,163,151,46,
-        62,127,247,65,128,66,62,227,61,36,93,1,173,46,60,6,
-        175,3,239,203,123,20,180,7,218,17,186,3,17,244,158,18
+        74,101,42,233,31,16,229,226,97,24,204,53,253,48,102,156,
+        86,251,27,32,243,120,174,52,65,226,31,80,81,138,69,211,
+        198,39,243,126,228,148,7,4,55,53,17,179,104,122,84,222,
+        129,250,139,103,191,250,125,107,115,214,93,54,213,178,216,219,
+        138,214,187,65,230,190,55,12,123,115,4,188,254,248,237,146,
+        222,158,111,170,22,146,18,158,194,101,159,186,177,100,224,128,
+        23,47,173,143,39,220,230,208,9,68,150,146,90,24,172,49,
+        253,207,47,21,113,75,131,112,42,75,10,147,116,29,75,236
     };
     const size_t indices[] = {
         1, 0
@@ -144,62 +175,97 @@ static satisfiable__underlying_tokT satisfiable_tok__hash(const char* str, const
 }
 
 const char* const restrict satisfiable_tok__table[80] = {
-    [SATISFIABLE_TOK__ANDL] = "&&",
-    [SATISFIABLE_TOK__COLON] = ":",
-    [SATISFIABLE_TOK__ROR] = ">>>",
-    [SATISFIABLE_TOK__CLOSED_ANGLE_BRACKET] = "<",
-    [SATISFIABLE_TOK__ROL] = "<<<",
-    [SATISFIABLE_TOK__UNARY_DECREMENT] = "--",
-    [SATISFIABLE_TOK__QUOTE] = "'",
-    [SATISFIABLE_TOK__CLOSED_ROUND_BRACKET] = ")",
-    [SATISFIABLE_TOK__SLASH] = "/",
-    [SATISFIABLE_TOK__AMPERSAND] = "&",
-    [SATISFIABLE_TOK__SHL] = ">>",
-    [SATISFIABLE_TOK__IF] = "if",
-    [SATISFIABLE_TOK__IN] = "in",
-    [SATISFIABLE_TOK__EXCLAMATION] = "!",
-    [SATISFIABLE_TOK__PERIOD] = ".",
-    [SATISFIABLE_TOK__OPENED_ROUND_BRACKET] = "(",
-    [SATISFIABLE_TOK__EQ] = "==",
-    [SATISFIABLE_TOK__QUESTION] = "?",
-    [SATISFIABLE_TOK__MATCH] = "match",
-    [SATISFIABLE_TOK__ARROW] = "->",
-    [SATISFIABLE_TOK__BAR] = "|",
-    [SATISFIABLE_TOK__OPENED_ANGLE_BRACKET] = ">",
-    [SATISFIABLE_TOK__CLOSED_CURLY_BRACKET] = "}",
-    [SATISFIABLE_TOK__DOUBLE_QUOTE] = "\"",
-    [SATISFIABLE_TOK__MINUS] = "-",
     [SATISFIABLE_TOK__THEOREM] = "theorem",
-    [SATISFIABLE_TOK__CLOSED_SQUARE_BRACKET] = "]",
-    [SATISFIABLE_TOK__ASSIGNMENT] = "=",
-    [SATISFIABLE_TOK__PERCENT] = "%",
-    [SATISFIABLE_TOK__NOT] = "not",
+    [SATISFIABLE_TOK__OPENED_MULTI_LINE_COMMENT] = "/*",
+    [SATISFIABLE_TOK__IN] = "in",
+    [SATISFIABLE_TOK__RETURN] = "return",
+    [SATISFIABLE_TOK__ROL] = "<<<",
+    [SATISFIABLE_TOK__TYPEOF] = "typeof",
+    [SATISFIABLE_TOK__QUESTION] = "?",
+    [SATISFIABLE_TOK__QUOTE] = "'",
+    [SATISFIABLE_TOK__COLON] = ":",
+    [SATISFIABLE_TOK__COUNTOF] = "countof",
+    [SATISFIABLE_TOK__ROR] = ">>>",
+    [SATISFIABLE_TOK__SHR] = "<<",
+    [SATISFIABLE_TOK__UNARY_DECREMENT] = "--",
+    [SATISFIABLE_TOK__SLASH] = "/",
+    [SATISFIABLE_TOK__CLOSED_ANGLE_BRACKET] = "<",
+    [SATISFIABLE_TOK__AMPERSAND] = "&",
+    [SATISFIABLE_TOK__CARAT] = "^",
+    [SATISFIABLE_TOK__MINUS] = "-",
     [SATISFIABLE_TOK__OPENED_SINGLE_LINE_COMMENT] = "//",
+    [SATISFIABLE_TOK__IF] = "if",
     [SATISFIABLE_TOK__ORL] = "||",
+    [SATISFIABLE_TOK__ASSIGNMENT] = "=",
     [SATISFIABLE_TOK__PLUS] = "+",
+    [SATISFIABLE_TOK__CLOSED_SQUARE_BRACKET] = "]",
+    [SATISFIABLE_TOK__CLOSED_ROUND_BRACKET] = ")",
+    [SATISFIABLE_TOK__SEMICOLON] = ";",
+    [SATISFIABLE_TOK__OPENED_ROUND_BRACKET] = "(",
+    [SATISFIABLE_TOK__UNARY_INCREMENT] = "++",
+    [SATISFIABLE_TOK__COMMA] = ",",
+    [SATISFIABLE_TOK__STAR] = "*",
     [SATISFIABLE_TOK__SORRY] = "sorry",
     [SATISFIABLE_TOK__OPENED_SQUARE_BRACKET] = "[",
     [SATISFIABLE_TOK__NEQ] = "!=",
-    [SATISFIABLE_TOK__XORL] = "^^",
     [SATISFIABLE_TOK__OPENED_CURLY_BRACKET] = "{",
-    [SATISFIABLE_TOK__CARAT] = "^",
-    [SATISFIABLE_TOK__STAR] = "*",
+    [SATISFIABLE_TOK__ANDL] = "&&",
+    [SATISFIABLE_TOK__XORL] = "^^",
+    [SATISFIABLE_TOK__PERCENT] = "%",
+    [SATISFIABLE_TOK__LTEQ] = "<=",
     [SATISFIABLE_TOK__ELSE] = "else",
-    [SATISFIABLE_TOK__TILDE] = "~",
-    [SATISFIABLE_TOK__SEMICOLON] = ";",
-    [SATISFIABLE_TOK__FOR] = "for",
-    [SATISFIABLE_TOK__INCLUDE] = "include",
-    [SATISFIABLE_TOK__OPENED_MULTI_LINE_COMMENT] = "/*",
-    [SATISFIABLE_TOK__COMMA] = ",",
+    [SATISFIABLE_TOK__MATCH] = "match",
     [SATISFIABLE_TOK__GTEQ] = ">=",
+    [SATISFIABLE_TOK__DOUBLE_QUOTE] = "\"",
+    [SATISFIABLE_TOK__SHL] = ">>",
+    [SATISFIABLE_TOK__OPENED_ANGLE_BRACKET] = ">",
+    [SATISFIABLE_TOK__CLOSED_CURLY_BRACKET] = "}",
     [SATISFIABLE_TOK__BACKSLASH] = "\\",
-    [SATISFIABLE_TOK__UNARY_INCREMENT] = "++",
-    [SATISFIABLE_TOK__RETURN] = "return",
-    [SATISFIABLE_TOK__EXISTS] = "exists",
-    [SATISFIABLE_TOK__SHR] = "<<",
-    [SATISFIABLE_TOK__SELF] = "self",
-    [SATISFIABLE_TOK__LTEQ] = "<="
+    [SATISFIABLE_TOK__TILDE] = "~",
+    [SATISFIABLE_TOK__ARROW] = "->",
+    [SATISFIABLE_TOK__PERIOD] = ".",
+    [SATISFIABLE_TOK__BAR] = "|",
+    [SATISFIABLE_TOK__EXCLAMATION] = "!",
+    [SATISFIABLE_TOK__INCLUDE] = "include",
+    [SATISFIABLE_TOK__EQ] = "=="
 /* many tokens, not 100% perfect hashing but this is as close as it would let me. */
+};
+
+const satisfiable_tok__priorityT satisfiable_tok__priority[] = {
+    [SATISFIABLE_TOK__SEMICOLON]            = SATISFIABLE_PRIORITY__EOL,
+    [SATISFIABLE_TOK__MATCH]                = SATISFIABLE_PRIORITY__MATCH,
+
+    [SATISFIABLE_TOK__ANDL]                 = SATISFIABLE_PRIORITY__LOGIC,
+    [SATISFIABLE_TOK__ORL]                  = SATISFIABLE_PRIORITY__LOGIC,
+    [SATISFIABLE_TOK__XORL]                 = SATISFIABLE_PRIORITY__LOGIC,
+
+    [SATISFIABLE_TOK__EQ]                   = SATISFIABLE_PRIORITY__EQUALITY,
+    [SATISFIABLE_TOK__NEQ]                  = SATISFIABLE_PRIORITY__EQUALITY,
+    [SATISFIABLE_TOK__GTEQ]                 = SATISFIABLE_PRIORITY__EQUALITY,
+    [SATISFIABLE_TOK__LTEQ]                 = SATISFIABLE_PRIORITY__EQUALITY,
+    [SATISFIABLE_TOK__OPENED_ANGLE_BRACKET] = SATISFIABLE_PRIORITY__EQUALITY,
+    [SATISFIABLE_TOK__CLOSED_ANGLE_BRACKET] = SATISFIABLE_PRIORITY__EQUALITY,
+
+    [SATISFIABLE_TOK__AMPERSAND]            = SATISFIABLE_PRIORITY__BITWISE,
+    [SATISFIABLE_TOK__BAR]                  = SATISFIABLE_PRIORITY__BITWISE,
+    [SATISFIABLE_TOK__CARAT]                = SATISFIABLE_PRIORITY__BITWISE,
+
+    [SATISFIABLE_TOK__PERCENT]              = SATISFIABLE_PRIORITY__MOD,
+
+    [SATISFIABLE_TOK__PLUS]                 = SATISFIABLE_PRIORITY__ARITHMETIC,
+    [SATISFIABLE_TOK__MINUS]                = SATISFIABLE_PRIORITY__ARITHMETIC,
+
+    [SATISFIABLE_TOK__STAR]                 = SATISFIABLE_PRIORITY__COMPLEX_ARITHMETIC,
+    [SATISFIABLE_TOK__SLASH]                = SATISFIABLE_PRIORITY__COMPLEX_ARITHMETIC,
+
+    [SATISFIABLE_TOK__COLON]                = SATISFIABLE_PRIORITY__TYPE,
+
+    [SATISFIABLE_TOK__NEG]                  = SATISFIABLE_PRIORITY__UNARY,
+    [SATISFIABLE_TOK__POS]                  = SATISFIABLE_PRIORITY__UNARY,
+    [SATISFIABLE_TOK__TILDE]                = SATISFIABLE_PRIORITY__UNARY,
+
+    [SATISFIABLE_TOK__PERIOD]               = SATISFIABLE_PRIORITY__ELEMENTOF,
+    [SATISFIABLE_TOK__FIELDOF]              = SATISFIABLE_PRIORITY__ELEMENTOF
 };
 
 static satisfiable__underlying_tokT satisfiable_tok__search(const char* const restrict str, const size_t len){
@@ -214,12 +280,26 @@ static size_t satisfiable_tok__whitespacelen(const char* const restrict str){
 }
 
 static size_t satisfiable_tok__oplen(const char* const restrict str){
-    return strspn(str, "+-*/%:;?&|^~!~=><()[]{}\"',.\\");
+    return strspn(str, "+-*/%:;?&|^~!~=><()[]{},.\\");
+}
+
+// find position of terminator.
+// if preceeded by '\', find next.
+static size_t satisfiable_tok__strlen(const char* const restrict base, const char terminator){
+    const char* off = base + 1;                         // to skip initial character.
+    while(1){
+        const char* const term = strchr(off, terminator);
+        if(!term) return strlen(base);
+        if(off[-1] != '\\') return off - base;
+        else off = term + 1;
+    }
 }
 
 // supports binary. hex. octal & fp encoding.
 // all of these share that the starting digit is 0 through 9.
 static size_t satisfiable_tok__numlen(const char* const restrict str){
+    if(str[0] == '"') return satisfiable_tok__strlen(str, '"');
+    if(str[0] == '\'') return satisfiable_tok__strlen(str, '\'');
 // first char is digit?
 //  y -> strspn.
 //  n -> first char is - or .?

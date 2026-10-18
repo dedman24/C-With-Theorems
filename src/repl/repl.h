@@ -24,26 +24,28 @@ static void satisfiable_repl__result(satisfiable_nameT* const restrict name, sat
     satisfiable_variableT* const restrict var = satisfiable_variable_search(variables, name[i]);
 
     switch(var->type){
-      case SATISFIABLE_TYPE__U8:  fprintf(stdout, "%u : uint8_t",  *(uint8_t*)var->internal); break;
-      case SATISFIABLE_TYPE__U16: fprintf(stdout, "%u : uint16_t", *(uint16_t*)var->internal); break;
-      case SATISFIABLE_TYPE__U32: fprintf(stdout, "%u : uint32_t", *(uint32_t*)var->internal); break;
-      case SATISFIABLE_TYPE__U64: fprintf(stdout, "%lu : uint64_t", *(uint64_t*)var->internal); break;
+      case SATISFIABLE_TYPE__U8:  fprintf(stdout, "%u",  *(uint8_t*)var->internal); break;
+      case SATISFIABLE_TYPE__U16: fprintf(stdout, "%u",  *(uint16_t*)var->internal); break;
+      case SATISFIABLE_TYPE__U32: fprintf(stdout, "%u",  *(uint32_t*)var->internal); break;
+      case SATISFIABLE_TYPE__U64: fprintf(stdout, "%lu", *(uint64_t*)var->internal); break;
 
-      case SATISFIABLE_TYPE__I8:  fprintf(stdout, "%d : int8_t",  *(int8_t*)var->internal); break;
-      case SATISFIABLE_TYPE__I16: fprintf(stdout, "%d : int16_t", *(int16_t*)var->internal); break;
-      case SATISFIABLE_TYPE__I32: fprintf(stdout, "%d : int32_t", *(int32_t*)var->internal); break;
-      case SATISFIABLE_TYPE__I64: fprintf(stdout, "%ld : int64_t", *(int64_t*)var->internal); break;
+      case SATISFIABLE_TYPE__I8:  fprintf(stdout, "%d",  *(int8_t*)var->internal); break;
+      case SATISFIABLE_TYPE__I16: fprintf(stdout, "%d",  *(int16_t*)var->internal); break;
+      case SATISFIABLE_TYPE__I32: fprintf(stdout, "%d",  *(int32_t*)var->internal); break;
+      case SATISFIABLE_TYPE__I64: fprintf(stdout, "%ld", *(int64_t*)var->internal); break;
 
-      case SATISFIABLE_TYPE__F32: fprintf(stdout, "%f : float32_t", *(float*)var->internal); break;
-      case SATISFIABLE_TYPE__F64: fprintf(stdout, "%f : float64_t", *(double*)var->internal); break;
+      case SATISFIABLE_TYPE__F32: fprintf(stdout, "%f", *(float*)var->internal); break;
+      case SATISFIABLE_TYPE__F64: fprintf(stdout, "%f", *(double*)var->internal); break;
 
       default:
         fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
     }
+    fputs(" : ", stdout);
+    fputs(satisfiable_type__strings[var->type], stdout);
+
     if(i != c_name - 1)
       fputs(", ", stdout);
   }
-
   fputc('\n', stdout);
 }
 

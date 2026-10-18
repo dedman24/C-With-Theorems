@@ -4,6 +4,7 @@
 // this file handles repl stuff.
 // we want an interface that evaluates whatever's written to stdin terminated by a semicolon & executes it.
 // this means that '2+3' does nothing, while '2+3;' prints out 5, or of whatever arithmetic expression is in stdin.
+// also supports piping, like with python3; `echo "whatever;" | ./satisfiable repl` has the same effect as writing `whatever;` by hand.
 
 #include "../common/_common.h"
 #include "../common/ansi_colours.h"       // all manners of colours.

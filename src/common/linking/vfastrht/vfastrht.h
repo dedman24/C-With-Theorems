@@ -54,7 +54,7 @@ void vfastrht_table_destroy(vfastrhtT* const restrict table, void (*destructor)(
 }
 
 static size_t vfastrht__idx(const vfastrht_keyT key, const unsigned short r){
-    return ((unsigned char*)key)[r];
+    return key >> r*8 & 0xFF;
 }
 
 bool vfastrht_put(vfastrhtT* restrict table, const vfastrht_keyT key, const vfastrht_objT obj){
@@ -62,6 +62,7 @@ bool vfastrht_put(vfastrhtT* restrict table, const vfastrht_keyT key, const vfas
     do{
         const size_t idx = vfastrht__idx(key, r);
         if(!table[idx].key){
+            table[idx].key = key;
             table[idx].obj = obj;
             return true;
         }

@@ -30,7 +30,7 @@ satisfiable_outputT satisfiable_compile(const int argc, const char* const restri
 
   satisfiable__fileT file;
   if(options->op != SATISFIABLE_OPTIONS__REPL){
-    satisfiable_load__map(options->path_src, true);
+    file = satisfiable_load__map(options->path_src, false);
     if(!file.code){
       satisfiable_error_report__str(SATISFIABLE_ERROR__PARSE_MISSING_SOURCE_FILE, SATISFIABLE_ERROR__PARSE, NULL, 0, 0, err, options->path_src);
       satisfiable_error_print(err, true);

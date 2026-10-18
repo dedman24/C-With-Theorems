@@ -41,7 +41,7 @@ static void satisfiable_interpreter_push_op(satisfiable_interpreterT* const rest
 }
 
 static satisfiable__underlying_tokT satisfiable_interpreter_pop_op(satisfiable_interpreterT* const restrict interpreter){
-  satisfiable__underlying_tokT tok; vfastarr_pop(&interpreter->ops, &tok, sizeof(tok));
+  satisfiable__underlying_tokT tok; vfastarr_pop(interpreter->ops, &tok, sizeof(tok));
   return tok;
 }
 
@@ -64,13 +64,13 @@ static satisfiable_variableT* satisfiable_interpreter_pop_variable(
   satisfiable_interpreterT* const restrict interpreter,
   satisfiable_error_ctxT* const restrict err, rcT* const restrict path, const satisfiable_fposT line, const satisfiable_fposT offset
 ){
-  satisfiable_nameT tok;
-  if(!vfastarr_pop(&interpreter->values, &tok, sizeof(tok))){
+  satisfiable_nameT id;
+  if(!vfastarr_pop(interpreter->values, &id, sizeof(id))){
     satisfiable_error_report(SATISFIABLE_ERROR__INTERPRETER_TOO_FEW_OPERANDS, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
     return NULL;
   }
 
-  satisfiable_variableT* const restrict variable = satisfiable_variable_search(interpreter->variables, tok);
+  satisfiable_variableT* const restrict variable = satisfiable_variable_search(interpreter->variables, id);
   if(!variable)
     satisfiable_error_report(SATISFIABLE_ERROR__INTERPRETER_VARIABLE_MISSING, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
   return variable;
@@ -78,7 +78,7 @@ static satisfiable_variableT* satisfiable_interpreter_pop_variable(
 
 static void satisfiable_interpreter_push_value(satisfiable_interpreterT* const restrict interpreter, satisfiable_nameT value){
   value &= ~SATISFIABLE_TOK__NAME_BIT;
-  interpreter->ops = vfastarr_append(interpreter->values, &value, sizeof(value));
+  interpreter->values = vfastarr_append(interpreter->values, &value, sizeof(value));
 }
 
 static size_t satisfiable_interpreter_depth_op(satisfiable_interpreterT* const restrict interpreter){

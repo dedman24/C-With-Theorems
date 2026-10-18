@@ -26,7 +26,7 @@ char* vfastpath_append(const char* const restrict base, const size_t s_base, con
 # ifdef VFASTPATH_IMPLEMENTATION
 
 #define VFASTARR_IMPLEMENTATION
-#include "vfastarr.h"
+#include "../vfastarr.h"            // bugprone building otherwise :PP.
 
 // TODO: add windows path support some day.
 #  ifdef VFASTPATH_WINDOWS

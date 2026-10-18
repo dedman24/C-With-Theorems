@@ -108,8 +108,7 @@ void* vfastarr_init(const size_t s_elem){
 }
 
 void vfastarr_destroy(void* const arr){
-  vfastarr_hdrT* const hdr = (vfastarr_hdrT*)arr - 1;
-  free(hdr);
+  free((vfastarr_hdrT*)arr - 1);
 }
 
 #endif

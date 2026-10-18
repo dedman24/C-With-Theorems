@@ -15,7 +15,7 @@ static bool satisfiable_op__setup_2(
   *op0 = satisfiable_interpreter_pop_variable(interpreter, err, path, line, offset);
   *op1 = satisfiable_interpreter_pop_variable(interpreter, err, path, line, offset);
 
-  if(!op0 || !op1){
+  if(!(*op0) || !(*op1)){
     satisfiable_error_report__u32(SATISFIABLE_ERROR__IMPOSSIBILITY, SATISFIABLE_ERROR__COMPILER, path, line, offset, err, SATISFIABLE_IMPOSSIBILITY__OP_TYPE);
     return false;
   }

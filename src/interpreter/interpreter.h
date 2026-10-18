@@ -40,8 +40,8 @@ static satisfiable_outputT satisfiable_interpreter_run(
   satisfiable_interpreterT interpreter; satisfiable_interpreter_init(&interpreter, variables);
 
   bool prev_was_operand = false;                                // used to check if two operands/names follow each other, which is not valid.
-
-  for(size_t pos = 0; pos < c_code; pos++){                     // overusage of 'i' as index variable found harmful.
+// c_code - 1 because last tok is always EOF.
+  for(size_t pos = 0; pos < c_code - 1; pos++){                 // overusage of 'i' as index variable found harmful.
     if(code[pos].token & SATISFIABLE_TOK__NAME_BIT){
       if(prev_was_operand){
         satisfiable_error_report(SATISFIABLE_ERROR__INTERPRETER_ADJACENT_OPERANDS, SATISFIABLE_ERROR__COMPILER, NULL /* TODO! */, code[pos].line, code[pos].offset, error);
@@ -62,23 +62,32 @@ static satisfiable_outputT satisfiable_interpreter_run(
 //  [ ] functions.
 
 // while priority(top) > priority(ourtok) process tokens.
-    satisfiable__underlying_tokT top = satisfiable_interpreter_top_op(&interpreter);
-    while(satisfiable_tok__priority[top] > satisfiable_tok__priority[code[pos].token]){
-      satisfiable_interpreter_op(top, prev_was_operand, &interpreter, error, NULL /* TODO! */, code[pos].line, code[pos].offset);
-      top = satisfiable_interpreter_pop_op(&interpreter);
+    const size_t cnt_top = vfastarr_elcnt(interpreter.ops, sizeof(*interpreter.ops));
+
+    if(cnt_top){
+      satisfiable__underlying_tokT top = interpreter.ops[cnt_top - 1];
+      if(satisfiable_tok__priority[top] <= satisfiable_tok__priority[code[pos].token])
+        goto SKIP_PRIO;
+      vfastarr_remove(interpreter.ops, sizeof(*interpreter.ops));
+      do{
+        satisfiable_interpreter_op(top, prev_was_operand, &interpreter, error, NULL /* TODO! */, code[pos].line, code[pos].offset);
+        top = satisfiable_interpreter_pop_op(&interpreter);
+      } while(satisfiable_tok__priority[top] > satisfiable_tok__priority[code[pos].token]);
     }
+SKIP_PRIO:
     prev_was_operand = false;
     if(code[pos].token != SATISFIABLE_TOK__SEMICOLON)
       satisfiable_interpreter_push_op(&interpreter, code[pos].token);
   }
 
-  if(isrepl)
+  if(!isrepl)
     return satisfiable_interpreter_destroy(&interpreter);
 // result of execution is first few values at top of interpreter.
-  satisfiable_outputT result = interpreter.values; interpreter.values = NULL;
+  satisfiable_outputT result = interpreter.values;
+  interpreter.values = NULL;
   interpreter.variables = NULL;
 
-  satisfiable_interpreter_destroy(&interpreter);
+  vfastarr_destroy(satisfiable_interpreter_destroy(&interpreter));
   return result;
 }
 

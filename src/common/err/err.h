@@ -155,7 +155,7 @@ static void satisfiable_error_ctx_destroy(satisfiable_error_ctxT* restrict ctx, 
   }
 
   vfastarr_destroy(ctx->errors);
-  free(ctx);
+  if(freectx) free(ctx);
 }
 
 static void satisfiable_error_print(satisfiable_error_ctxT* const restrict ctx, const bool freectx){

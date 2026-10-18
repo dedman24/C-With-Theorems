@@ -13,7 +13,7 @@ typedef void (*satisfiable_interpreter_opT)(
 
 // operation array.
 static satisfiable_interpreter_opT satisfiable_interpreter_ops[][2] = {
-  [SATISFIABLE_TOK__PLUS] = { satisfiable_op__add, satisfiable_op__pos }
+  [SATISFIABLE_TOK__PLUS] = { satisfiable_op__pos, satisfiable_op__add }
 };
 
 #endif

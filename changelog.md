@@ -1,15 +1,13 @@
-### Changelog 2026/10/17.
- - updated README.md.
- - added single & double quoted literals as variables (supports C-like escape sequences).
- - added basic interpreter. it can execute little so far, but I'm going to work on it these next few days.
- - added command-line REPL with 'satisfiable repl', which takes program input from stdin & executes it. Supports piping, like with python's REPL.
-bugs may be present, proper bugfixing will take place tmrw.
+### Changelog 2026/10/18.
+ - fixed tokeniser not being able to find file (_room-temp iq error idk how that slipped_).
+ - fixed segfaulting on repl.
+finally one can execute `./satisfiable repl` and have it evaluate what 1 + 2 is TwT...
 
 ### Current errors:
- - tokenise cannot find file.
- - repl segfaults on tokenisation.
+ - values terminating in standard rust-like integer suffixes do not work properly, lead to segfaults.
 
 ### Things to add:
  - more ops.
  - first-class support for arrays & other types, perhaps even user-generated types, to ensure safety.
- - more complex types, ultimately giving us dependent type support..
+ - more complex types, ultimately giving us dependent type support.
+ - path stuff to interpreter probably first thing I'm ading tmrw.

@@ -32,10 +32,10 @@ static bool satisfiable_name_ctx_destroy(satisfiable_name_ctxT* const restrict n
     vfastbst_str_destroy(&name->names[i], false);
 
   vfastarr_destroy(name->names);
-  vfastbst_str_destroy(&name->values, true);
+  vfastbst_str_destroy(&name->values, false);
   if(freectx) free(name);
 
-  return ctxdepth == 0;
+  return ctxdepth == 1;
 }
 
 static void satisfiable_name_depth_inc(satisfiable_name_ctxT* const restrict name){
@@ -220,10 +220,10 @@ static satisfiable_nameT satisfiable_value_add(
   }
 // how are these handled? is 'rc' a proper way?
 // 'rc' undoubtedly adds overhead, we don't really care about it being referenced multiple times.
-  const satisfiable_nameT id = satisfiable_variable_name(name->variables) | SATISFIABLE_TOK__NAME_BIT;
+  const satisfiable_nameT id = satisfiable_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  satisfiable_variable_add(name->variables, id, raw, s_raw, (void*)raw, type_raw, SATISFIABLE_QUALIFIER__FREENAME | SATISFIABLE_QUALIFIER__CONST);
-  return id;
+  satisfiable_variable_add(name->variables, id, raw, s_raw, (void*)raw, type_raw, SATISFIABLE_QUALIFIER__CONST);
+  return id | SATISFIABLE_TOK__NAME_BIT;
 }
 
 #endif

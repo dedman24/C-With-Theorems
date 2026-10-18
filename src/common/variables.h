@@ -82,6 +82,32 @@ typedef struct{
   satisfiable_qualifierT qualifier;               // qualifiers.
 } satisfiable_variableT;
 
+static size_t satisfiable_type__sizeof(satisfiable_variableT* const restrict variable){
+  const size_t sizes[] = {
+    [SATISFIABLE_TYPE__U8]      = 1,
+    [SATISFIABLE_TYPE__U16]     = 2,
+    [SATISFIABLE_TYPE__U32]     = 4,
+    [SATISFIABLE_TYPE__U64]     = 8,
+
+    [SATISFIABLE_TYPE__I8]      = 1,
+    [SATISFIABLE_TYPE__I16]     = 2,
+    [SATISFIABLE_TYPE__I32]     = 4,
+    [SATISFIABLE_TYPE__I64]     = 8,
+
+    [SATISFIABLE_TYPE__F8]      = 1,
+    [SATISFIABLE_TYPE__F16]     = 2,
+    [SATISFIABLE_TYPE__F32]     = 4,
+    [SATISFIABLE_TYPE__F64]     = 8,
+
+    [SATISFIABLE_TYPE__CHAR]    = 1,
+    [SATISFIABLE_TYPE__TYPE]    = 0,
+    [SATISFIABLE_TYPE__BOOLEAN] = 1
+  };
+
+  if(variable->type == SATISFIABLE_TYPE__STRING) return strlen(variable->internal);
+  return sizes[variable->type];
+}
+
 static satisfiable_variableT* satisfiable_variable_init(
   const char* const restrict name, const size_t s_name,
   void* const restrict internal, const satisfiable_typeT type, const satisfiable_qualifierT qualifier
@@ -100,6 +126,7 @@ static satisfiable_variableT* satisfiable_variable_init(
 static void satisfiable_variable_destroy(vfastrht_objT* const restrict var){
   satisfiable_variableT* const restrict real = (satisfiable_variableT*)var;
   if(real->qualifier & SATISFIABLE_QUALIFIER__FREENAME) free((void*)real->name);
+  free(real->internal);
   free(real);
 }
 

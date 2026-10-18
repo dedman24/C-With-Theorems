@@ -17,35 +17,50 @@
 // posix stuff.
 #include "unistd.h"             // isatty.
 
-static void satisfiable_repl_result(satisfiable_variableT* const restrict var){
-  switch(var->type){
-    case SATISFIABLE_TYPE__I32:
-      fprintf(stdout, "%d", *(int32_t*)var->internal);
-    default:
-      fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
+static void satisfiable_repl__result(satisfiable_nameT* const restrict name, satisfiable_variable_ctxT* const restrict variables){
+  const size_t c_name = vfastarr_elcnt(name, sizeof(*name));
+
+  for(size_t i = 0; i < c_name; i++){
+    satisfiable_variableT* const restrict var = satisfiable_variable_search(variables, name[i]);
+
+    switch(var->type){
+      case SATISFIABLE_TYPE__U8:  fprintf(stdout, "%u : uint8_t",  *(uint8_t*)var->internal); break;
+      case SATISFIABLE_TYPE__U16: fprintf(stdout, "%u : uint16_t", *(uint16_t*)var->internal); break;
+      case SATISFIABLE_TYPE__U32: fprintf(stdout, "%u : uint32_t", *(uint32_t*)var->internal); break;
+      case SATISFIABLE_TYPE__U64: fprintf(stdout, "%lu : uint64_t", *(uint64_t*)var->internal); break;
+
+      case SATISFIABLE_TYPE__I8:  fprintf(stdout, "%d : int8_t",  *(int8_t*)var->internal); break;
+      case SATISFIABLE_TYPE__I16: fprintf(stdout, "%d : int16_t", *(int16_t*)var->internal); break;
+      case SATISFIABLE_TYPE__I32: fprintf(stdout, "%d : int32_t", *(int32_t*)var->internal); break;
+      case SATISFIABLE_TYPE__I64: fprintf(stdout, "%ld : int64_t", *(int64_t*)var->internal); break;
+
+      case SATISFIABLE_TYPE__F32: fprintf(stdout, "%f : float32_t", *(float*)var->internal); break;
+      case SATISFIABLE_TYPE__F64: fprintf(stdout, "%f : float64_t", *(double*)var->internal); break;
+
+      default:
+        fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
+    }
+    if(i != c_name - 1)
+      fputs(", ", stdout);
   }
+
+  fputc('\n', stdout);
 }
 
 static void satisfiable_repl__line(const char* const restrict code){
   const size_t s_code = vfastarr_size(code);
+  if(!s_code) return;
 
   satisfiable_variable_ctxT* variables;
   satisfiable_error_ctxT err; satisfiable_error_ctx_init(&err);
   satisfiable_outputT tokenised = satisfiable_tokenise(code, "repl", strlen("repl"), &variables, &err);
 
   satisfiable_nameT* const restrict name = satisfiable_interpreter_run(tokenised, vfastarr_elcnt(tokenised, sizeof(satisfiable_tokT)), &err, variables, true);
-  const size_t c_name = vfastarr_elcnt(name, sizeof(*name));
-
-  for(size_t i = 0; i < c_name; i++){
-    satisfiable_variableT* const restrict var = satisfiable_variable_search(variables, name[i]);
-    satisfiable_repl_result(var);
-    if(i != c_name - 1)
-      fputs(", ", stdout);
-  }
-
-  fputc('\n', stdout);
+  satisfiable_repl__result(name, variables);
 
   vfastarr_destroy(name);
+  vfastarr_destroy(tokenised);
+  satisfiable_error_print(&err, false);
   satisfiable_variable_ctx_destroy(variables, true);
 }
 
@@ -78,11 +93,17 @@ static satisfiable_outputT satisfiable_repl(void){
       vfastarr_empty(line);
     }
   }
+// for some reason doesn't work with this, figure it out smartass.
+/*
+  for(size_t i = 0; i < vfastarr_size(line); i++)
+    printf("%02x", line[i]);
+  puts("");
+
   if(!ishuman){
-    vfastarr_append(line, ";", sizeof(";"));      // appends ';\0'.
+    vfastarr_append(line, ";", sizeof(";"));      // appends ';\0'. TODO: enable.
     satisfiable_repl__line(line);
   }
-
+*/
   vfastarr_destroy(line);
   return NULL;
 }

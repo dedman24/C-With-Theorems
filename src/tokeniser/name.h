@@ -1,5 +1,5 @@
-#ifndef SATISFIABLE_TOKENISER_NAME_H_INCLUDED
-#define SATISFIABLE_TOKENISER_NAME_H_INCLUDED
+#ifndef LTH_TOKENISER_NAME_H_INCLUDED
+#define LTH_TOKENISER_NAME_H_INCLUDED
 
 #include "types/chars.h"                  // char, string escape sequence handling.
 #include "types/vtypes.h"                 // value types.
@@ -12,13 +12,13 @@
 #include "inttypes.h"                     // sscanf formats.
 
 typedef struct{
-  satisfiable_variable_ctxT* variables;   // NOTE: remember to extract this before deleting the whole name ctx.
+  lth_variable_ctxT* variables;   // NOTE: remember to extract this before deleting the whole name ctx.
   vfastbst_strT* names;
   vfastbst_strT values;
-} satisfiable_name_ctxT;
+} lth_name_ctxT;
 
-static void satisfiable_name_ctx_init(satisfiable_name_ctxT* const restrict name){
-  name->variables = satisfiable_variable_ctx_init(NULL);
+static void lth_name_ctx_init(lth_name_ctxT* const restrict name){
+  name->variables = lth_variable_ctx_init(NULL);
   name->names = vfastarr_init(sizeof(*name->names));
   name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
   name->names[0] = VFASTBST_STR_INIT;
@@ -26,7 +26,7 @@ static void satisfiable_name_ctx_init(satisfiable_name_ctxT* const restrict name
 }
 
 // destroys name ctx, returns whether ctxdepth is 0 or not.
-static bool satisfiable_name_ctx_destroy(satisfiable_name_ctxT* const restrict name, const bool freectx){
+static bool lth_name_ctx_destroy(lth_name_ctxT* const restrict name, const bool freectx){
   const size_t ctxdepth = vfastarr_elcnt(name->names, sizeof(*name->names));
   for(size_t i = 0; i < ctxdepth; i++)
     vfastbst_str_destroy(&name->names[i], false);
@@ -38,12 +38,12 @@ static bool satisfiable_name_ctx_destroy(satisfiable_name_ctxT* const restrict n
   return ctxdepth == 1;
 }
 
-static void satisfiable_name_depth_inc(satisfiable_name_ctxT* const restrict name){
+static void lth_name_depth_inc(lth_name_ctxT* const restrict name){
   vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
 }
 
 // returns false if depth goes below 0.
-static bool satisfiable_name_depth_dec(satisfiable_name_ctxT* const restrict name){
+static bool lth_name_depth_dec(lth_name_ctxT* const restrict name){
   const size_t elcnt = vfastarr_elcnt(name, sizeof(*name));
   if(!elcnt) return false;
 
@@ -52,14 +52,14 @@ static bool satisfiable_name_depth_dec(satisfiable_name_ctxT* const restrict nam
   return true;
 }
 
-static size_t satisfiable_name_depth(satisfiable_name_ctxT* const restrict name){
+static size_t lth_name_depth(lth_name_ctxT* const restrict name){
   return vfastarr_elcnt(name, sizeof(*name));
 }
 
 // searches for name, creates nameID if it doesn't find any.
-static satisfiable_nameT satisfiable_name_add(
+static lth_nameT lth_name_add(
   const char* const restrict key, const size_t s_key,
-  satisfiable_error_ctxT* const restrict err, satisfiable_name_ctxT* const restrict name
+  lth_error_ctxT* const restrict err, lth_name_ctxT* const restrict name
 ){
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
 
@@ -70,14 +70,14 @@ static satisfiable_nameT satisfiable_name_add(
       return (*curr_node)->obj;
   }
 
-  const satisfiable_nameT id = satisfiable_variable_name(name->variables) | SATISFIABLE_TOK__NAME_BIT;
+  const lth_nameT id = lth_variable_name(name->variables) | LTH_TOK__NAME_BIT;
   *curr_node = vfastbst_str_node_init(key, s_key, id);
-  satisfiable_variable_add(name->variables, id, key, s_key, NULL, SATISFIABLE_TYPE__NONE, SATISFIABLE_QUALIFIER__NONE);
+  lth_variable_add(name->variables, id, key, s_key, NULL, LTH_TYPE__NONE, LTH_QUALIFIER__NONE);
   return id;
 }
 
 // decodes binary string, returns 1 on success, 0 otherwise.
-static int satisfiable_value_decode__binary(
+static int lth_value_decode__binary(
   const char* restrict data, const size_t s_data, uint64_t* const restrict raw, int* const restrict bytes_read
 ){
   *raw = 0;
@@ -89,12 +89,12 @@ static int satisfiable_value_decode__binary(
   return *bytes_read != 0;
 }
 
-static const void* satisfiable_value_decode(
-  const char* restrict data, size_t s_data, size_t* const restrict s_raw, satisfiable_typeT* const restrict type_raw,
-  satisfiable_error_ctxT* const restrict err, rcT* const restrict path, const satisfiable_fposT line, const satisfiable_fposT offset
+static const void* lth_value_decode(
+  const char* restrict data, size_t s_data, size_t* const restrict s_raw, lth_typeT* const restrict type_raw,
+  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
 ){
-  const satisfiable_typeT type = satisfiable_vtype(data, s_data, err, path, line, offset);
-  if(type == SATISFIABLE_TYPE__NONE) 
+  const lth_typeT type = lth_vtype(data, s_data, err, path, line, offset);
+  if(type == LTH_TYPE__NONE) 
     return NULL;
   *type_raw = type;
 
@@ -105,7 +105,7 @@ static const void* satisfiable_value_decode(
   enum{ HEX, DECIMAL, OCTAL, BINARY } encoding;
   if(
     s_data > 2 && data[0] == 0 &&
-    type != SATISFIABLE_TYPE__F8 && type != SATISFIABLE_TYPE__F16 && type != SATISFIABLE_TYPE__F32 && type != SATISFIABLE_TYPE__F64
+    type != LTH_TYPE__F8 && type != LTH_TYPE__F16 && type != LTH_TYPE__F32 && type != LTH_TYPE__F64
   ){
     if(negated){ data++; s_data--; }
     
@@ -122,32 +122,32 @@ static const void* satisfiable_value_decode(
   else encoding = DECIMAL;
 
   switch(type){
-    case SATISFIABLE_TYPE__STRING:
-      raw = satisfiable_vtype_string(data + 1, s_data, s_raw, err, path, line, offset);
+    case LTH_TYPE__STRING:
+      raw = lth_vtype_string(data + 1, s_data, s_raw, err, path, line, offset);
       return raw;
-    case SATISFIABLE_TYPE__CHAR:
+    case LTH_TYPE__CHAR:
       *s_raw = sizeof(char);
       raw = malloc(sizeof(char));
-      *raw = satisfiable_vtype_char(data + 1, s_data - 1, true, NULL, err, path, line, offset);
+      *raw = lth_vtype_char(data + 1, s_data - 1, true, NULL, err, path, line, offset);
       return raw;
-    case SATISFIABLE_TYPE__F8:
-    case SATISFIABLE_TYPE__F16:
-      satisfiable_error_report(SATISFIABLE_ERROR__VALUE_FORMAT_UNIMPLEMENTED, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
+    case LTH_TYPE__F8:
+    case LTH_TYPE__F16:
+      lth_error_report(LTH_ERROR__VALUE_FORMAT_UNIMPLEMENTED, LTH_ERROR__COMPILER, path, line, offset, err);
       return NULL;
-    case SATISFIABLE_TYPE__F32:
+    case LTH_TYPE__F32:
       *s_raw = sizeof(float);
       raw = malloc(sizeof(float));
       args_read = sscanf(data, "%f%n", (float*)raw, &bytes_read);
       break;
-    case SATISFIABLE_TYPE__F64:
+    case LTH_TYPE__F64:
       *s_raw = sizeof(double);
       raw = malloc(sizeof(double));
       args_read = sscanf(data, "%lf%n", (double*)raw, &bytes_read);
       break;
-    case SATISFIABLE_TYPE__U8:
-    case SATISFIABLE_TYPE__U16:
-    case SATISFIABLE_TYPE__U32:
-    case SATISFIABLE_TYPE__U64:
+    case LTH_TYPE__U8:
+    case LTH_TYPE__U16:
+    case LTH_TYPE__U32:
+    case LTH_TYPE__U64:
       *s_raw = sizeof(uint64_t);
       raw = malloc(sizeof(uint64_t));
       switch(encoding){
@@ -163,15 +163,15 @@ static const void* satisfiable_value_decode(
           if(negated) *(uint64_t*)raw = -*(uint64_t*)raw;
           break;
         case BINARY:
-          args_read = satisfiable_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
+          args_read = lth_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
           if(negated) *(uint64_t*)raw = -*(uint64_t*)raw;
           break;
       }
       break;
-    case SATISFIABLE_TYPE__I8:
-    case SATISFIABLE_TYPE__I16:
-    case SATISFIABLE_TYPE__I32:
-    case SATISFIABLE_TYPE__I64:
+    case LTH_TYPE__I8:
+    case LTH_TYPE__I16:
+    case LTH_TYPE__I32:
+    case LTH_TYPE__I64:
       *s_raw = sizeof(int64_t);
       raw = malloc(sizeof(int64_t));
       switch(encoding){
@@ -187,31 +187,31 @@ static const void* satisfiable_value_decode(
           if(negated) *(int64_t*)raw = -*(int64_t*)raw;
           break;
         case BINARY:
-          args_read = satisfiable_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
+          args_read = lth_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
           if(negated) *(int64_t*)raw = -*(int64_t*)raw;
           break;
       }
       break;
-    case SATISFIABLE_TYPE__NONE:      // error reported by satisfiable_vtype.
+    case LTH_TYPE__NONE:      // error reported by lth_vtype.
       return NULL;
     default:                          // should not happen, very worrying if it does.
-      satisfiable_error_report__u32(SATISFIABLE_ERROR__IMPOSSIBILITY, SATISFIABLE_ERROR__COMPILER, path, line, offset, err, SATISFIABLE_IMPOSSIBILITY__NAME_H_DEFAULT);
+      lth_error_report__u32(LTH_ERROR__IMPOSSIBILITY, LTH_ERROR__COMPILER, path, line, offset, err, LTH_IMPOSSIBILITY__NAME_H_DEFAULT);
       return NULL;
   }
 
   if(bytes_read != s_data)
-    satisfiable_error_report__u32(SATISFIABLE_ERROR__VALUE_TOO_FEW_BYTES, SATISFIABLE_ERROR__COMPILER, path, line, offset, err, bytes_read);
+    lth_error_report__u32(LTH_ERROR__VALUE_TOO_FEW_BYTES, LTH_ERROR__COMPILER, path, line, offset, err, bytes_read);
   return raw;
 }
 
 // searches for value, creates nameID if it doesn't find any.
-static satisfiable_nameT satisfiable_value_add(
-  const char* const restrict data, const size_t s_data, satisfiable_name_ctxT* const restrict name,
-  satisfiable_error_ctxT* const restrict err, rcT* const restrict path, const satisfiable_fposT line, const satisfiable_fposT offset
+static lth_nameT lth_value_add(
+  const char* const restrict data, const size_t s_data, lth_name_ctxT* const restrict name,
+  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
 ){
   size_t s_raw;
-  satisfiable_typeT type_raw;
-  const char* const restrict raw = satisfiable_value_decode(data, s_data, &s_raw, &type_raw, err, path, line, offset);
+  lth_typeT type_raw;
+  const char* const restrict raw = lth_value_decode(data, s_data, &s_raw, &type_raw, err, path, line, offset);
 
   vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
   if(*curr_node){
@@ -220,10 +220,10 @@ static satisfiable_nameT satisfiable_value_add(
   }
 // how are these handled? is 'rc' a proper way?
 // 'rc' undoubtedly adds overhead, we don't really care about it being referenced multiple times.
-  const satisfiable_nameT id = satisfiable_variable_name(name->variables);
+  const lth_nameT id = lth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  satisfiable_variable_add(name->variables, id, raw, s_raw, (void*)raw, type_raw, SATISFIABLE_QUALIFIER__CONST);
-  return id | SATISFIABLE_TOK__NAME_BIT;
+  lth_variable_add(name->variables, id, raw, s_raw, (void*)raw, type_raw, LTH_QUALIFIER__CONST);
+  return id | LTH_TOK__NAME_BIT;
 }
 
 #endif

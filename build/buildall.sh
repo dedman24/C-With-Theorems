@@ -15,7 +15,7 @@ else
       src/common/linking/vfastrht/vfastrht.c      \
       src/common/linking/vfastpath/vfastpath.c    \
       src/common/linking/vfasttask/vfasttask.c    \
-      src/satisfiable.c
+      src/lth.c
   elif [[ $# == 2 && "$2" == "fast" ]]; then
     gcc -O1 -std=c23 -o $1                        \
       src/common/linking/vfastbst/vfastbst.c      \
@@ -23,7 +23,7 @@ else
       src/common/linking/vfastrht/vfastrht.c      \
       src/common/linking/vfastpath/vfastpath.c    \
       src/common/linking/vfasttask/vfasttask.c    \
-      src/satisfiable.c
+      src/lth.c
   elif [[ $# == 2 ]]; then
     echo "ERROR: unknown build option."
   else
@@ -33,6 +33,6 @@ else
       src/common/linking/vfastrht/vfastrht.c      \
       src/common/linking/vfastpath/vfastpath.c    \
       src/common/linking/vfasttask/vfasttask.c    \
-      src/satisfiable.c
+      src/lth.c
   fi
 fi

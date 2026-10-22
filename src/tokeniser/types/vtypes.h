@@ -1,5 +1,5 @@
-#ifndef SATISFIABLE_TOKENISER_TYPES_VTYPE_H_INCLUDED
-#define SATISFIABLE_TOKENISER_TYPES_VTYPE_H_INCLUDED
+#ifndef LTH_TOKENISER_TYPES_VTYPE_H_INCLUDED
+#define LTH_TOKENISER_TYPES_VTYPE_H_INCLUDED
 
 // tokenises value types.
 
@@ -11,7 +11,7 @@
 #include "string.h"                     // strncmp.
 
 // hash function, generated with vfasttables version 1.1.0.
-static satisfiable_typeT satisfiable_vtype__hash(const char* str, const size_t len){
+static lth_typeT lth_vtype__hash(const char* str, const size_t len){
     if(len > 127) return 0;
 // associated values generated for hash function.
     const uint8_t associated_values[] = {
@@ -35,61 +35,61 @@ static satisfiable_typeT satisfiable_vtype__hash(const char* str, const size_t l
     return hash;
 }
 
-static satisfiable_typeT satisfiable_vtype__search(const char* const restrict str, const size_t len){
-    const satisfiable_typeT index = satisfiable_vtype__hash(str, len);
+static lth_typeT lth_vtype__search(const char* const restrict str, const size_t len){
+    const lth_typeT index = lth_vtype__hash(str, len);
     char* table[12] = {
-       [SATISFIABLE_TYPE__I64] = "i64",
-       [SATISFIABLE_TYPE__U16] = "u16",
-       [SATISFIABLE_TYPE__I32] = "i32",
-       [SATISFIABLE_TYPE__U64] = "u64",
-       [SATISFIABLE_TYPE__U8]  = "u8",
-       [SATISFIABLE_TYPE__I8]  = "i8",
-       [SATISFIABLE_TYPE__U32] = "u32",
-       [SATISFIABLE_TYPE__I16] = "i16"
+       [LTH_TYPE__I64] = "i64",
+       [LTH_TYPE__U16] = "u16",
+       [LTH_TYPE__I32] = "i32",
+       [LTH_TYPE__U64] = "u64",
+       [LTH_TYPE__U8]  = "u8",
+       [LTH_TYPE__I8]  = "i8",
+       [LTH_TYPE__U32] = "u32",
+       [LTH_TYPE__I16] = "i16"
     };
-    return table[index] && strncmp(table[index], str, len) == 0? index: SATISFIABLE_TYPE__NONE;
+    return table[index] && strncmp(table[index], str, len) == 0? index: LTH_TYPE__NONE;
 }
 
 // really it should be encoding (hex, decimal, octal, binary) + type (whatever :ppp).
-static satisfiable_typeT satisfiable_vtype(
+static lth_typeT lth_vtype(
     const char* const restrict data, const size_t s_data,
-    satisfiable_error_ctxT* const restrict err, rcT* const restrict path, const satisfiable_fposT line, const satisfiable_fposT offset
+    lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
 ){
     if(data[0] == '"'){
     // assumes string is all until '\0' eof terminator.
         if(data[s_data - 1] != '"')
-            satisfiable_error_report(SATISFIABLE_ERROR__VALUE_STRING_UNFINISHED, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
-        return SATISFIABLE_TYPE__STRING;
+            lth_error_report(LTH_ERROR__VALUE_STRING_UNFINISHED, LTH_ERROR__COMPILER, path, line, offset, err);
+        return LTH_TYPE__STRING;
     }
     if(data[0] == '\''){
         if(data[s_data - 1] != '\'')
-            satisfiable_error_report(SATISFIABLE_ERROR__VALUE_CHAR_UNFINISHED, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
+            lth_error_report(LTH_ERROR__VALUE_CHAR_UNFINISHED, LTH_ERROR__COMPILER, path, line, offset, err);
         if(s_data != 3)
-            satisfiable_error_report(SATISFIABLE_ERROR__VALUE_CHAR_TOO_LONG, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
-        return SATISFIABLE_TYPE__CHAR;
+            lth_error_report(LTH_ERROR__VALUE_CHAR_TOO_LONG, LTH_ERROR__COMPILER, path, line, offset, err);
+        return LTH_TYPE__CHAR;
     }
 
     if(s_data >= 3){
         const size_t max = strcspn(data, "iu");
         if(max > s_data) goto SKIP_SEARCH;
         if(s_data - max > 2 || s_data - max == 0){
-            satisfiable_error_report(SATISFIABLE_ERROR__VALUE_FORMAT_UNKNOWN, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
-            return SATISFIABLE_TYPE__NONE;
+            lth_error_report(LTH_ERROR__VALUE_FORMAT_UNKNOWN, LTH_ERROR__COMPILER, path, line, offset, err);
+            return LTH_TYPE__NONE;
         }
-        const satisfiable_typeT vtype = satisfiable_vtype__search(data + s_data - 3, 3);
-        if(vtype == SATISFIABLE_TYPE__NONE)
-            satisfiable_error_report(SATISFIABLE_ERROR__VALUE_FORMAT_UNKNOWN, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
+        const lth_typeT vtype = lth_vtype__search(data + s_data - 3, 3);
+        if(vtype == LTH_TYPE__NONE)
+            lth_error_report(LTH_ERROR__VALUE_FORMAT_UNKNOWN, LTH_ERROR__COMPILER, path, line, offset, err);
         return vtype;
     }
 SKIP_SEARCH:
     const char* const restrict period = strchr(data, '.');
     if(period && period - data < s_data){
         if(data[s_data - 1] == 'f')
-            return SATISFIABLE_TYPE__F32;
-        else return SATISFIABLE_TYPE__F64;
+            return LTH_TYPE__F32;
+        else return LTH_TYPE__F64;
     }
 // default type for literals.
-    return SATISFIABLE_TYPE__I32;
+    return LTH_TYPE__I32;
 }
 
 #endif

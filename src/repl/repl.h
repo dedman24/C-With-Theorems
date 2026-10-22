@@ -1,10 +1,10 @@
-#ifndef SATISFIABLE_REPL_H_INCLUDED
-#define SATISFIABLE_REPL_H_INCLUDED
+#ifndef LTH_REPL_H_INCLUDED
+#define LTH_REPL_H_INCLUDED
 
 // this file handles repl stuff.
 // we want an interface that evaluates whatever's written to stdin terminated by a semicolon & executes it.
 // this means that '2+3' does nothing, while '2+3;' prints out 5, or of whatever arithmetic expression is in stdin.
-// also supports piping, like with python3; `echo "whatever;" | ./satisfiable repl` has the same effect as writing `whatever;` by hand.
+// also supports piping, like with python3; `echo "whatever;" | ./lth repl` has the same effect as writing `whatever;` by hand.
 
 #include "../common/_common.h"
 #include "../common/ansi_colours.h"       // all manners of colours.
@@ -18,31 +18,31 @@
 // posix stuff.
 #include "unistd.h"             // isatty.
 
-static void satisfiable_repl__result(satisfiable_nameT* const restrict name, satisfiable_variable_ctxT* const restrict variables){
+static void lth_repl__result(lth_nameT* const restrict name, lth_variable_ctxT* const restrict variables){
   const size_t c_name = vfastarr_elcnt(name, sizeof(*name));
 
   for(size_t i = 0; i < c_name; i++){
-    satisfiable_variableT* const restrict var = satisfiable_variable_search(variables, name[i]);
+    lth_variableT* const restrict var = lth_variable_search(variables, name[i]);
 
     switch(var->type){
-      case SATISFIABLE_TYPE__U8:  fprintf(stdout, "%u",  *(uint8_t*)var->internal); break;
-      case SATISFIABLE_TYPE__U16: fprintf(stdout, "%u",  *(uint16_t*)var->internal); break;
-      case SATISFIABLE_TYPE__U32: fprintf(stdout, "%u",  *(uint32_t*)var->internal); break;
-      case SATISFIABLE_TYPE__U64: fprintf(stdout, "%lu", *(uint64_t*)var->internal); break;
+      case LTH_TYPE__U8:  fprintf(stdout, "%u",  *(uint8_t*)var->internal); break;
+      case LTH_TYPE__U16: fprintf(stdout, "%u",  *(uint16_t*)var->internal); break;
+      case LTH_TYPE__U32: fprintf(stdout, "%u",  *(uint32_t*)var->internal); break;
+      case LTH_TYPE__U64: fprintf(stdout, "%lu", *(uint64_t*)var->internal); break;
 
-      case SATISFIABLE_TYPE__I8:  fprintf(stdout, "%d",  *(int8_t*)var->internal); break;
-      case SATISFIABLE_TYPE__I16: fprintf(stdout, "%d",  *(int16_t*)var->internal); break;
-      case SATISFIABLE_TYPE__I32: fprintf(stdout, "%d",  *(int32_t*)var->internal); break;
-      case SATISFIABLE_TYPE__I64: fprintf(stdout, "%ld", *(int64_t*)var->internal); break;
+      case LTH_TYPE__I8:  fprintf(stdout, "%d",  *(int8_t*)var->internal); break;
+      case LTH_TYPE__I16: fprintf(stdout, "%d",  *(int16_t*)var->internal); break;
+      case LTH_TYPE__I32: fprintf(stdout, "%d",  *(int32_t*)var->internal); break;
+      case LTH_TYPE__I64: fprintf(stdout, "%ld", *(int64_t*)var->internal); break;
 
-      case SATISFIABLE_TYPE__F32: fprintf(stdout, "%f", *(float*)var->internal); break;
-      case SATISFIABLE_TYPE__F64: fprintf(stdout, "%f", *(double*)var->internal); break;
+      case LTH_TYPE__F32: fprintf(stdout, "%f", *(float*)var->internal); break;
+      case LTH_TYPE__F64: fprintf(stdout, "%f", *(double*)var->internal); break;
 
       default:
         fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
     }
     fputs(" : ", stdout);
-    fputs(satisfiable_type__strings[var->type], stdout);
+    fputs(lth_type__strings[var->type], stdout);
 
     if(i != c_name - 1)
       fputs(", ", stdout);
@@ -50,25 +50,25 @@ static void satisfiable_repl__result(satisfiable_nameT* const restrict name, sat
   fputc('\n', stdout);
 }
 
-static void satisfiable_repl__line(const char* const restrict code){
+static void lth_repl__line(const char* const restrict code){
   const size_t s_code = vfastarr_size(code);
   if(!s_code) return;
 
-  satisfiable_variable_ctxT* variables;
-  satisfiable_error_ctxT err; satisfiable_error_ctx_init(&err);
-  satisfiable_outputT tokenised = satisfiable_tokenise(code, "repl", strlen("repl"), &variables, &err);
+  lth_variable_ctxT* variables;
+  lth_error_ctxT err; lth_error_ctx_init(&err);
+  lth_outputT tokenised = lth_tokenise(code, "repl", strlen("repl"), &variables, &err);
 
-  satisfiable_nameT* const restrict name = satisfiable_interpreter_run(tokenised, vfastarr_elcnt(tokenised, sizeof(satisfiable_tokT)), &err, variables, true);
-  satisfiable_repl__result(name, variables);
+  lth_nameT* const restrict name = lth_interpreter_run(tokenised, vfastarr_elcnt(tokenised, sizeof(lth_tokT)), &err, variables, true);
+  lth_repl__result(name, variables);
 
   vfastarr_destroy(name);
   vfastarr_destroy(tokenised);
-  satisfiable_error_print(&err, false);
-  satisfiable_variable_ctx_destroy(variables, true);
+  lth_error_print(&err, false);
+  lth_variable_ctx_destroy(variables, true);
 }
 
 // loop that evaluates everything coming from stdin.
-static satisfiable_outputT satisfiable_repl(void){
+static lth_outputT lth_repl(void){
 // to detect whether piping from stdout of another process is used, or this is just a normal user interface.
   const bool ishuman = isatty(STDIN_FILENO);
   if(ishuman){
@@ -92,7 +92,7 @@ static satisfiable_outputT satisfiable_repl(void){
     }
     else if(c == ';'){          // execute REPLed code, empty line.
       line = vfastarr_append(line, "\0", 1);
-      satisfiable_repl__line(line);
+      lth_repl__line(line);
       vfastarr_empty(line);
     }
   }
@@ -104,7 +104,7 @@ static satisfiable_outputT satisfiable_repl(void){
 
   if(!ishuman){
     vfastarr_append(line, ";", sizeof(";"));      // appends ';\0'. TODO: enable.
-    satisfiable_repl__line(line);
+    lth_repl__line(line);
   }
 */
   vfastarr_destroy(line);

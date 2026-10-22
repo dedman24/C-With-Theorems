@@ -1,8 +1,8 @@
-#ifndef SATISFIABLE_INTERPRETER_H_INCLUDED
-#define SATISFIABLE_INTERPRETER_H_INCLUDED
+#ifndef LTH_INTERPRETER_H_INCLUDED
+#define LTH_INTERPRETER_H_INCLUDED
 
 #include "ctx.h"                    // interpreter ctx.
-#include "ops/_ops.h"               // satisfiable_interpreter_ops.
+#include "ops/_ops.h"               // lth_interpreter_ops.
 #include "../common/_common.h"      // array handling.
 
 // stdlib includes.
@@ -10,14 +10,14 @@
 #include "stdbool.h"                // boolean types.
 
 // dispatches op.
-static void satisfiable_interpreter_op(
-  const satisfiable__underlying_tokT op, const bool prev_was_operand,
-  satisfiable_interpreterT* const restrict interpreter,
-  satisfiable_error_ctxT* const restrict err, rcT* const restrict path, const satisfiable_fposT line, const satisfiable_fposT offset
+static void lth_interpreter_op(
+  const lth__underlying_tokT op, const bool prev_was_operand,
+  lth_interpreterT* const restrict interpreter,
+  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
 ){
-  const satisfiable_interpreter_opT foo = satisfiable_interpreter_ops[op][prev_was_operand];
+  const lth_interpreter_opT foo = lth_interpreter_ops[op][prev_was_operand];
   if(!foo)
-    satisfiable_error_report(SATISFIABLE_ERROR__INTERPRETER_OP_UNIMPLEMENTED, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
+    lth_error_report(LTH_ERROR__INTERPRETER_OP_UNIMPLEMENTED, LTH_ERROR__COMPILER, path, line, offset, err);
   else foo(interpreter, err, path, line, offset);
 }
 
@@ -31,25 +31,25 @@ static void satisfiable_interpreter_op(
 // destroys 'variables'.
 // isrepl ~ when set to false, interprets program normally.
 //          when set to true, executes as REPL.
-static satisfiable_outputT satisfiable_interpreter_run(
-  satisfiable_tokT* const restrict code, const size_t c_code,
-  satisfiable_error_ctxT* const restrict error,
-  satisfiable_variable_ctxT* const restrict variables,
+static lth_outputT lth_interpreter_run(
+  lth_tokT* const restrict code, const size_t c_code,
+  lth_error_ctxT* const restrict error,
+  lth_variable_ctxT* const restrict variables,
   const bool isrepl
 ){
-  satisfiable_interpreterT interpreter; satisfiable_interpreter_init(&interpreter, variables);
+  lth_interpreterT interpreter; lth_interpreter_init(&interpreter, variables);
 
   bool prev_was_operand = false;                                // used to check if two operands/names follow each other, which is not valid.
 // c_code - 1 because last tok is always EOF.
   for(size_t pos = 0; pos < c_code - 1; pos++){                 // overusage of 'i' as index variable found harmful.
-    if(code[pos].token & SATISFIABLE_TOK__NAME_BIT){
+    if(code[pos].token & LTH_TOK__NAME_BIT){
       if(prev_was_operand){
-        satisfiable_error_report(SATISFIABLE_ERROR__INTERPRETER_ADJACENT_OPERANDS, SATISFIABLE_ERROR__COMPILER, NULL /* TODO! */, code[pos].line, code[pos].offset, error);
-        return satisfiable_interpreter_destroy(&interpreter);
+        lth_error_report(LTH_ERROR__INTERPRETER_ADJACENT_OPERANDS, LTH_ERROR__COMPILER, NULL /* TODO! */, code[pos].line, code[pos].offset, error);
+        return lth_interpreter_destroy(&interpreter);
       }
       else prev_was_operand = true;
 
-      satisfiable_interpreter_push_value(&interpreter, code[pos].token);
+      lth_interpreter_push_value(&interpreter, code[pos].token);
       continue;
     }
 
@@ -65,29 +65,29 @@ static satisfiable_outputT satisfiable_interpreter_run(
     const size_t cnt_top = vfastarr_elcnt(interpreter.ops, sizeof(*interpreter.ops));
 
     if(cnt_top){
-      satisfiable__underlying_tokT top = interpreter.ops[cnt_top - 1];
-      if(satisfiable_tok__priority[top] <= satisfiable_tok__priority[code[pos].token])
+      lth__underlying_tokT top = interpreter.ops[cnt_top - 1];
+      if(lth_tok__priority[top] <= lth_tok__priority[code[pos].token])
         goto SKIP_PRIO;
       vfastarr_remove(interpreter.ops, sizeof(*interpreter.ops));
       do{
-        satisfiable_interpreter_op(top, prev_was_operand, &interpreter, error, NULL /* TODO! */, code[pos].line, code[pos].offset);
-        top = satisfiable_interpreter_pop_op(&interpreter);
-      } while(satisfiable_tok__priority[top] > satisfiable_tok__priority[code[pos].token]);
+        lth_interpreter_op(top, prev_was_operand, &interpreter, error, NULL /* TODO! */, code[pos].line, code[pos].offset);
+        top = lth_interpreter_pop_op(&interpreter);
+      } while(lth_tok__priority[top] > lth_tok__priority[code[pos].token]);
     }
 SKIP_PRIO:
     prev_was_operand = false;
-    if(code[pos].token != SATISFIABLE_TOK__SEMICOLON)
-      satisfiable_interpreter_push_op(&interpreter, code[pos].token);
+    if(code[pos].token != LTH_TOK__SEMICOLON)
+      lth_interpreter_push_op(&interpreter, code[pos].token);
   }
 
   if(!isrepl)
-    return satisfiable_interpreter_destroy(&interpreter);
+    return lth_interpreter_destroy(&interpreter);
 // result of execution is first few values at top of interpreter.
-  satisfiable_outputT result = interpreter.values;
+  lth_outputT result = interpreter.values;
   interpreter.values = NULL;
   interpreter.variables = NULL;
 
-  vfastarr_destroy(satisfiable_interpreter_destroy(&interpreter));
+  vfastarr_destroy(lth_interpreter_destroy(&interpreter));
   return result;
 }
 

@@ -1,5 +1,5 @@
-#ifndef SATISFIABLE_COMMON_ERR_H_INCLUDED
-#define SATISFIABLE_COMMON_ERR_H_INCLUDED
+#ifndef LTH_COMMON_ERR_H_INCLUDED
+#define LTH_COMMON_ERR_H_INCLUDED
 
 // this library handles errors.
 
@@ -8,7 +8,7 @@
 #include "../linking/rc.h"              // reference-counted strings.
 #include "../ansi_colours.h"            // terminal colours.
 #include "../linking/vfastarr.h"        // array type & ops.
-#include "../../parse/version.h"        // SATISFIABLE_VERSION_STR.
+#include "../../parse/version.h"        // LTH_VERSION_STR.
 
 // stdlib includes.
 #include "stdio.h"                      // puts, printf.
@@ -17,116 +17,118 @@
 
 // enum holding all impossibilities.
 enum{
-  SATISFIABLE_IMPOSSIBILITY__PARSE_OPTION,
-  SATISFIABLE_IMPOSSIBILITY__TOK_H_RETURN_VALUE,
-  SATISFIABLE_IMPOSSIBILITY__NAME_H_DEFAULT,
-  SATISFIABLE_IMPOSSIBILITY__OP_TYPE
+  LTH_IMPOSSIBILITY__PARSE_OPTION,
+  LTH_IMPOSSIBILITY__TOK_H_RETURN_VALUE,
+  LTH_IMPOSSIBILITY__NAME_H_DEFAULT,
+  LTH_IMPOSSIBILITY__OP_TYPE
 };
 
 // lovely way of handling errors, isn't it?
 typedef enum{
-  SATISFIABLE_ERROR__NONE,
-  SATISFIABLE_ERROR__IMPOSSIBILITY,
+  LTH_ERROR__NONE,
+  LTH_ERROR__IMPOSSIBILITY,
 
-  SATISFIABLE_ERROR__INDENTATION_DEPTH_NEGATIVE,
-  SATISFIABLE_ERROR__INDENTATION_DEPTH_TOO_HIGH,
+  LTH_ERROR__INDENTATION_DEPTH_NEGATIVE,
+  LTH_ERROR__INDENTATION_DEPTH_TOO_HIGH,
 
-  SATISFIABLE_ERROR__VALUE_UNDEFINED,
-  SATISFIABLE_ERROR__VALUE_UNASSIGNED,
-  SATISFIABLE_ERROR__VALUE_TOO_FEW_BYTES,
-  SATISFIABLE_ERROR__VALUE_CHAR_TOO_LONG,
-  SATISFIABLE_ERROR__VALUE_CHAR_TOO_SHORT,
-  SATISFIABLE_ERROR__VALUE_CHAR_UNFINISHED,
-  SATISFIABLE_ERROR__VALUE_STRING_UNFINISHED,
-  SATISFIABLE_ERROR__VALUE_FORMAT_UNKNOWN,
-  SATISFIABLE_ERROR__VALUE_FORMAT_UNIMPLEMENTED,
-  SATISFIABLE_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE,
+  LTH_ERROR__VALUE_UNDEFINED,
+  LTH_ERROR__VALUE_UNASSIGNED,
+  LTH_ERROR__VALUE_TOO_FEW_BYTES,
+  LTH_ERROR__VALUE_CHAR_TOO_LONG,
+  LTH_ERROR__VALUE_CHAR_TOO_SHORT,
+  LTH_ERROR__VALUE_CHAR_UNFINISHED,
+  LTH_ERROR__VALUE_STRING_UNFINISHED,
+  LTH_ERROR__VALUE_FORMAT_UNKNOWN,
+  LTH_ERROR__VALUE_FORMAT_UNIMPLEMENTED,
+  LTH_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE,
 
-  SATISFIABLE_ERROR__TYPE_INCOMPATIBLE_OP,
-  SATISFIABLE_ERROR__TYPE_INCOMPATIBLE_RETURN,
+  LTH_ERROR__TYPE_INCOMPATIBLE_OP,
+  LTH_ERROR__TYPE_INCOMPATIBLE_RETURN,
 
-  SATISFIABLE_ERROR__INTERPRETER_OP_UNIMPLEMENTED,
-  SATISFIABLE_ERROR__INTERPRETER_TOO_FEW_OPERANDS,
-  SATISFIABLE_ERROR__INTERPRETER_TYPE_UNSUPPORTED,
-  SATISFIABLE_ERROR__INTERPRETER_VARIABLE_MISSING,
-  SATISFIABLE_ERROR__INTERPRETER_ADJACENT_OPERANDS,
+  LTH_ERROR__INTERPRETER_DIVIDE_BY_ZERO,
+  LTH_ERROR__INTERPRETER_OP_UNIMPLEMENTED,
+  LTH_ERROR__INTERPRETER_TOO_FEW_OPERANDS,
+  LTH_ERROR__INTERPRETER_TYPE_UNSUPPORTED,
+  LTH_ERROR__INTERPRETER_VARIABLE_MISSING,
+  LTH_ERROR__INTERPRETER_ADJACENT_OPERANDS,
 
-  SATISFIABLE_ERROR__INCLUDE_NO_LEADING_QUOTES,
-  SATISFIABLE_ERROR__INCLUDE_NO_TRAILING_QUOTES,
-  SATISFIABLE_ERROR__INCLUDE_SELF_REFERENCE,
-  SATISFIABLE_ERROR__INCLUDE_UNKNOWN_FILE,
+  LTH_ERROR__INCLUDE_NO_LEADING_QUOTES,
+  LTH_ERROR__INCLUDE_NO_TRAILING_QUOTES,
+  LTH_ERROR__INCLUDE_SELF_REFERENCE,
+  LTH_ERROR__INCLUDE_UNKNOWN_FILE,
 
-  SATISFIABLE_ERROR__PARSE_UNIMPLEMENTED_OPTION,
-  SATISFIABLE_ERROR__PARSE_REPEATED_OPTION,
-  SATISFIABLE_ERROR__PARSE_UNKNOWN_OPTION,
-  SATISFIABLE_ERROR__PARSE_MISSING_SOURCE_FILE,
-  SATISFIABLE_ERROR__PARSE_UNKNOWN_SOURCE_FILE,
-} satisfiable_error_typeT;
+  LTH_ERROR__PARSE_UNIMPLEMENTED_OPTION,
+  LTH_ERROR__PARSE_REPEATED_OPTION,
+  LTH_ERROR__PARSE_UNKNOWN_OPTION,
+  LTH_ERROR__PARSE_MISSING_SOURCE_FILE,
+  LTH_ERROR__PARSE_UNKNOWN_SOURCE_FILE,
+} lth_error_typeT;
 
 typedef enum{
-  SATISFIABLE_ERROR__COMPILER,
-  SATISFIABLE_ERROR__COMPILER_DESTRUCTION,            // while ctx is being destroyed.
-  SATISFIABLE_ERROR__TYPECHECKER,
-  SATISFIABLE_ERROR__PARSE
-} satisfiable_error_categoryT;
+  LTH_ERROR__COMPILER,
+  LTH_ERROR__COMPILER_DESTRUCTION,            // while ctx is being destroyed.
+  LTH_ERROR__TYPECHECKER,
+  LTH_ERROR__PARSE
+} lth_error_categoryT;
 
-const char* const restrict satisfiable_error_strings[] = {
-  [SATISFIABLE_ERROR__NONE]                           = "no error, you shouldn't be seeing this. contact devs.\n",
-  [SATISFIABLE_ERROR__IMPOSSIBILITY]                  = "an 'impossibility', something that shouldn't happen, just did "
-                                                        "(Satisfiable version " SATISFIABLE_VERSION_STR "). "
+const char* const restrict lth_error_strings[] = {
+  [LTH_ERROR__NONE]                           = "no error, you shouldn't be seeing this. contact devs.\n",
+  [LTH_ERROR__IMPOSSIBILITY]                  = "an 'impossibility', something that shouldn't happen, just did "
+                                                        "(Satisfiable version " LTH_VERSION_STR "). "
                                                         "contact devs. " 
                                                         ANSI_COLOUR_RED "ERROR CODE: %08xh" ANSI_COLOUR_RESET ".\n",
 
-  [SATISFIABLE_ERROR__INDENTATION_DEPTH_NEGATIVE]     = "scope depth is negative, due to extra '}'.\n",
-  [SATISFIABLE_ERROR__INDENTATION_DEPTH_TOO_HIGH]     = "at end of tokenisation, indentation depth is not 0.\n",
+  [LTH_ERROR__INDENTATION_DEPTH_NEGATIVE]     = "scope depth is negative, due to extra '}'.\n",
+  [LTH_ERROR__INDENTATION_DEPTH_TOO_HIGH]     = "at end of tokenisation, indentation depth is not 0.\n",
 
-  [SATISFIABLE_ERROR__TYPE_INCOMPATIBLE_OP]           = "in expression, type %s is incompatible with type %s.\n",
-  [SATISFIABLE_ERROR__TYPE_INCOMPATIBLE_RETURN]       = "expected return type %s is incompatible with type %s.\n",
+  [LTH_ERROR__TYPE_INCOMPATIBLE_OP]           = "in expression, type %s is incompatible with type %s.\n",
+  [LTH_ERROR__TYPE_INCOMPATIBLE_RETURN]       = "expected return type %s is incompatible with type %s.\n",
 
-  [SATISFIABLE_ERROR__INTERPRETER_OP_UNIMPLEMENTED]   = "operator is unimplemented.\n",
-  [SATISFIABLE_ERROR__INTERPRETER_TOO_FEW_OPERANDS]   = "too few operands present for op to be executed.\n",
-  [SATISFIABLE_ERROR__INTERPRETER_TYPE_UNSUPPORTED]   = "type '%s' does not support specified operation.\n",
-  [SATISFIABLE_ERROR__INTERPRETER_VARIABLE_MISSING]   = "could not find variable in variable_ctxT. contact devs.\n",
-  [SATISFIABLE_ERROR__INTERPRETER_ADJACENT_OPERANDS]  = "two operands are adjacent with no operator between them.\n",
+  [LTH_ERROR__INTERPRETER_DIVIDE_BY_ZERO]     = "divide-by-zero happened.\n",
+  [LTH_ERROR__INTERPRETER_OP_UNIMPLEMENTED]   = "operator is unimplemented.\n",
+  [LTH_ERROR__INTERPRETER_TOO_FEW_OPERANDS]   = "too few operands present for op to be executed.\n",
+  [LTH_ERROR__INTERPRETER_TYPE_UNSUPPORTED]   = "type '%s' does not support specified operation.\n",
+  [LTH_ERROR__INTERPRETER_VARIABLE_MISSING]   = "could not find variable in variable_ctxT. contact devs.\n",
+  [LTH_ERROR__INTERPRETER_ADJACENT_OPERANDS]  = "two operands are adjacent with no operator between them.\n",
 
-  [SATISFIABLE_ERROR__VALUE_UNDEFINED]                = "value is used before being defined.\n",        // definition ~ giving type to variable through ':'.
-  [SATISFIABLE_ERROR__VALUE_UNASSIGNED]               = "value is used before being assigned.\n",       // assignment ~ giving value to variable through '='.
-  [SATISFIABLE_ERROR__VALUE_TOO_FEW_BYTES]            = "immediate is read, but not entirely; only %u bytes are.\n",
-  [SATISFIABLE_ERROR__VALUE_CHAR_TOO_LONG]            = "single quotes hold too many characters.\n",
-  [SATISFIABLE_ERROR__VALUE_CHAR_TOO_SHORT]           = "data specified by single quotes does not occupy all of quotes.\n",
-  [SATISFIABLE_ERROR__VALUE_CHAR_UNFINISHED]          = "char is not properly terminated by final single quote character.\n",
-  [SATISFIABLE_ERROR__VALUE_STRING_UNFINISHED]        = "string is not properly terminated by final double quote character.\n",
-  [SATISFIABLE_ERROR__VALUE_FORMAT_UNKNOWN]           = "value assumes invalid format.\n",
-  [SATISFIABLE_ERROR__VALUE_FORMAT_UNIMPLEMENTED]     = "value assumes format that not yet implemented in the compiler.\n",   // lmfao what a copout.
-  [SATISFIABLE_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE]  = "unknown escape sequence.\n",
+  [LTH_ERROR__VALUE_UNDEFINED]                = "value is used before being defined.\n",        // definition ~ giving type to variable through ':'.
+  [LTH_ERROR__VALUE_UNASSIGNED]               = "value is used before being assigned.\n",       // assignment ~ giving value to variable through '='.
+  [LTH_ERROR__VALUE_TOO_FEW_BYTES]            = "immediate is read, but not entirely; only %u bytes are.\n",
+  [LTH_ERROR__VALUE_CHAR_TOO_LONG]            = "single quotes hold too many characters.\n",
+  [LTH_ERROR__VALUE_CHAR_TOO_SHORT]           = "data specified by single quotes does not occupy all of quotes.\n",
+  [LTH_ERROR__VALUE_CHAR_UNFINISHED]          = "char is not properly terminated by final single quote character.\n",
+  [LTH_ERROR__VALUE_STRING_UNFINISHED]        = "string is not properly terminated by final double quote character.\n",
+  [LTH_ERROR__VALUE_FORMAT_UNKNOWN]           = "value assumes invalid format.\n",
+  [LTH_ERROR__VALUE_FORMAT_UNIMPLEMENTED]     = "value assumes format that not yet implemented in the compiler.\n",   // lmfao what a copout.
+  [LTH_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE]  = "unknown escape sequence.\n",
 
-  [SATISFIABLE_ERROR__INCLUDE_NO_LEADING_QUOTES]      = "'include' not followed by double-quote symbol (\").\n",
-  [SATISFIABLE_ERROR__INCLUDE_NO_TRAILING_QUOTES]     = "path specified by 'include' not followed by double-quote symbol (\").\n",
-  [SATISFIABLE_ERROR__INCLUDE_SELF_REFERENCE]         = "source file includes itself.\n",
-  [SATISFIABLE_ERROR__INCLUDE_UNKNOWN_FILE]           = "in 'include', file '%s' does not exist.\n",
+  [LTH_ERROR__INCLUDE_NO_LEADING_QUOTES]      = "'include' not followed by double-quote symbol (\").\n",
+  [LTH_ERROR__INCLUDE_NO_TRAILING_QUOTES]     = "path specified by 'include' not followed by double-quote symbol (\").\n",
+  [LTH_ERROR__INCLUDE_SELF_REFERENCE]         = "source file includes itself.\n",
+  [LTH_ERROR__INCLUDE_UNKNOWN_FILE]           = "in 'include', file '%s' does not exist.\n",
 
-  [SATISFIABLE_ERROR__PARSE_UNIMPLEMENTED_OPTION]     = "command-line option '%s' is not implemented yet.\n",
-  [SATISFIABLE_ERROR__PARSE_REPEATED_OPTION]          = "command-line option '%s' is repeated twice.\n",
-  [SATISFIABLE_ERROR__PARSE_UNKNOWN_OPTION]           = "command-line option '%s' was not recognised by compiler.\n",
-  [SATISFIABLE_ERROR__PARSE_MISSING_SOURCE_FILE]      = "source file is missing.\n",
-  [SATISFIABLE_ERROR__PARSE_UNKNOWN_SOURCE_FILE]      = "source file '%s' could not be found.\n"
+  [LTH_ERROR__PARSE_UNIMPLEMENTED_OPTION]     = "command-line option '%s' is not implemented yet.\n",
+  [LTH_ERROR__PARSE_REPEATED_OPTION]          = "command-line option '%s' is repeated twice.\n",
+  [LTH_ERROR__PARSE_UNKNOWN_OPTION]           = "command-line option '%s' was not recognised by compiler.\n",
+  [LTH_ERROR__PARSE_MISSING_SOURCE_FILE]      = "source file is missing.\n",
+  [LTH_ERROR__PARSE_UNKNOWN_SOURCE_FILE]      = "source file '%s' could not be found.\n"
 };
 
 typedef struct{
   char* message;
-  satisfiable_error_categoryT category;
+  lth_error_categoryT category;
   rcT* path;
-  satisfiable_fposT line;
-  satisfiable_fposT offset;
-} satisfiable_errorT;
+  lth_fposT line;
+  lth_fposT offset;
+} lth_errorT;
 
-static void satisfiable_error_init(
-  satisfiable_errorT* const restrict error,
+static void lth_error_init(
+  lth_errorT* const restrict error,
   char* const restrict message,
-  const satisfiable_error_categoryT category,
+  const lth_error_categoryT category,
   rcT* const restrict path,
-  const satisfiable_fposT line,
-  const satisfiable_fposT offset
+  const lth_fposT line,
+  const lth_fposT offset
 ){
   error->message = message;
   error->category = category;
@@ -137,16 +139,16 @@ static void satisfiable_error_init(
 }
 
 typedef struct{
-  satisfiable_errorT* errors;
-} satisfiable_error_ctxT;
+  lth_errorT* errors;
+} lth_error_ctxT;
 
-static satisfiable_error_ctxT* satisfiable_error_ctx_init(satisfiable_error_ctxT* restrict ctx){
+static lth_error_ctxT* lth_error_ctx_init(lth_error_ctxT* restrict ctx){
   if(!ctx) ctx = malloc(sizeof(*ctx));
   ctx->errors = vfastarr_init(sizeof(*ctx->errors));
   return ctx;
 }
 
-static void satisfiable_error_ctx_destroy(satisfiable_error_ctxT* restrict ctx, const bool freectx){
+static void lth_error_ctx_destroy(lth_error_ctxT* restrict ctx, const bool freectx){
   const size_t cnt_err = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   for(size_t i = 0; i < cnt_err; i++){
     free(ctx->errors[i].message);
@@ -158,95 +160,98 @@ static void satisfiable_error_ctx_destroy(satisfiable_error_ctxT* restrict ctx, 
   if(freectx) free(ctx);
 }
 
-static void satisfiable_error_print(satisfiable_error_ctxT* const restrict ctx, const bool freectx){
+static void lth_error_print(lth_error_ctxT* const restrict ctx, const bool freectx){
   const size_t cnt_err = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
 
   for(size_t i = 0; i < cnt_err; i++){
+    fputs(ANSI_COLOUR_RED "ERROR" ANSI_COLOUR_RESET, stderr);
     if(ctx->errors[i].path){
+      fputs(" (", stderr);
       fputs(ANSI_COLOUR_CYAN, stderr);
       fputs(ctx->errors[i].path->str, stderr);
-      if(ctx->errors[i].category == SATISFIABLE_ERROR__COMPILER)
+      if(ctx->errors[i].category == LTH_ERROR__COMPILER)
         fprintf(stderr, ":%u:%u" ANSI_COLOUR_RESET, ctx->errors[i].line, ctx->errors[i].offset);
+      fputc(')', stderr);
     }
-    fputs(ANSI_COLOUR_RED "ERROR: " ANSI_COLOUR_RESET, stderr);    
+    fputs(": ", stderr);
     fputs(ctx->errors[i].message, stderr);
   }
 
-  satisfiable_error_ctx_destroy(ctx, freectx);
+  lth_error_ctx_destroy(ctx, freectx);
 }
 
-static void satisfiable_error_report(
-  const satisfiable_error_typeT type, const satisfiable_error_categoryT category, rcT* const restrict path,
-  const satisfiable_fposT line, const satisfiable_fposT offset,
-  satisfiable_error_ctxT* const restrict ctx
+static void lth_error_report(
+  const lth_error_typeT type, const lth_error_categoryT category, rcT* const restrict path,
+  const lth_fposT line, const lth_fposT offset,
+  lth_error_ctxT* const restrict ctx
 ){
-  const size_t len_message = strlen(satisfiable_error_strings[type]);
+  const size_t len_message = strlen(lth_error_strings[type]);
   char* const restrict message = malloc(len_message + 1);
-  strcpy(message, satisfiable_error_strings[type]);
+  strcpy(message, lth_error_strings[type]);
 
   const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
-  satisfiable_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+  lth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
 }
 
-static void satisfiable_error_report__u32(
-  const satisfiable_error_typeT type, const satisfiable_error_categoryT category, rcT* const restrict path,
-  const satisfiable_fposT line, const satisfiable_fposT offset,
-  satisfiable_error_ctxT* const restrict ctx,
+static void lth_error_report__u32(
+  const lth_error_typeT type, const lth_error_categoryT category, rcT* const restrict path,
+  const lth_fposT line, const lth_fposT offset,
+  lth_error_ctxT* const restrict ctx,
   const uint32_t value
 ){
-  const size_t len_message = strlen(satisfiable_error_strings[type]) + 2*sizeof(value);
+  const size_t len_message = strlen(lth_error_strings[type]) + 2*sizeof(value);
   char* const restrict message = malloc(len_message + 1);
-  sprintf(message, satisfiable_error_strings[type], value);
+  sprintf(message, lth_error_strings[type], value);
 
   const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
-  satisfiable_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+  lth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
 }
 
-static void satisfiable_error_report__str(
-  const satisfiable_error_typeT type, const satisfiable_error_categoryT category, rcT* const restrict path,
-  const satisfiable_fposT line, const satisfiable_fposT offset,
-  satisfiable_error_ctxT* const restrict ctx,
+static void lth_error_report__str(
+  const lth_error_typeT type, const lth_error_categoryT category, rcT* const restrict path,
+  const lth_fposT line, const lth_fposT offset,
+  lth_error_ctxT* const restrict ctx,
   const char* const restrict string
 ){
-  const size_t len_message = strlen(satisfiable_error_strings[type]) + strlen(string);
+  const size_t len_message = strlen(lth_error_strings[type]) + strlen(string);
   char* const restrict message = malloc(len_message + 1);
-  sprintf(message, satisfiable_error_strings[type], string);
+  sprintf(message, lth_error_strings[type], string);
 
   const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
-  satisfiable_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+  lth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
 }
 
-static void satisfiable_error_report__type1(
-  const satisfiable_error_typeT type, const satisfiable_error_categoryT category, rcT* const restrict path,
-  const satisfiable_fposT line, const satisfiable_fposT offset,
-  satisfiable_error_ctxT* const restrict ctx,
-  const satisfiable_typeT type_data
+static void lth_error_report__type1(
+  const lth_error_typeT type, const lth_error_categoryT category, rcT* const restrict path,
+  const lth_fposT line, const lth_fposT offset,
+  lth_error_ctxT* const restrict ctx,
+  const lth_typeT type_data
 ){
-  const size_t len_message = strlen(satisfiable_error_strings[type]) + strlen(satisfiable_type__strings[type_data]);
+  const size_t len_message = strlen(lth_error_strings[type]) + strlen(lth_type__strings[type_data]);
   char* const restrict message = malloc(len_message + 1);
-  sprintf(message, satisfiable_error_strings[type], satisfiable_type__strings[type_data]);
+  sprintf(message, lth_error_strings[type], lth_type__strings[type_data]);
 
   const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
-  satisfiable_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+  lth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
 }
 
-static void satisfiable_error_report__type2(
-  const satisfiable_error_typeT type, const satisfiable_error_categoryT category, rcT* const restrict path,
-  const satisfiable_fposT line, const satisfiable_fposT offset,
-  satisfiable_error_ctxT* const restrict ctx,
-  const satisfiable_typeT t0, const satisfiable_typeT t1
+static void lth_error_report__type2(
+  const lth_error_typeT type, const lth_error_categoryT category, rcT* const restrict path,
+  const lth_fposT line, const lth_fposT offset,
+  lth_error_ctxT* const restrict ctx,
+  const lth_typeT t0, const lth_typeT t1
 ){
-  const size_t len_message = strlen(satisfiable_error_strings[type]) + strlen(satisfiable_type__strings[t0]) + strlen(satisfiable_type__strings[t1]);
+  const size_t len_message = strlen(lth_error_strings[type]) + strlen(lth_type__strings[t0]) + strlen(lth_type__strings[t1]);
   char* const restrict message = malloc(len_message + 1);
-  sprintf(message, satisfiable_error_strings[type], satisfiable_type__strings[t0], satisfiable_type__strings[t1]);
+  sprintf(message, lth_error_strings[type], lth_type__strings[t0], lth_type__strings[t1]);
 
   const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
-  satisfiable_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+  lth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
 }
 
 #endif

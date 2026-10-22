@@ -1,5 +1,5 @@
-#ifndef SATISFIABLE_TOKENISER_H_INCLUDED
-#define SATISFIABLE_TOKENISER_H_INCLUDED
+#ifndef LTH_TOKENISER_H_INCLUDED
+#define LTH_TOKENISER_H_INCLUDED
 
 #include "name.h"                   // name handling.
 #include "../common/_common.h"      // tokens et cetera.
@@ -9,56 +9,56 @@
 #include "string.h"                 // for string manipulation functions.
 
 typedef struct{
-  satisfiable_tokT* arr;
-  satisfiable_name_ctxT name;
+  lth_tokT* arr;
+  lth_name_ctxT name;
   vfastbst_rcT files;
-} satisfiable_tokeniserT;
+} lth_tokeniserT;
 
-static void satisfiable_tokeniser_init(satisfiable_tokeniserT* const restrict tokeniser){
-  satisfiable_name_ctx_init(&tokeniser->name);
+static void lth_tokeniser_init(lth_tokeniserT* const restrict tokeniser){
+  lth_name_ctx_init(&tokeniser->name);
   tokeniser->arr = vfastarr_init(sizeof(*tokeniser->arr));
   tokeniser->files = VFASTBST_RC_INIT;
 }
 
-static satisfiable_outputT satisfiable_tokeniser_destroy(
-  satisfiable_tokeniserT* const restrict tokeniser,  satisfiable_variable_ctxT** variables,
-  satisfiable_error_ctxT* const restrict err, rcT* const restrict path
+static lth_outputT lth_tokeniser_destroy(
+  lth_tokeniserT* const restrict tokeniser,  lth_variable_ctxT** variables,
+  lth_error_ctxT* const restrict err, rcT* const restrict path
 ){
   if(variables) *variables = tokeniser->name.variables;
-  else satisfiable_variable_ctx_destroy(tokeniser->name.variables, true);
+  else lth_variable_ctx_destroy(tokeniser->name.variables, true);
 
-  if(!satisfiable_name_ctx_destroy(&tokeniser->name, false))
-    satisfiable_error_report(SATISFIABLE_ERROR__INDENTATION_DEPTH_NEGATIVE, SATISFIABLE_ERROR__COMPILER_DESTRUCTION, path, 0, 0, err);
+  if(!lth_name_ctx_destroy(&tokeniser->name, false))
+    lth_error_report(LTH_ERROR__INDENTATION_DEPTH_NEGATIVE, LTH_ERROR__COMPILER_DESTRUCTION, path, 0, 0, err);
   vfastbst_rc_destroy(&tokeniser->files);
-  return (satisfiable_outputT)tokeniser->arr;
+  return (lth_outputT)tokeniser->arr;
 }
 
 // path   ~ file path itself.
 // s_path ~ length of path excluding actual filename.
 // err    ~ error ctx struct holding all reported during compilation.
-static void satisfiable_tokenise__single(
+static void lth_tokenise__single(
   const char* restrict code,
   rcT* const restrict path, const size_t s_path,
-  satisfiable_error_ctxT* const restrict err,
-  satisfiable_tokeniserT* const restrict ctx
+  lth_error_ctxT* const restrict err,
+  lth_tokeniserT* const restrict ctx
 );
 
 // handles 'include' commands by parsing the path & pushing it to the queue, if it wasn't already.
-static const char* satisfiable_tokenise__include(
+static const char* lth_tokenise__include(
   const char* restrict code, rcT* const restrict path, const size_t s_path,
-  satisfiable_tokeniserT* const restrict tokeniser,
-  satisfiable_error_ctxT* const restrict err, satisfiable_fposT* const restrict line, satisfiable_fposT* const restrict offset
+  lth_tokeniserT* const restrict tokeniser,
+  lth_error_ctxT* const restrict err, lth_fposT* const restrict line, lth_fposT* const restrict offset
 ){
   code += strcspn(code, "\"");
   if(code[0] != '"'){     // Include isn't followed by single quotes, so errors out.
-    satisfiable_error_report(SATISFIABLE_ERROR__INCLUDE_NO_LEADING_QUOTES, SATISFIABLE_ERROR__COMPILER, path, *line, *offset, err);
+    lth_error_report(LTH_ERROR__INCLUDE_NO_LEADING_QUOTES, LTH_ERROR__COMPILER, path, *line, *offset, err);
     return code;
   }
 
   const size_t s_finalpath = strcspn(code, "\""); 
   code += s_finalpath;
   if(code[0] != '"'){
-    satisfiable_error_report(SATISFIABLE_ERROR__INCLUDE_NO_LEADING_QUOTES, SATISFIABLE_ERROR__COMPILER, path, *line, *offset, err);
+    lth_error_report(LTH_ERROR__INCLUDE_NO_LEADING_QUOTES, LTH_ERROR__COMPILER, path, *line, *offset, err);
     return code;
   }
 
@@ -69,45 +69,45 @@ static const char* satisfiable_tokenise__include(
   else s_filename = s_finalpath - (filename - finalpath->str) - 1 /* correction term, because we want to exclude last '/'. */;
 
   if((s_finalpath - s_filename) == s_path && !strcmp(path->str, finalpath->str)){
-    satisfiable_error_report(SATISFIABLE_ERROR__INCLUDE_SELF_REFERENCE, SATISFIABLE_ERROR__COMPILER, path, *line, *offset, err);
+    lth_error_report(LTH_ERROR__INCLUDE_SELF_REFERENCE, LTH_ERROR__COMPILER, path, *line, *offset, err);
     rc_disown(finalpath);
     return code;
   }
 
   vfastbst_rc_nodeT** const restrict success = vfastbst_rc_put_half(&tokeniser->files, finalpath);
 // error out if an include's argument is ever NULL.
-  satisfiable_tokT* new = NULL;
+  lth_tokT* new = NULL;
   if(!*success){
-    const satisfiable__fileT finalcode = satisfiable_load__map(finalpath->str, true);
+    const lth__fileT finalcode = lth_load__map(finalpath->str, true);
     if(!finalcode.code){
-      satisfiable_error_report__str(SATISFIABLE_ERROR__INCLUDE_UNKNOWN_FILE, SATISFIABLE_ERROR__COMPILER, path, *line, *offset, err, finalpath->str);
+      lth_error_report__str(LTH_ERROR__INCLUDE_UNKNOWN_FILE, LTH_ERROR__COMPILER, path, *line, *offset, err, finalpath->str);
       rc_disown(finalpath);
       return code;
     }
 
     void* const restrict old = tokeniser->arr;
     tokeniser->arr = vfastarr_init(sizeof(*tokeniser->arr));
-    satisfiable_tokenise__single(finalcode.code, finalpath, s_finalpath - s_filename, err, tokeniser);
-    satisfiable_load__unmap(finalcode);
+    lth_tokenise__single(finalcode.code, finalpath, s_finalpath - s_filename, err, tokeniser);
+    lth_load__unmap(finalcode);
 
     new = tokeniser->arr; tokeniser->arr = old;
-    *success = vfastbst_rc_node_init(finalpath, (satisfiable__representation_tokT)new);
+    *success = vfastbst_rc_node_init(finalpath, (lth__representation_tokT)new);
   }
   else
-    new = (satisfiable_tokT*)(*success)->obj;
+    new = (lth_tokT*)(*success)->obj;
 
 // when processing stuff, the 'Include' token is followed by some ptr to data representing the file being included, whatever that is.
-  const satisfiable_tokT info = satisfiable_tok_init((satisfiable__underlying_tokT)new, *line, *offset);
+  const lth_tokT info = lth_tok_init((lth__underlying_tokT)new, *line, *offset);
   tokeniser->arr = vfastarr_append(tokeniser->arr, &info, sizeof(info));
 
   rc_disown(finalpath);
   return code;
 }
 
-static const char* satisfiable_tokenise__comment__single(
+static const char* lth_tokenise__comment__single(
   const char* restrict code,
-  satisfiable_fposT* const restrict line,
-  satisfiable_fposT* const restrict offset
+  lth_fposT* const restrict line,
+  lth_fposT* const restrict offset
 ){
   const char* restrict n_code = strchr(code, '\n');
   if(!n_code) n_code = code + strlen(code);                     // I'd use strchrnul but it's GNU only.
@@ -117,10 +117,10 @@ static const char* satisfiable_tokenise__comment__single(
   return n_code;
 }
 
-static const char* satisfiable_tokenise__comment__multi(
+static const char* lth_tokenise__comment__multi(
   const char* restrict code,
-  satisfiable_fposT* const restrict line,
-  satisfiable_fposT* const restrict offset
+  lth_fposT* const restrict line,
+  lth_fposT* const restrict offset
 ){
 // we want to support arbitrarily nested comments. how?
   unsigned int depth = 1;
@@ -161,55 +161,55 @@ static const char* satisfiable_tokenise__comment__multi(
 }
 
 // tokenises code pointed at by 'code' variable.
-static void satisfiable_tokenise__single(
+static void lth_tokenise__single(
   const char* restrict code, rcT* const restrict path, const size_t s_path,
-  satisfiable_error_ctxT* const restrict err, satisfiable_tokeniserT* const restrict tokeniser
+  lth_error_ctxT* const restrict err, lth_tokeniserT* const restrict tokeniser
 ){
-  satisfiable_fposT line = 0, offset = 0;
-  satisfiable_tokT tok = satisfiable_tok_init(SATISFIABLE_TOK__SPECIAL_ERROR, line, offset);
+  lth_fposT line = 0, offset = 0;
+  lth_tokT tok = lth_tok_init(LTH_TOK__SPECIAL_ERROR, line, offset);
 
 // ADD SPECIAL HANDLING FOR:
 //  names.
 
   do{
     size_t len;
-    tok = satisfiable_tok(code, &len, line, offset);
+    tok = lth_tok(code, &len, line, offset);
 // tokens that should be ignored.
     switch(tok.token){
-      case SATISFIABLE_TOK__NEWLINE:
+      case LTH_TOK__NEWLINE:
         line++; offset = 0;
         code += len;
         continue;
-      case SATISFIABLE_TOK__WHITESPACE:
+      case LTH_TOK__WHITESPACE:
         offset += len;
         code += len;
         continue;
-      case SATISFIABLE_TOK__OPENED_SINGLE_LINE_COMMENT:
-        code = satisfiable_tokenise__comment__single(code + len, &line, &offset);
+      case LTH_TOK__OPENED_SINGLE_LINE_COMMENT:
+        code = lth_tokenise__comment__single(code + len, &line, &offset);
         continue;
-      case SATISFIABLE_TOK__OPENED_MULTI_LINE_COMMENT:
-        code = satisfiable_tokenise__comment__multi(code + len, &line, &offset);
+      case LTH_TOK__OPENED_MULTI_LINE_COMMENT:
+        code = lth_tokenise__comment__multi(code + len, &line, &offset);
         continue;
-      case SATISFIABLE_TOK__NAME:
-        const satisfiable_nameT name = satisfiable_name_add(code, len, err, &tokeniser->name);
+      case LTH_TOK__NAME:
+        const lth_nameT name = lth_name_add(code, len, err, &tokeniser->name);
         tokeniser->arr = vfastarr_append(
           tokeniser->arr,
-          &satisfiable_tok_init__macro(name, line, offset),
-          sizeof(satisfiable_tokT)
+          &lth_tok_init__macro(name, line, offset),
+          sizeof(lth_tokT)
         );
         offset += len; code += len;
         continue;
-      case SATISFIABLE_TOK__VALUE:
-        const satisfiable_nameT value = satisfiable_value_add(code, len, &tokeniser->name, err, path, line, offset);
+      case LTH_TOK__VALUE:
+        const lth_nameT value = lth_value_add(code, len, &tokeniser->name, err, path, line, offset);
         tokeniser->arr = vfastarr_append(
           tokeniser->arr,
-          &satisfiable_tok_init__macro(value, line, offset),
-          sizeof(satisfiable_tokT)
+          &lth_tok_init__macro(value, line, offset),
+          sizeof(lth_tokT)
         );
         offset += len; code += len;
         continue;
-      case SATISFIABLE_TOK__SPECIAL_IMPOSSIBILITY:
-        satisfiable_error_report__u32(SATISFIABLE_ERROR__IMPOSSIBILITY, SATISFIABLE_ERROR__COMPILER, path, line, offset, err, SATISFIABLE_IMPOSSIBILITY__TOK_H_RETURN_VALUE);
+      case LTH_TOK__SPECIAL_IMPOSSIBILITY:
+        lth_error_report__u32(LTH_ERROR__IMPOSSIBILITY, LTH_ERROR__COMPILER, path, line, offset, err, LTH_IMPOSSIBILITY__TOK_H_RETURN_VALUE);
         offset += len; code += len;
         continue;
       default:
@@ -220,30 +220,30 @@ static void satisfiable_tokenise__single(
     tokeniser->arr = vfastarr_append(tokeniser->arr, &tok, sizeof(tok));
 // special handling of certain tokens.
     switch(tok.token){
-      case SATISFIABLE_TOK__INCLUDE:
-        code = satisfiable_tokenise__include(code, path, s_path, tokeniser, err, &line, &offset);
+      case LTH_TOK__INCLUDE:
+        code = lth_tokenise__include(code, path, s_path, tokeniser, err, &line, &offset);
         break;
-      case SATISFIABLE_TOK__OPENED_CURLY_BRACKET:
-        satisfiable_name_depth_inc(&tokeniser->name);
+      case LTH_TOK__OPENED_CURLY_BRACKET:
+        lth_name_depth_inc(&tokeniser->name);
         break;
-      case SATISFIABLE_TOK__CLOSED_CURLY_BRACKET:
-        if(!satisfiable_name_depth_dec(&tokeniser->name))
-          satisfiable_error_report(SATISFIABLE_ERROR__INDENTATION_DEPTH_NEGATIVE, SATISFIABLE_ERROR__COMPILER, path, line, offset, err);
+      case LTH_TOK__CLOSED_CURLY_BRACKET:
+        if(!lth_name_depth_dec(&tokeniser->name))
+          lth_error_report(LTH_ERROR__INDENTATION_DEPTH_NEGATIVE, LTH_ERROR__COMPILER, path, line, offset, err);
         break;
       default:
         break;
     }
     code += len;
     offset += len;
-  } while(tok.token != SATISFIABLE_TOK__EOF);
+  } while(tok.token != LTH_TOK__EOF);
 }
 
-static satisfiable_outputT satisfiable_tokenise(
+static lth_outputT lth_tokenise(
   const char* restrict code, const char* const restrict path, const size_t s_path,
-  satisfiable_variable_ctxT** const restrict variables, satisfiable_error_ctxT* const restrict err
+  lth_variable_ctxT** const restrict variables, lth_error_ctxT* const restrict err
 ){
   rcT* const restrict rc_path = rc_make(path);
-  satisfiable_tokeniserT tokeniser; satisfiable_tokeniser_init(&tokeniser);
+  lth_tokeniserT tokeniser; lth_tokeniser_init(&tokeniser);
 
 // such descriptive names, clearly indicative of a cnile...
 // C's only missing a defer{} statement (that doesn't require #include "stddefer.h" or some bs like that) & it'd be my favourite language.
@@ -252,8 +252,8 @@ static satisfiable_outputT satisfiable_tokenise(
 //  or just use zig... but it isn't stable yet & I want my stuff to compile for the next thousand years.
 // myC would have all features zig does, basically native C interop (not 100% backwards compatibility though) & more.
 // I wouldn't like it if it didn't have dependent types, though I'd barely use them.
-  satisfiable_tokenise__single(code, rc_path, s_path, err, &tokeniser);
-  satisfiable_outputT tokenised = satisfiable_tokeniser_destroy(&tokeniser, variables, err, rc_path);
+  lth_tokenise__single(code, rc_path, s_path, err, &tokeniser);
+  lth_outputT tokenised = lth_tokeniser_destroy(&tokeniser, variables, err, rc_path);
   rc_disown(rc_path);
 // result of tokenisation.
   return tokenised;

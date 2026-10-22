@@ -1,8 +1,8 @@
-#ifndef SATISFIABLE_PARSE_H_INCLUDED
-#define SATISFIABLE_PARSE_H_INCLUDED
+#ifndef LTH_PARSE_H_INCLUDED
+#define LTH_PARSE_H_INCLUDED
 
 // parses command-line options, returns struct holding all of them.
-//    satisfiable_opT    ~ controls what operation the compiler's executing.
+//    lth_opT    ~ controls what operation the compiler's executing.
 
 #include "../common/err/err.h"
 
@@ -14,25 +14,25 @@
 #include "string.h"     // strncmp.
 #include "stdbool.h"    // bool, true, false.
 
-#define SATISFIABLE_DEFAULT_OPTION SATISFIABLE_OPTIONS__DEBUG
-#define SATISFIABLE_DEFAULT_DST "program.out"
+#define LTH_DEFAULT_OPTION LTH_OPTIONS__DEBUG
+#define LTH_DEFAULT_DST "program.out"
 
 // note: most of these are left over from other projects.
 typedef enum{
-    SATISFIABLE_OPTIONS__REPL = 3,          // Read-Evaluate-Print-Loop in Satisfiable.
-    SATISFIABLE_OPTIONS__HELP = 1,          // prints help info.
-    SATISFIABLE_OPTIONS__CHECK = 2,         // checks for type validity of program.
-    SATISFIABLE_OPTIONS__DETOKENISE = 5,    // detokenises tokenised program.
-    SATISFIABLE_OPTIONS__TOKENISE = 0,      // tokenises program.
-    SATISFIABLE_OPTIONS__VERSION = 4,       // compiler version.
+    LTH_OPTIONS__REPL = 3,          // Read-Evaluate-Print-Loop.
+    LTH_OPTIONS__HELP = 1,          // prints help info.
+    LTH_OPTIONS__CHECK = 2,         // checks for type validity of program.
+    LTH_OPTIONS__DETOKENISE = 5,    // detokenises tokenised program.
+    LTH_OPTIONS__TOKENISE = 0,      // tokenises program.
+    LTH_OPTIONS__VERSION = 4,       // compiler version.
 
-    SATISFIABLE_OPTIONS__NONE = 6,
-    SATISFIABLE_OPTIONS__COMPILE,
-    SATISFIABLE_OPTIONS__DEFAULT = SATISFIABLE_OPTIONS__COMPILE
-} satisfiable_opT;
+    LTH_OPTIONS__NONE = 6,
+    LTH_OPTIONS__COMPILE,
+    LTH_OPTIONS__DEFAULT = LTH_OPTIONS__COMPILE
+} lth_opT;
 
 // hash function, generated with vfasttables version 1.0.0.
-static satisfiable_opT satisfiable_op__hash(const char* const restrict str, const size_t len){
+static lth_opT lth_op__hash(const char* const restrict str, const size_t len){
     if(len > 127) return 0;
 // associated values generated for hash function.
     const uint8_t associated_values[] = {
@@ -56,66 +56,66 @@ static satisfiable_opT satisfiable_op__hash(const char* const restrict str, cons
     return hash;
 }
 
-static satisfiable_opT satisfiable_op__search(const char* const restrict str, const size_t len){
-    const satisfiable_opT index = satisfiable_op__hash(str, len);
+static lth_opT lth_op__search(const char* const restrict str, const size_t len){
+    const lth_opT index = lth_op__hash(str, len);
     char* table[6] = {
-       [SATISFIABLE_OPTIONS__REPL] = "repl",
-       [SATISFIABLE_OPTIONS__TOKENISE] = "tokenise",
-       [SATISFIABLE_OPTIONS__VERSION] = "version",
-       [SATISFIABLE_OPTIONS__DETOKENISE] = "detokenise",
-       [SATISFIABLE_OPTIONS__HELP] = "help",
-       [SATISFIABLE_OPTIONS__CHECK] = "check"
+       [LTH_OPTIONS__REPL] = "repl",
+       [LTH_OPTIONS__TOKENISE] = "tokenise",
+       [LTH_OPTIONS__VERSION] = "version",
+       [LTH_OPTIONS__DETOKENISE] = "detokenise",
+       [LTH_OPTIONS__HELP] = "help",
+       [LTH_OPTIONS__CHECK] = "check"
     };
-    return strncmp(table[index], str, len) == 0? index: SATISFIABLE_OPTIONS__NONE;
+    return strncmp(table[index], str, len) == 0? index: LTH_OPTIONS__NONE;
 }
 
 typedef struct{
   const char* restrict path_src;
-  satisfiable_opT op;
-} satisfiable_optionsT;
+  lth_opT op;
+} lth_optionsT;
 
-static void satisfiable_options_destroy(satisfiable_optionsT* const restrict options, const bool freectx){
+static void lth_options_destroy(lth_optionsT* const restrict options, const bool freectx){
   free(options);
 }
 
-static satisfiable_optionsT* satisfiable_parse(
-  satisfiable_optionsT* restrict options,
+static lth_optionsT* lth_parse(
+  lth_optionsT* restrict options,
   const int argc, 
   const char* const restrict* const restrict argv,
-  satisfiable_error_ctxT* const restrict error
+  lth_error_ctxT* const restrict error
 ){
   const bool dynamically_allocated = options == NULL;
   if(dynamically_allocated) options = malloc(sizeof(*options));
-  options->op = SATISFIABLE_OPTIONS__NONE;
+  options->op = LTH_OPTIONS__NONE;
   options->path_src = NULL;
 
   for(size_t i = 1; i < argc; i++){
-    const satisfiable_opT op = satisfiable_op__search(argv[i], strlen(argv[i]));
+    const lth_opT op = lth_op__search(argv[i], strlen(argv[i]));
 
-    if(op == SATISFIABLE_OPTIONS__NONE) 
-      satisfiable_error_report__str(SATISFIABLE_ERROR__PARSE_UNKNOWN_OPTION, SATISFIABLE_ERROR__PARSE, NULL, 0, 0, error, argv[i]);
-    else if(op == SATISFIABLE_OPTIONS__HELP){
-      satisfiable_parse__help(argv[0]);
-      satisfiable_options_destroy(options, dynamically_allocated);
+    if(op == LTH_OPTIONS__NONE) 
+      lth_error_report__str(LTH_ERROR__PARSE_UNKNOWN_OPTION, LTH_ERROR__PARSE, NULL, 0, 0, error, argv[i]);
+    else if(op == LTH_OPTIONS__HELP){
+      lth_parse__help(argv[0]);
+      lth_options_destroy(options, dynamically_allocated);
       return NULL;
     }
-    else if(op == SATISFIABLE_OPTIONS__VERSION){
-      satisfiable_parse__version();
-      satisfiable_options_destroy(options, dynamically_allocated);
+    else if(op == LTH_OPTIONS__VERSION){
+      lth_parse__version();
+      lth_options_destroy(options, dynamically_allocated);
       return NULL;
     }
 // list of all valid compiler modes/states.
     else if(
-      op == SATISFIABLE_OPTIONS__REPL ||
-      op == SATISFIABLE_OPTIONS__CHECK ||
-      op == SATISFIABLE_OPTIONS__TOKENISE ||
-      op == SATISFIABLE_OPTIONS__DETOKENISE
+      op == LTH_OPTIONS__REPL ||
+      op == LTH_OPTIONS__CHECK ||
+      op == LTH_OPTIONS__TOKENISE ||
+      op == LTH_OPTIONS__DETOKENISE
     ){
-      if(options->op != SATISFIABLE_OPTIONS__NONE){
-        satisfiable_error_report__str(SATISFIABLE_ERROR__PARSE_REPEATED_OPTION, SATISFIABLE_ERROR__PARSE, NULL, 0, 0, error, argv[i]);
+      if(options->op != LTH_OPTIONS__NONE){
+        lth_error_report__str(LTH_ERROR__PARSE_REPEATED_OPTION, LTH_ERROR__PARSE, NULL, 0, 0, error, argv[i]);
         continue;
       }
-      if(op != SATISFIABLE_OPTIONS__REPL){
+      if(op != LTH_OPTIONS__REPL){
         if(i == argc - 1) break;
         options->path_src = argv[++i];
       }
@@ -123,10 +123,10 @@ static satisfiable_optionsT* satisfiable_parse(
     }
   }
 // default values.
-  if(options->op == SATISFIABLE_OPTIONS__NONE) options->op = SATISFIABLE_OPTIONS__DEFAULT;
-  if(options->path_src == NULL && options->op != SATISFIABLE_OPTIONS__REPL){ 
-    satisfiable_error_report(SATISFIABLE_ERROR__PARSE_MISSING_SOURCE_FILE, SATISFIABLE_ERROR__PARSE, NULL, 0, 0, error);
-    satisfiable_options_destroy(options, dynamically_allocated);
+  if(options->op == LTH_OPTIONS__NONE) options->op = LTH_OPTIONS__DEFAULT;
+  if(options->path_src == NULL && options->op != LTH_OPTIONS__REPL){ 
+    lth_error_report(LTH_ERROR__PARSE_MISSING_SOURCE_FILE, LTH_ERROR__PARSE, NULL, 0, 0, error);
+    lth_options_destroy(options, dynamically_allocated);
     return NULL;
   }
 

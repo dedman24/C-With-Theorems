@@ -1,5 +1,5 @@
-#ifndef SATISFIABLE_COMMON_H_INCLUDED
-#define SATISFIABLE_COMMON_H_INCLUDED
+#ifndef LTH_COMMON_H_INCLUDED
+#define LTH_COMMON_H_INCLUDED
 
 // this file includes all files in common.
 

@@ -1,9 +1,0 @@
-NAME : NAME ( NAME : NAME ( NAME ) , NAME : NAME ( NAME ) , NAME : NAME -> NAME ( NAME ) ) = NAME + ( NAME ^ NAME ~ NAME ( NAME ) ) + NAME ; 
-NAME : theorem ( NAME : NAME ( NAME ) , NAME : NAME ( NAME ) -> NAME ( NAME , NAME , NAME ) == NAME + NAME ) = NAME ; 
-NAME : theorem ( NAME : NAME ( NAME ) -> ~ NAME + NAME == - NAME ) = NAME ; 
-NAME : NAME ( NAME : NAME , NAME : NAME -> NAME ) = match NAME NAME = NAME , NAME = ~ NAME ; 
-NAME : NAME ( NAME : NAME ( NAME ) , NAME : NAME ( NAME ) -> NAME ( NAME ) ) = NAME ~ NAME ( NAME ) ( NAME , NAME ) ; 
-NAME : theorem ( NAME : NAME -> ~ NAME == NAME ^ NAME ) = NAME ( NAME , NAME ) ~ NAME ; 
-NAME : theorem ( NAME : NAME ( NAME ) -> ~ NAME == NAME ^ NAME ~ NAME ( NAME ) ) = NAME ~ NAME ( NAME ) ( NAME ) ; 
-NAME : theorem ( NAME : NAME ( NAME ) , NAME : NAME ( NAME ) -> NAME + ( NAME ^ NAME ~ NAME ( NAME ) ) + NAME == NAME - NAME ) = NAME ( NAME , NAME ( NAME ) ~ NAME ( NAME ( NAME ) ) ) ~ NAME ; 
-NAME : theorem ( NAME : NAME ( NAME ) , NAME : NAME ( NAME ) -> NAME ( NAME , NAME , NAME ) == NAME - NAME ) = NAME ( NAME , NAME , NAME ) ~ NAME ~ NAME ( NAME ( NAME , NAME ) ) ; 

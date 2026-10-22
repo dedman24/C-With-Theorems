@@ -1,48 +1,34 @@
-# example of a program in the 'satisfiable' programming language.
+# example of a program in the Lisp With Theorems (lth) programming language.
 # prototype of dependent typing in LISP.
 # LISP syntax, however ugly, makes dependent type checking very simple.
 
+(-- yes multi-line comments in lth are lisp statements how'd you know? )
+(-- maybe one day add C-style /**/ comments, to break apart code. )
 (--
- - we provide various functions to test all kinds of things regarding the 'satisfiable' compiler.
+ - we provide various functions to test all kinds of things regarding the lth interpreter.
  - hopefully it works.
  - provided here are examples of:
  -  circuit definitions,
  -  proofs using dependent types.
- - I don't really like how satisfiable looks currently, but little can be done.
+ - I don't really like how lth looks currently, but little can be done.
  - it's one of those ugly programming languages you HAVE to use & get used to. 
  - cry about it, see if I care.
 --)
 
-# deffun syntax ~
-# (deffun (FUNCTION-NAME ARGNAME ARGTYPE) DST-TYPE)
-# deffun per-se doesn't support 
-(deffun (xor a wire b wire) wire)
-(define (xor 0 b) (b))
-(define (xor 0 b) (~ b))
-
-(defthe (xor-commutative-0 a wire) (= (xor a 0) (xor 0 a)))
-(define (xor-commutative-0 0) refl)
-(define (xor-commutative-0 1) refl)
-
-(defthe (xor-commutative-1 a wire) (= (xor a 0) (xor 0 a)))
-(define (xor-commutative-1 0) refl)
-(define (xor-commutative-1 1) refl)
-
-(defthe (xor-commutative a wire b wire) (= (xor a b) (xor b a)))
-(define (xor-commutative a 0) (xor-commutative-0 a))
-(define (xor-commutative a 1) (xor-commutative-1 a)) 
-
-# type definitions.
-(type nat (enum
+# deftype syntax ~
+# (deftype TYPE-NAME CONTENTS)
+(deftype nat_t (enum
   z
-  (deffun (succ nat) nat)
+  (deffun (succ nat_t) nat_t)
 ))
 
-(deffun (add a nat b nat) nat)
+# deffun syntax ~
+# (deffun (FUNCTION-NAME ARGNAME ARGTYPE) DST-TYPE)
+(deffun (add a nat_t b nat_t) nat_t)
 (define (add 0 b) b)
 (define (add (succ x) b) (succ (add x b)))
 
-(defthe (add-0 a nat) 
+(defthe (add-0 a nat_t) 
   (= (add a 0) (add 0 a))
 )
 (define (add-0 0) refl)

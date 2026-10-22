@@ -6,14 +6,14 @@ To build lth,
 one just has to execute `./build/buildall.sh lth`, which handles everything. I didn't use traditional build systems because I don't know how to use them (_cba to learn lol_) & a shell script works just fine.
 
 ## Usage.
-To compile a program, one writes `lth [options] program_name.sat > output_file.cnf`. The compiler doesn't check what files end with so that `.sat` can be anything really. All output is written to stdout, save for errors which are written to stderr.
+To compile a program, one writes `lth [options] file.lth`. All output is written to stdout, save for errors which are written to stderr.
 
 The following mutually exclusive options can be used:
 * `help` ~ prints help string to stdout.
 * `version` ~ prints current version & copyright info to stdout.
-* `check` ~ type-checks the code without compiling to SAT formulae.
+* `check` ~ type-checks code.
 * `repl` ~ executes command-line REPL, useful for debugging programs.
-If no options are explicited, all code is type-checked & compiled down to instances of the satisfiability problem.
+If no options are explicited, all code is type-checked & interpreted.
 
 ## Syntax.
 Syntax is very simple, made to be visually unique & easy to read.\
@@ -25,6 +25,6 @@ lth is **functional**; for example, variables cannot be modified once assigned.\
 This was done to make proof generation simpler, it helps one reason about the code & it fits neatly with the logic model chosen.
 
 ## Why LISP.
-Personally I don't understand why people like LISPs so much. I find them very ugly _purely from a syntax point-of-view.
-They however make for very simple interpreted languages, which is why I chose them to implement my first.
-Maybe I'll learn to love them.
+Personally I don't understand why people like LISPs so much. I find them very ugly _purely from a syntactic point-of-view_.
+They however make for very simple interpreted languages, which is why I chose them to implement my first.\
+Maybe I'll learn to love them, perhaps when lth has a compiler of itself & a thousand device drivers written in it.

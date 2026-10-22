@@ -10,7 +10,7 @@
 // basic function which reads 1 character & returns it, how many bytes were consumed & so on.
 // ischar ~ whether we're processing a single character (set to true) or a string (set to false).
 static char lth_vtype_char(
-  const char* const restrict data, const size_t s_data, const bool isquote, int* const restrict bytes_read,
+  const char* const restrict data, const size_t s_data, const bool isquote, size_t* const restrict bytes_read,
   lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
 ){
 // cannot be not terminated by quote, unless terminated by \0, but in case we decide to add other terminating characters this will work.
@@ -75,8 +75,9 @@ static char* lth_vtype_string(
   vfastextT arr; vfastext_init(&arr, sizeof(char));
   if(data[s_data] != '"')             // we still go on, returning NULL is far more harmful.
     lth_error_report(LTH_ERROR__VALUE_STRING_UNFINISHED, LTH_ERROR__COMPILER, path, line, offset, err);
+
   for(size_t i = 0; i < s_data;){
-    int bytes_read;
+    size_t bytes_read;
     const char c = lth_vtype_char(data + i, s_data - i, false, &bytes_read, err, path, line, offset);
     vfastext_append(&arr, &c, sizeof(c));
     i += bytes_read;

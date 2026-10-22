@@ -12,7 +12,7 @@
 #include "stdlib.h"         // for calloc, free.
 #include "string.h"         // for strcmp.
 
-typedef lth__representation_tokT vfastbst_str_objT;
+typedef lth__underlying_tokT vfastbst_str_objT;
 
 typedef struct vfastbst_str_nodeS{
   struct vfastbst_str_nodeS* leaf[2];

@@ -27,12 +27,12 @@ static bool lth_op__setup_2(
 
   if((*op0)->type == LTH_TYPE__NONE || (*op1)->type == LTH_TYPE__NONE){
     if((*op0)->type == (*op1)->type)      // both being errors, no 'correct' type can be figured out.
-      lth_interpreter_push_value(interpreter, LTH_VARIABLE__ID_ERROR);
+      lth_interpreter_push(interpreter, LTH_VARIABLE__ID_ERROR);
     else{
-      const lth_typeT dst_type = (*op0)->type != LTH_TYPE__NONE?
+      const lth_nameT dst_type = (*op0)->type != LTH_TYPE__NONE?
         (*op0)->type:
         (*op1)->type;
-      lth_interpreter_push_variable(interpreter, NULL, 0, NULL, dst_type, LTH_QUALIFIER__NONE);
+      lth_interpreter_push_variable(interpreter, NULL, dst_type, LTH_QUALIFIER__NONE);
     }
     return false;
   }
@@ -40,7 +40,7 @@ static bool lth_op__setup_2(
   if((*op0)->type != (*op1)->type){       // type errors, how exciting!
     lth_error_report__type2(LTH_ERROR__TYPE_INCOMPATIBLE_OP, LTH_ERROR__COMPILER, path, line, offset, err, (*op0)->type, (*op1)->type);
   // if we don't push anything to the stack, truly horrible stuff can happen, so we add a value of type NULL, holding nothing.
-    lth_interpreter_push_value(interpreter, LTH_VARIABLE__ID_ERROR);
+    lth_interpreter_push(interpreter, LTH_VARIABLE__ID_ERROR);
     return false;
   }
 
@@ -71,7 +71,7 @@ static bool lth_op__setup_1(
   }
 // error type.
   if((*op)->type == LTH_TYPE__NONE){
-    lth_interpreter_push_value(interpreter, LTH_VARIABLE__ID_ERROR);
+    lth_interpreter_push(interpreter, LTH_VARIABLE__ID_ERROR);
     return false;
   }
 // unassigned variable.

@@ -39,7 +39,7 @@ static bool lth_name_ctx_destroy(lth_name_ctxT* const restrict name, const bool 
 }
 
 static void lth_name_depth_inc(lth_name_ctxT* const restrict name){
-  vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
+  name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
 }
 
 // returns false if depth goes below 0.
@@ -70,7 +70,7 @@ static lth_nameT lth_name_add(
       return (*curr_node)->obj;
   }
 
-  const lth_nameT id = lth_variable_name(name->variables) | LTH_TOK__NAME_BIT;
+  const lth_nameT id = lth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(key, s_key, id);
   lth_variable_add(name->variables, id, key, s_key, NULL, LTH_TYPE__NONE, LTH_QUALIFIER__NONE);
   return id;
@@ -90,10 +90,10 @@ static int lth_value_decode__binary(
 }
 
 static const void* lth_value_decode(
-  const char* restrict data, size_t s_data, size_t* const restrict s_raw, lth_typeT* const restrict type_raw,
+  const char* restrict data, size_t s_data, size_t* const restrict s_raw, lth_nameT* const restrict type_raw,
   lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
 ){
-  const lth_typeT type = lth_vtype(data, s_data, err, path, line, offset);
+  const lth_nameT type = lth_vtype(data, s_data, err, path, line, offset);
   if(type == LTH_TYPE__NONE) 
     return NULL;
   *type_raw = type;
@@ -122,14 +122,6 @@ static const void* lth_value_decode(
   else encoding = DECIMAL;
 
   switch(type){
-    case LTH_TYPE__STRING:
-      raw = lth_vtype_string(data + 1, s_data, s_raw, err, path, line, offset);
-      return raw;
-    case LTH_TYPE__CHAR:
-      *s_raw = sizeof(char);
-      raw = malloc(sizeof(char));
-      *raw = lth_vtype_char(data + 1, s_data - 1, true, NULL, err, path, line, offset);
-      return raw;
     case LTH_TYPE__F8:
     case LTH_TYPE__F16:
       lth_error_report(LTH_ERROR__VALUE_FORMAT_UNIMPLEMENTED, LTH_ERROR__COMPILER, path, line, offset, err);
@@ -210,7 +202,7 @@ static lth_nameT lth_value_add(
   lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
 ){
   size_t s_raw;
-  lth_typeT type_raw;
+  lth_nameT type_raw;
   const char* const restrict raw = lth_value_decode(data, s_data, &s_raw, &type_raw, err, path, line, offset);
 
   vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
@@ -218,12 +210,50 @@ static lth_nameT lth_value_add(
     free((char*)raw);
     return (*curr_node)->obj;
   }
-// how are these handled? is 'rc' a proper way?
-// 'rc' undoubtedly adds overhead, we don't really care about it being referenced multiple times.
+
   const lth_nameT id = lth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
   lth_variable_add(name->variables, id, raw, s_raw, (void*)raw, type_raw, LTH_QUALIFIER__CONST);
-  return id | LTH_TOK__NAME_BIT;
+  return id;
+}
+
+static lth_nameT lth_char_add(
+  const char* const restrict data, const size_t s_data, lth_name_ctxT* const restrict name,
+  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
+){
+  size_t s_raw;
+  char* const restrict raw = malloc(1);
+  raw[0] = lth_vtype_char(data, s_data, true, &s_raw, err, path, line, offset);
+
+  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
+  if(*curr_node){
+    free((char*)raw);
+    return (*curr_node)->obj;
+  }
+
+  const lth_nameT id = lth_variable_name(name->variables);
+  *curr_node = vfastbst_str_node_init(raw, s_raw, id);
+  lth_variable_add(name->variables, id, raw, s_raw, (void*)raw, LTH_TYPE__CHAR, LTH_QUALIFIER__CONST);
+  return id;
+}
+
+static lth_nameT lth_string_add(
+  const char* const restrict data, const size_t s_data, lth_name_ctxT* const restrict name,
+  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
+){
+  size_t s_raw;
+  const char* const restrict raw = lth_vtype_string(data, s_data, &s_raw, err, path, line, offset);
+
+  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
+  if(*curr_node){
+    free((char*)raw);
+    return (*curr_node)->obj;
+  }
+
+  const lth_nameT id = lth_variable_name(name->variables);
+  *curr_node = vfastbst_str_node_init(raw, s_raw, id);
+  lth_variable_add(name->variables, id, raw, s_raw, (void*)raw, LTH_TYPE__STRING, LTH_QUALIFIER__CONST);
+  return id;
 }
 
 #endif

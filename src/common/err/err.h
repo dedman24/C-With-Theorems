@@ -18,7 +18,6 @@
 // enum holding all impossibilities.
 enum{
   LTH_IMPOSSIBILITY__PARSE_OPTION,
-  LTH_IMPOSSIBILITY__TOK_H_RETURN_VALUE,
   LTH_IMPOSSIBILITY__NAME_H_DEFAULT,
   LTH_IMPOSSIBILITY__OP_TYPE
 };
@@ -228,7 +227,7 @@ static void lth_error_report__type1(
   const lth_error_typeT type, const lth_error_categoryT category, rcT* const restrict path,
   const lth_fposT line, const lth_fposT offset,
   lth_error_ctxT* const restrict ctx,
-  const lth_typeT type_data
+  const lth_nameT type_data
 ){
   const size_t len_message = strlen(lth_error_strings[type]) + strlen(lth_type__strings[type_data]);
   char* const restrict message = malloc(len_message + 1);
@@ -243,7 +242,7 @@ static void lth_error_report__type2(
   const lth_error_typeT type, const lth_error_categoryT category, rcT* const restrict path,
   const lth_fposT line, const lth_fposT offset,
   lth_error_ctxT* const restrict ctx,
-  const lth_typeT t0, const lth_typeT t1
+  const lth_nameT t0, const lth_nameT t1
 ){
   const size_t len_message = strlen(lth_error_strings[type]) + strlen(lth_type__strings[t0]) + strlen(lth_type__strings[t1]);
   char* const restrict message = malloc(len_message + 1);

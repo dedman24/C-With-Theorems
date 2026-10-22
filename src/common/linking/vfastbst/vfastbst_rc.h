@@ -10,14 +10,14 @@
 #endif
 
 #include "../rc.h"          // reference-counted strings.
-#include "../../tok.h"      // lth__representation_tokT.
+#include "../../tok.h"      // lth__underlying_tokT.
 
 // stdlib includes.
 #include "stddef.h"         // for NULL, size_t.
 #include "stdlib.h"         // for calloc, free.
 #include "string.h"         // for strcmp.
 
-typedef lth__representation_tokT vfastbst_rc_objT;
+typedef lth__underlying_tokT vfastbst_rc_objT;
 
 typedef struct vfastbst_rc_nodeS{
   rcT* key;

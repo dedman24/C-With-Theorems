@@ -11,59 +11,59 @@
 #include "stddef.h"         // size_t, NULL.
 #include "stdlib.h"         // malloc, free.
 
-typedef lth__representation_tokT lth_nameT;
-
 // some day you'll realise that everything here sux.
 // some day we'll all be fine, consumed by the dust...
-typedef enum{
-  LTH_TYPE__U8 = 3,
-  LTH_TYPE__U16 = 6,
-  LTH_TYPE__U32 = 9,
-  LTH_TYPE__U64 = 0,
 
-  LTH_TYPE__I8 = 4,
-  LTH_TYPE__I16 = 7,
-  LTH_TYPE__I32 = 10,
-  LTH_TYPE__I64 = 1,
-
-  LTH_TYPE__F8 = 5,
-  LTH_TYPE__F16 = 8,
-  LTH_TYPE__F32 = 11,
-  LTH_TYPE__F64 = 2,
-
-  LTH_TYPE__NONE = 12,                    // used for error values.
-  LTH_TYPE__UNDEFINED,                    // used for yet-to-be-defined variables.
-
+// types defined when initialising value ctx.
+enum{
   LTH_TYPE__CHAR,
   LTH_TYPE__TYPE,
   LTH_TYPE__STRING,
   LTH_TYPE__BOOLEAN,
-} lth_typeT;
+
+  LTH_TYPE__U8,
+  LTH_TYPE__U16,
+  LTH_TYPE__U32,
+  LTH_TYPE__U64,
+
+  LTH_TYPE__I8,
+  LTH_TYPE__I16,
+  LTH_TYPE__I32,
+  LTH_TYPE__I64,
+
+  LTH_TYPE__F8,
+  LTH_TYPE__F16,
+  LTH_TYPE__F32,
+  LTH_TYPE__F64,
+
+  LTH_TYPE__NONE,                         // used for error values.
+  LTH_TYPE__UNDEFINED,                    // used for yet-to-be-defined variables.
+};
 
 // possibly avoid c-like type names?
 const char* const restrict lth_type__strings[] = {
-  [LTH_TYPE__U8]        = "uint8_t",
-  [LTH_TYPE__U16]       = "uint16_t",
-  [LTH_TYPE__U32]       = "uint32_t",
-  [LTH_TYPE__U64]       = "uint64_t",
+  [LTH_TYPE__CHAR]      = "char",
+  [LTH_TYPE__TYPE]      = "type",
+  [LTH_TYPE__STRING]    = "string",
+  [LTH_TYPE__BOOLEAN]   = "bool",
 
-  [LTH_TYPE__I8]        = "int8_t",
-  [LTH_TYPE__I16]       = "int16_t",
-  [LTH_TYPE__I32]       = "int32_t",
-  [LTH_TYPE__I64]       = "int64_t",
+  [LTH_TYPE__U8]        = "u8",
+  [LTH_TYPE__U16]       = "u16",
+  [LTH_TYPE__U32]       = "u32",
+  [LTH_TYPE__U64]       = "u64",
 
-  [LTH_TYPE__F8]        = "float8_t",
-  [LTH_TYPE__F16]       = "float16_t",
-  [LTH_TYPE__F32]       = "float32_t",
-  [LTH_TYPE__F64]       = "float64_t",
+  [LTH_TYPE__I8]        = "i8",
+  [LTH_TYPE__I16]       = "i16",
+  [LTH_TYPE__I32]       = "i32",
+  [LTH_TYPE__I64]       = "i64",
+
+  [LTH_TYPE__F8]        = "f8",
+  [LTH_TYPE__F16]       = "f16",
+  [LTH_TYPE__F32]       = "f32",
+  [LTH_TYPE__F64]       = "f64",
 
   [LTH_TYPE__NONE]      = "ERROR",
-  [LTH_TYPE__UNDEFINED] = "UNDEFINED",
-
-  [LTH_TYPE__CHAR]      = "char",
-  [LTH_TYPE__TYPE]      = "type_t",
-  [LTH_TYPE__STRING]    = "string",
-  [LTH_TYPE__BOOLEAN]   = "bool"
+  [LTH_TYPE__UNDEFINED] = "UNDEFINED"
 };
 
 // doesn't really work for user-defined qualifiers, but those are an abstract idea anyways.
@@ -75,15 +75,19 @@ typedef enum: uint8_t{
 } lth_qualifierT;
 
 typedef struct{
-  void* internal;                                 // internal representation/actual contents of variable.
-  const char* name;                               // string name of variable.
-  size_t s_name;                                  // length of name in bytes.
-  lth_typeT type;                         // value type.
+  void* internal;                         // internal representation/actual contents of variable.
+  const char* name;                       // string name of variable.
+  size_t s_name;                          // length of name in bytes.
+  lth_nameT type;                         // value type.
   lth_qualifierT qualifier;               // qualifiers.
 } lth_variableT;
 
 static size_t lth_type__sizeof(lth_variableT* const restrict variable){
   const size_t sizes[] = {
+    [LTH_TYPE__CHAR]    = 1,
+    [LTH_TYPE__TYPE]    = 0,
+    [LTH_TYPE__BOOLEAN] = 1,
+
     [LTH_TYPE__U8]      = 1,
     [LTH_TYPE__U16]     = 2,
     [LTH_TYPE__U32]     = 4,
@@ -97,11 +101,7 @@ static size_t lth_type__sizeof(lth_variableT* const restrict variable){
     [LTH_TYPE__F8]      = 1,
     [LTH_TYPE__F16]     = 2,
     [LTH_TYPE__F32]     = 4,
-    [LTH_TYPE__F64]     = 8,
-
-    [LTH_TYPE__CHAR]    = 1,
-    [LTH_TYPE__TYPE]    = 0,
-    [LTH_TYPE__BOOLEAN] = 1
+    [LTH_TYPE__F64]     = 8
   };
 
   if(variable->type == LTH_TYPE__STRING) return strlen(variable->internal);
@@ -110,7 +110,7 @@ static size_t lth_type__sizeof(lth_variableT* const restrict variable){
 
 static lth_variableT* lth_variable_init(
   const char* const restrict name, const size_t s_name,
-  void* const restrict internal, const lth_typeT type, const lth_qualifierT qualifier
+  void* const restrict internal, const lth_nameT type, const lth_qualifierT qualifier
 ){
   lth_variableT* const restrict var = malloc(sizeof(*var));
 
@@ -143,7 +143,7 @@ static void lth_variable_ctx_destroy(lth_variable_ctxT* const restrict ctx, cons
 static void lth_variable_add(
   lth_variable_ctxT* const restrict ctx,
   const lth_nameT id, const char* const restrict name, const size_t s_name,
-  void* const restrict internal, const lth_typeT type, const lth_qualifierT qualifier
+  void* const restrict internal, const lth_nameT type, const lth_qualifierT qualifier
 ){
   lth_variableT* const restrict var = lth_variable_init(name, s_name, internal, type, qualifier);
   vfastrht_put(ctx->correspondences, id, var);

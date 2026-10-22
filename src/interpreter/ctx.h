@@ -8,8 +8,7 @@
 
 typedef struct{
   lth_variable_ctxT* variables;
-  lth__underlying_tokT* ops;
-  lth_nameT* values;
+  lth_nameT* state;
   lth_outputT output;
 } lth_interpreterT;
 
@@ -19,45 +18,35 @@ static void lth_interpreter_init(
 ){
   interpreter->variables = variables;
 
-  interpreter->ops = vfastarr_init(sizeof(*interpreter->ops));
-  interpreter->values = vfastarr_init(sizeof(*interpreter->values));
+  interpreter->state = vfastarr_init(sizeof(*interpreter->state));
   interpreter->output = vfastarr_init(sizeof(char));
 }
 
 static lth_outputT lth_interpreter_destroy(lth_interpreterT* const restrict interpreter){
   if(interpreter->variables)
     lth_variable_ctx_destroy(interpreter->variables, true);
-
-  if(interpreter->ops)
-    vfastarr_destroy(interpreter->ops);
-  if(interpreter->values)
-    vfastarr_destroy(interpreter->values);
-
+  if(interpreter->state)
+    vfastarr_destroy(interpreter->state);
   return interpreter->output;
 }
 
-static void lth_interpreter_push_op(lth_interpreterT* const restrict interpreter, const lth__underlying_tokT op){
-  interpreter->ops = vfastarr_append(interpreter->ops, &op, sizeof(op));
+static void lth_interpreter_push(lth_interpreterT* const restrict interpreter, const lth_nameT value){
+  interpreter->state = vfastarr_append(interpreter->state, &value, sizeof(value));
 }
 
-static lth__underlying_tokT lth_interpreter_pop_op(lth_interpreterT* const restrict interpreter){
-  lth__underlying_tokT tok; vfastarr_pop(interpreter->ops, &tok, sizeof(tok));
-  return tok;
-}
-
-static lth__underlying_tokT lth_interpreter_top_op(lth_interpreterT* const restrict interpreter){
-  return interpreter->ops[vfastarr_elcnt(interpreter->ops, sizeof(*interpreter->ops)) - 1];
+static lth_nameT lth_interpreter_pop(lth_interpreterT* const restrict interpreter){
+  lth_nameT value;
+  vfastarr_pop(interpreter->state, &value, sizeof(value));
+  return value;
 }
 
 static void lth_interpreter_push_variable(
   lth_interpreterT* const restrict interpreter,
-  const char* const restrict name, const size_t s_name,
-  void* const restrict internal, const lth_typeT type, const lth_qualifierT qualifier
+  void* const restrict internal, const lth_nameT type, const lth_qualifierT qualifier
 ){
   const lth_nameT id = lth_variable_name(interpreter->variables);
-  lth_variable_add(interpreter->variables, id, name, s_name, internal, type, qualifier);
-
-  interpreter->values = vfastarr_append(interpreter->values, &id, sizeof(id));
+  lth_variable_add(interpreter->variables, id, NULL, 0, internal, type, qualifier);
+  lth_interpreter_push(interpreter, id);
 }
 
 static lth_variableT* lth_interpreter_pop_variable(
@@ -65,7 +54,7 @@ static lth_variableT* lth_interpreter_pop_variable(
   lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
 ){
   lth_nameT id;
-  if(!vfastarr_pop(interpreter->values, &id, sizeof(id))){
+  if(!vfastarr_pop(interpreter->state, &id, sizeof(id))){
     lth_error_report(LTH_ERROR__INTERPRETER_TOO_FEW_OPERANDS, LTH_ERROR__COMPILER, path, line, offset, err);
     return NULL;
   }
@@ -74,15 +63,6 @@ static lth_variableT* lth_interpreter_pop_variable(
   if(!variable)
     lth_error_report(LTH_ERROR__INTERPRETER_VARIABLE_MISSING, LTH_ERROR__COMPILER, path, line, offset, err);
   return variable;
-}
-
-static void lth_interpreter_push_value(lth_interpreterT* const restrict interpreter, lth_nameT value){
-  value &= ~LTH_TOK__NAME_BIT;
-  interpreter->values = vfastarr_append(interpreter->values, &value, sizeof(value));
-}
-
-static size_t lth_interpreter_depth_op(lth_interpreterT* const restrict interpreter){
-  return vfastarr_elcnt(interpreter->ops, sizeof(*interpreter->ops));
 }
 
 #endif

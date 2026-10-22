@@ -41,7 +41,7 @@ static void lth_op__and(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op0, op1);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op0->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op0->type, qualif);
 }
 
 static void lth_op__or(
@@ -77,7 +77,7 @@ static void lth_op__or(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op0, op1);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op0->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op0->type, qualif);
 }
 
 
@@ -114,7 +114,7 @@ static void lth_op__xor(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op0, op1);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op0->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op0->type, qualif);
 }
 
 static void lth_op__not(
@@ -149,7 +149,7 @@ static void lth_op__not(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op, op);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op->type, qualif);
 }
 
 #endif

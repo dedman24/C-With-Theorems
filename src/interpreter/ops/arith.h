@@ -51,7 +51,7 @@ static void lth_op__add(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op0, op1);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op0->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op0->type, qualif);
 }
 
 // glorified noop.
@@ -101,7 +101,7 @@ static void lth_op__sub(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op0, op1);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op0->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op0->type, qualif);
 }
 
 static void lth_op__neg(
@@ -136,7 +136,7 @@ static void lth_op__neg(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op, op);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op->type, qualif);
 }
 
 static void lth_op__mul(
@@ -171,7 +171,7 @@ static void lth_op__mul(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op0, op1);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op0->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op0->type, qualif);
 }
 
 static void lth_op__div(
@@ -209,7 +209,7 @@ static void lth_op__div(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op0, op1);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op0->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op0->type, qualif);
 }
 
 static void lth_op__mod(
@@ -247,7 +247,7 @@ static void lth_op__mod(
   }
 
   const lth_qualifierT qualif = lth_qualifier__2(op0, op1);
-  lth_interpreter_push_variable(interpreter, NULL, 0, raw_final, op0->type, qualif);
+  lth_interpreter_push_variable(interpreter, raw_final, op0->type, qualif);
 }
 
 #endif

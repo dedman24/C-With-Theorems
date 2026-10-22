@@ -91,7 +91,7 @@ static const char* lth_tokenise__include(
     lth_load__unmap(finalcode);
 
     new = tokeniser->arr; tokeniser->arr = old;
-    *success = vfastbst_rc_node_init(finalpath, (lth__representation_tokT)new);
+    *success = vfastbst_rc_node_init(finalpath, (lth__underlying_tokT)new);
   }
   else
     new = (lth_tokT*)(*success)->obj;
@@ -104,7 +104,7 @@ static const char* lth_tokenise__include(
   return code;
 }
 
-static const char* lth_tokenise__comment__single(
+static const char* lth_tokenise__comment(
   const char* restrict code,
   lth_fposT* const restrict line,
   lth_fposT* const restrict offset
@@ -117,125 +117,58 @@ static const char* lth_tokenise__comment__single(
   return n_code;
 }
 
-static const char* lth_tokenise__comment__multi(
-  const char* restrict code,
-  lth_fposT* const restrict line,
-  lth_fposT* const restrict offset
-){
-// we want to support arbitrarily nested comments. how?
-  unsigned int depth = 1;
-  const char* restrict newln = strchr(code, '\n');
-  const char* restrict closest_opened = strstr(code, "/*");
-  const char* restrict closest_closed = strstr(code, "*/");
-// congrats: the world's ugliest code!
-  do{
-    if(
-      newln &&
-      (newln < closest_closed || !closest_closed) &&
-      (newln < closest_opened || !closest_opened)
-    ){ 
-      *line += 1; *offset = 0;
-      code = newln + 1;
-      newln = strchr(code, '\n');
-    }
-    else if(
-      closest_opened &&
-      (closest_opened < newln || !newln) &&
-      (closest_opened < closest_closed || !closest_closed)
-    ){
-      *offset += closest_opened - code; depth++;
-      code = closest_opened + 2 + 1;
-      closest_opened = strstr(code, "/*");
-    }
-    else if(
-      closest_closed &&
-      (closest_closed < newln || !newln) &&
-      (closest_closed < closest_opened || !closest_opened)
-    ){
-      *offset += closest_closed - code; depth--;
-      code = closest_closed + 2 + 1;
-      closest_closed = strstr(code, "*/");
-    }
-  } while(depth && code[0]);
-  return code;
-}
-
 // tokenises code pointed at by 'code' variable.
 static void lth_tokenise__single(
   const char* restrict code, rcT* const restrict path, const size_t s_path,
   lth_error_ctxT* const restrict err, lth_tokeniserT* const restrict tokeniser
 ){
   lth_fposT line = 0, offset = 0;
-  lth_tokT tok = lth_tok_init(LTH_TOK__SPECIAL_ERROR, line, offset);
 
-// ADD SPECIAL HANDLING FOR:
-//  names.
-
-  do{
+  while(1){
     size_t len;
-    tok = lth_tok(code, &len, line, offset);
+    const lth_tok_typeT tok = lth_tok(code, &len);
 // tokens that should be ignored.
-    switch(tok.token){
+    switch(tok){
       case LTH_TOK__NEWLINE:
         line++; offset = 0;
         code += len;
         continue;
       case LTH_TOK__WHITESPACE:
-        offset += len;
-        code += len;
-        continue;
-      case LTH_TOK__OPENED_SINGLE_LINE_COMMENT:
-        code = lth_tokenise__comment__single(code + len, &line, &offset);
-        continue;
-      case LTH_TOK__OPENED_MULTI_LINE_COMMENT:
-        code = lth_tokenise__comment__multi(code + len, &line, &offset);
-        continue;
-      case LTH_TOK__NAME:
-        const lth_nameT name = lth_name_add(code, len, err, &tokeniser->name);
-        tokeniser->arr = vfastarr_append(
-          tokeniser->arr,
-          &lth_tok_init__macro(name, line, offset),
-          sizeof(lth_tokT)
-        );
-        offset += len; code += len;
-        continue;
-      case LTH_TOK__VALUE:
-        const lth_nameT value = lth_value_add(code, len, &tokeniser->name, err, path, line, offset);
-        tokeniser->arr = vfastarr_append(
-          tokeniser->arr,
-          &lth_tok_init__macro(value, line, offset),
-          sizeof(lth_tokT)
-        );
-        offset += len; code += len;
-        continue;
-      case LTH_TOK__SPECIAL_IMPOSSIBILITY:
-        lth_error_report__u32(LTH_ERROR__IMPOSSIBILITY, LTH_ERROR__COMPILER, path, line, offset, err, LTH_IMPOSSIBILITY__TOK_H_RETURN_VALUE);
-        offset += len; code += len;
-        continue;
-      default:
         break;
-    }
-// name handling:
-//  try to allocate name.
-    tokeniser->arr = vfastarr_append(tokeniser->arr, &tok, sizeof(tok));
-// special handling of certain tokens.
-    switch(tok.token){
-      case LTH_TOK__INCLUDE:
-        code = lth_tokenise__include(code, path, s_path, tokeniser, err, &line, &offset);
-        break;
-      case LTH_TOK__OPENED_CURLY_BRACKET:
+      case LTH_TOK__COMMENT:
+        code = lth_tokenise__comment(code + len, &line, &offset);
+        continue;
+      case LTH_TOK__EOF:
+        return;
+  
+      case LTH_TOK__OPENED_BRACKET:
         lth_name_depth_inc(&tokeniser->name);
         break;
-      case LTH_TOK__CLOSED_CURLY_BRACKET:
+      case LTH_TOK__CLOSED_BRACKET:
         if(!lth_name_depth_dec(&tokeniser->name))
           lth_error_report(LTH_ERROR__INDENTATION_DEPTH_NEGATIVE, LTH_ERROR__COMPILER, path, line, offset, err);
         break;
-      default:
+
+      case LTH_TOK__NAME:
+        const lth_nameT name = lth_name_add(code, len, err, &tokeniser->name);
+        tokeniser->arr = vfastarr_append(tokeniser->arr, &lth_tok_init(name, line, offset), sizeof(lth_tokT));
+        break;
+      case LTH_TOK__VALUE:
+        const lth_nameT value = lth_value_add(code, len, &tokeniser->name, err, path, line, offset);
+        tokeniser->arr = vfastarr_append(tokeniser->arr, &lth_tok_init(value, line, offset), sizeof(lth_tokT));
+        break;
+      case LTH_TOK__CHAR:
+        const lth_nameT character = lth_char_add(code, len, &tokeniser->name, err, path, line, offset);
+        tokeniser->arr = vfastarr_append(tokeniser->arr, &lth_tok_init(character, line, offset), sizeof(lth_tokT));
+        break;
+      case LTH_TOK__STRING:
+        const lth_nameT string = lth_string_add(code, len, &tokeniser->name, err, path, line, offset);
+        tokeniser->arr = vfastarr_append(tokeniser->arr, &lth_tok_init(string, line, offset), sizeof(lth_tokT));
         break;
     }
     code += len;
     offset += len;
-  } while(tok.token != LTH_TOK__EOF);
+  }
 }
 
 static lth_outputT lth_tokenise(

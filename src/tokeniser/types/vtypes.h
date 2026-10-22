@@ -11,19 +11,21 @@
 #include "string.h"                     // strncmp.
 
 // hash function, generated with vfasttables version 1.1.0.
-static lth_typeT lth_vtype__hash(const char* str, const size_t len){
-    if(len > 127) return 0;
+static lth_nameT lth_vtype__hash(const char* str, const size_t len){
 // associated values generated for hash function.
+// hand-optimised B))).
     const uint8_t associated_values[] = {
-        84,88,46,239,56,96,187,19,97,195,133,240,255,13,163,150,
-        164,205,16,29,80,114,33,248,79,152,160,170,223,209,247,63,
-        106,164,42,243,107,130,94,113,95,22,98,228,215,185,43,151,
-        196,144,36,159,99,63,78,184,150,0,213,166,114,226,77,225,
-        174,151,7,6,95,33,50,207,117,135,179,195,83,51,60,99,
-        132,220,17,233,148,54,27,235,243,98,61,31,162,184,38,239,
-        111,199,146,243,122,239,197,201,18,196,167,114,25,253,35,110,
-        209,243,3,108,58,255,6,67,213,55,40,109,212,69,105,27
+        [2] = 4,
+        [4] = 4,
+        ['u'] = 0,
+        ['i'] = 4,
+        ['8'] = 0,
+        ['1'] = 1,
+        ['3'] = 2,
+        ['6'] = 3,
     };
+    if(len > 3) return 0;
+
     const size_t indices[] = {
         1, 0
     };
@@ -35,40 +37,27 @@ static lth_typeT lth_vtype__hash(const char* str, const size_t len){
     return hash;
 }
 
-static lth_typeT lth_vtype__search(const char* const restrict str, const size_t len){
-    const lth_typeT index = lth_vtype__hash(str, len);
+static lth_nameT lth_vtype__search(const char* const restrict str, const size_t len){
+    const lth_nameT index = lth_vtype__hash(str, len);
     char* table[12] = {
-       [LTH_TYPE__I64] = "i64",
-       [LTH_TYPE__U16] = "u16",
-       [LTH_TYPE__I32] = "i32",
-       [LTH_TYPE__U64] = "u64",
        [LTH_TYPE__U8]  = "u8",
-       [LTH_TYPE__I8]  = "i8",
+       [LTH_TYPE__U16] = "u16",
        [LTH_TYPE__U32] = "u32",
-       [LTH_TYPE__I16] = "i16"
+       [LTH_TYPE__U64] = "u64",
+
+       [LTH_TYPE__I8]  = "i8",
+       [LTH_TYPE__I16] = "i16",
+       [LTH_TYPE__I32] = "i32",
+       [LTH_TYPE__I64] = "i64"
     };
     return table[index] && strncmp(table[index], str, len) == 0? index: LTH_TYPE__NONE;
 }
 
 // really it should be encoding (hex, decimal, octal, binary) + type (whatever :ppp).
-static lth_typeT lth_vtype(
+static lth_nameT lth_vtype(
     const char* const restrict data, const size_t s_data,
     lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
 ){
-    if(data[0] == '"'){
-    // assumes string is all until '\0' eof terminator.
-        if(data[s_data - 1] != '"')
-            lth_error_report(LTH_ERROR__VALUE_STRING_UNFINISHED, LTH_ERROR__COMPILER, path, line, offset, err);
-        return LTH_TYPE__STRING;
-    }
-    if(data[0] == '\''){
-        if(data[s_data - 1] != '\'')
-            lth_error_report(LTH_ERROR__VALUE_CHAR_UNFINISHED, LTH_ERROR__COMPILER, path, line, offset, err);
-        if(s_data != 3)
-            lth_error_report(LTH_ERROR__VALUE_CHAR_TOO_LONG, LTH_ERROR__COMPILER, path, line, offset, err);
-        return LTH_TYPE__CHAR;
-    }
-
     if(s_data >= 3){
         const size_t max = strcspn(data, "iu");
         if(max > s_data) goto SKIP_SEARCH;
@@ -76,10 +65,10 @@ static lth_typeT lth_vtype(
             lth_error_report(LTH_ERROR__VALUE_FORMAT_UNKNOWN, LTH_ERROR__COMPILER, path, line, offset, err);
             return LTH_TYPE__NONE;
         }
-        const lth_typeT vtype = lth_vtype__search(data + s_data - 3, 3);
-        if(vtype == LTH_TYPE__NONE)
+        const lth_nameT type = lth_vtype__search(data + s_data - 3, 3);
+        if(type == LTH_TYPE__NONE)
             lth_error_report(LTH_ERROR__VALUE_FORMAT_UNKNOWN, LTH_ERROR__COMPILER, path, line, offset, err);
-        return vtype;
+        return type;
     }
 SKIP_SEARCH:
     const char* const restrict period = strchr(data, '.');

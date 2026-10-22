@@ -40,51 +40,20 @@ static lth_outputT lth_interpreter_run(
   lth_interpreterT interpreter; lth_interpreter_init(&interpreter, variables);
 
   bool prev_was_operand = false;                                // used to check if two operands/names follow each other, which is not valid.
-// c_code - 1 because last tok is always EOF.
-  for(size_t pos = 0; pos < c_code - 1; pos++){                 // overusage of 'i' as index variable found harmful.
-    if(code[pos].token & LTH_TOK__NAME_BIT){
-      if(prev_was_operand){
-        lth_error_report(LTH_ERROR__INTERPRETER_ADJACENT_OPERANDS, LTH_ERROR__COMPILER, NULL /* TODO! */, code[pos].line, code[pos].offset, error);
-        return lth_interpreter_destroy(&interpreter);
-      }
-      else prev_was_operand = true;
-
-      lth_interpreter_push_value(&interpreter, code[pos].token);
-      continue;
-    }
-
-// the following tokens require special processing rules:
-//  [X] semicolons.
-//  [ ] ufcs stuff.
-//  [ ] round brackets.
-//  [ ] square brackets (in types too).
-//  [ ] match statements.
-//  [ ] functions.
-
-// while priority(top) > priority(ourtok) process tokens.
-    const size_t cnt_top = vfastarr_elcnt(interpreter.ops, sizeof(*interpreter.ops));
-
-    if(cnt_top){
-      lth__underlying_tokT top = interpreter.ops[cnt_top - 1];
-      if(lth_tok__priority[top] <= lth_tok__priority[code[pos].token])
-        goto SKIP_PRIO;
-      vfastarr_remove(interpreter.ops, sizeof(*interpreter.ops));
-      do{
-        lth_interpreter_op(top, prev_was_operand, &interpreter, error, NULL /* TODO! */, code[pos].line, code[pos].offset);
-        top = lth_interpreter_pop_op(&interpreter);
-      } while(lth_tok__priority[top] > lth_tok__priority[code[pos].token]);
-    }
-SKIP_PRIO:
-    prev_was_operand = false;
-    if(code[pos].token != LTH_TOK__SEMICOLON)
-      lth_interpreter_push_op(&interpreter, code[pos].token);
+  for(size_t pos = 0; pos < c_code ; pos++){                    // overusage of 'i' as index variable found harmful.
+/*
+    if(code[pos].name == closed bracket)
+      execute code;
+    else
+      lth_interpreter_push(interpreter, code[pos].name);
+*/
   }
 
   if(!isrepl)
     return lth_interpreter_destroy(&interpreter);
 // result of execution is first few values at top of interpreter.
-  lth_outputT result = interpreter.values;
-  interpreter.values = NULL;
+  lth_outputT result = interpreter.state;
+  interpreter.state = NULL;
   interpreter.variables = NULL;
 
   vfastarr_destroy(lth_interpreter_destroy(&interpreter));

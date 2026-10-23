@@ -1,32 +1,19 @@
-# example of a program in the Lisp With Theorems (lth) programming language.
-# prototype of dependent typing in LISP.
-# LISP syntax, however ugly, makes dependent type checking very simple.
+// example of a program implementing theorem proving in an imperative manner in C With Theorems.
 
-(-- yes multi-line comments in lth are lisp statements how'd you know? )
-(-- maybe one day add C-style /**/ comments, to break apart code. )
-(--
- - we provide various functions to test all kinds of things regarding the lth interpreter.
- - hopefully it works.
- - provided here are examples of:
- -  circuit definitions,
- -  proofs using dependent types.
- - I don't really like how lth looks currently, but little can be done.
- - it's one of those ugly programming languages you HAVE to use & get used to. 
- - cry about it, see if I care.
---)
+type_t nat_t = enum{
+  z,
+  nat_t succ(nat_t)
+};
 
-# deftype syntax ~
-# (deftype TYPE-NAME CONTENTS)
-(deftype nat_t (enum
-  z
-  (deffun (succ nat_t) nat_t)
-))
+void add(nat_t a, nat_t b, nat_t* dst){
+  *dst = switch a
+    z = b,
+    succ(x) = succ(add(x, b));
+}
 
-# deffun syntax ~
-# (deffun (FUNCTION-NAME ARGNAME ARGTYPE) DST-TYPE)
-(deffun (add a nat_t b nat_t) nat_t)
-(define (add 0 b) b)
-(define (add (succ x) b) (succ (add x b)))
+theorem add0(nat_t a){
+
+}
 
 (defthe (add-0 a nat_t) 
   (= (add a 0) (add 0 a))

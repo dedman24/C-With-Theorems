@@ -1,5 +1,5 @@
-#ifndef LTH_TOKENISER_TYPES_CHARS_H_INCLUDED
-#define LTH_TOKENISER_TYPES_CHARS_H_INCLUDED
+#ifndef CTH_TOKENISER_TYPES_CHARS_H_INCLUDED
+#define CTH_TOKENISER_TYPES_CHARS_H_INCLUDED
 
 #include "../../common/_common.h"
 
@@ -9,13 +9,13 @@
 
 // basic function which reads 1 character & returns it, how many bytes were consumed & so on.
 // ischar ~ whether we're processing a single character (set to true) or a string (set to false).
-static char lth_vtype_char(
+static char cth_vtype_char(
   const char* const restrict data, const size_t s_data, const bool isquote, size_t* const restrict bytes_read,
-  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
+  cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
 // cannot be not terminated by quote, unless terminated by \0, but in case we decide to add other terminating characters this will work.
   if(isquote && data[s_data] != '\''){
-    lth_error_report(LTH_ERROR__VALUE_CHAR_UNFINISHED, LTH_ERROR__COMPILER, path, line, offset, err);
+    cth_error_report(CTH_ERROR__VALUE_CHAR_UNFINISHED, CTH_ERROR__COMPILER, path, line, offset, err);
     return 0;
   }
   if(data[0] != '\\'){
@@ -40,7 +40,7 @@ static char lth_vtype_char(
       int value, s_value;
       const int c_args = sscanf(data + 2, "%o%n", &value, &s_value);
       if(!c_args || s_value != s_data - 3 /* final quote & first 2 chars we skipped over */ && isquote)
-        lth_error_report(LTH_ERROR__VALUE_CHAR_TOO_SHORT, LTH_ERROR__COMPILER, path, line, offset, err);
+        cth_error_report(CTH_ERROR__VALUE_CHAR_TOO_SHORT, CTH_ERROR__COMPILER, path, line, offset, err);
       if(bytes_read) *bytes_read = s_value;
       return value;
     }
@@ -48,37 +48,37 @@ static char lth_vtype_char(
       int value, s_value;
       const int c_args = sscanf(data + 2, "%x%n", &value, &s_value);
       if(!c_args || s_value != s_data - 3 /* final quote & first 2 chars we skipped over */ && isquote)
-        lth_error_report(LTH_ERROR__VALUE_CHAR_TOO_SHORT, LTH_ERROR__COMPILER, path, line, offset, err);
+        cth_error_report(CTH_ERROR__VALUE_CHAR_TOO_SHORT, CTH_ERROR__COMPILER, path, line, offset, err);
       if(bytes_read) *bytes_read = s_value;
       return value;
     }
     default:                          // arbitrary decimal value of the format \... or an error if not a digit.
       if(data[1] < '0' || data[1] > '9'){
-        lth_error_report(LTH_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE, LTH_ERROR__COMPILER, path, line, offset, err);
+        cth_error_report(CTH_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE, CTH_ERROR__COMPILER, path, line, offset, err);
         if(bytes_read) *bytes_read = 2;
         return 0;
       }{
       int value, s_value;
       const int c_args = sscanf(data + 2, "%d%n", &value, &s_value);
       if(!c_args || s_value != s_data - 3 /* final quote & first 2 chars we skipped over */ && isquote)
-        lth_error_report(LTH_ERROR__VALUE_CHAR_TOO_SHORT, LTH_ERROR__COMPILER, path, line, offset, err);
+        cth_error_report(CTH_ERROR__VALUE_CHAR_TOO_SHORT, CTH_ERROR__COMPILER, path, line, offset, err);
       if(bytes_read) *bytes_read = s_value;
       return value;
       }
   }
 } 
 
-static char* lth_vtype_string(
+static char* cth_vtype_string(
   const char* const restrict data, const size_t s_data, size_t* const restrict s_raw,
-  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
+  cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
   vfastextT arr; vfastext_init(&arr, sizeof(char));
   if(data[s_data] != '"')             // we still go on, returning NULL is far more harmful.
-    lth_error_report(LTH_ERROR__VALUE_STRING_UNFINISHED, LTH_ERROR__COMPILER, path, line, offset, err);
+    cth_error_report(CTH_ERROR__VALUE_STRING_UNFINISHED, CTH_ERROR__COMPILER, path, line, offset, err);
 
   for(size_t i = 0; i < s_data;){
     size_t bytes_read;
-    const char c = lth_vtype_char(data + i, s_data - i, false, &bytes_read, err, path, line, offset);
+    const char c = cth_vtype_char(data + i, s_data - i, false, &bytes_read, err, path, line, offset);
     vfastext_append(&arr, &c, sizeof(c));
     i += bytes_read;
   }

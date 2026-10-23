@@ -3,21 +3,21 @@
 
 // insert-only binary search tree for file handling.
 // uses reference-counted strings.
-// exists specifically for the lth programming language.
+// exists specifically for the cth programming language.
 
 #ifdef VFASTBST_IMPLEMENTATION
 # define RC_IMPLEMENTATION
 #endif
 
 #include "../rc.h"          // reference-counted strings.
-#include "../../tok.h"      // lth__underlying_tokT.
+#include "../../tok.h"      // cth__underlying_tokT.
 
 // stdlib includes.
 #include "stddef.h"         // for NULL, size_t.
 #include "stdlib.h"         // for calloc, free.
 #include "string.h"         // for strcmp.
 
-typedef lth__underlying_tokT vfastbst_rc_objT;
+typedef cth__underlying_tokT vfastbst_rc_objT;
 
 typedef struct vfastbst_rc_nodeS{
   rcT* key;

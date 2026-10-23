@@ -1,9 +1,9 @@
-#ifndef LTH_COMMON_VARIABLES_H_INCLUDED
-#define LTH_COMMON_VARIABLES_H_INCLUDED
+#ifndef CTH_COMMON_VARIABLES_H_INCLUDED
+#define CTH_COMMON_VARIABLES_H_INCLUDED
 
 // handles variables, variable ctx.
 
-#include "tok.h"                          // lth__representation_tokT.
+#include "tok.h"                          // cth__representation_tokT.
 #include "linking/vfastrht/vfastrht.h"    // vfastrhtT type & functions.
 
 
@@ -16,103 +16,103 @@
 
 // types defined when initialising value ctx.
 enum{
-  LTH_TYPE__CHAR,
-  LTH_TYPE__TYPE,
-  LTH_TYPE__STRING,
-  LTH_TYPE__BOOLEAN,
+  CTH_TYPE__CHAR,
+  CTH_TYPE__TYPE,
+  CTH_TYPE__STRING,
+  CTH_TYPE__BOOLEAN,
 
-  LTH_TYPE__U8,
-  LTH_TYPE__U16,
-  LTH_TYPE__U32,
-  LTH_TYPE__U64,
+  CTH_TYPE__U8,
+  CTH_TYPE__U16,
+  CTH_TYPE__U32,
+  CTH_TYPE__U64,
 
-  LTH_TYPE__I8,
-  LTH_TYPE__I16,
-  LTH_TYPE__I32,
-  LTH_TYPE__I64,
+  CTH_TYPE__I8,
+  CTH_TYPE__I16,
+  CTH_TYPE__I32,
+  CTH_TYPE__I64,
 
-  LTH_TYPE__F8,
-  LTH_TYPE__F16,
-  LTH_TYPE__F32,
-  LTH_TYPE__F64,
+  CTH_TYPE__F8,
+  CTH_TYPE__F16,
+  CTH_TYPE__F32,
+  CTH_TYPE__F64,
 
-  LTH_TYPE__NONE,                         // used for error values.
-  LTH_TYPE__UNDEFINED,                    // used for yet-to-be-defined variables.
+  CTH_TYPE__NONE,                         // used for error values.
+  CTH_TYPE__UNDEFINED,                    // used for yet-to-be-defined variables.
 };
 
 // possibly avoid c-like type names?
-const char* const restrict lth_type__strings[] = {
-  [LTH_TYPE__CHAR]      = "char",
-  [LTH_TYPE__TYPE]      = "type",
-  [LTH_TYPE__STRING]    = "string",
-  [LTH_TYPE__BOOLEAN]   = "bool",
+const char* const restrict cth_type__strings[] = {
+  [CTH_TYPE__CHAR]      = "char",
+  [CTH_TYPE__TYPE]      = "type",
+  [CTH_TYPE__STRING]    = "string",
+  [CTH_TYPE__BOOLEAN]   = "bool",
 
-  [LTH_TYPE__U8]        = "u8",
-  [LTH_TYPE__U16]       = "u16",
-  [LTH_TYPE__U32]       = "u32",
-  [LTH_TYPE__U64]       = "u64",
+  [CTH_TYPE__U8]        = "u8",
+  [CTH_TYPE__U16]       = "u16",
+  [CTH_TYPE__U32]       = "u32",
+  [CTH_TYPE__U64]       = "u64",
 
-  [LTH_TYPE__I8]        = "i8",
-  [LTH_TYPE__I16]       = "i16",
-  [LTH_TYPE__I32]       = "i32",
-  [LTH_TYPE__I64]       = "i64",
+  [CTH_TYPE__I8]        = "i8",
+  [CTH_TYPE__I16]       = "i16",
+  [CTH_TYPE__I32]       = "i32",
+  [CTH_TYPE__I64]       = "i64",
 
-  [LTH_TYPE__F8]        = "f8",
-  [LTH_TYPE__F16]       = "f16",
-  [LTH_TYPE__F32]       = "f32",
-  [LTH_TYPE__F64]       = "f64",
+  [CTH_TYPE__F8]        = "f8",
+  [CTH_TYPE__F16]       = "f16",
+  [CTH_TYPE__F32]       = "f32",
+  [CTH_TYPE__F64]       = "f64",
 
-  [LTH_TYPE__NONE]      = "ERROR",
-  [LTH_TYPE__UNDEFINED] = "UNDEFINED"
+  [CTH_TYPE__NONE]      = "ERROR",
+  [CTH_TYPE__UNDEFINED] = "UNDEFINED"
 };
 
 // doesn't really work for user-defined qualifiers, but those are an abstract idea anyways.
 typedef enum: uint8_t{
-  LTH_QUALIFIER__NONE     = 0,
-  LTH_QUALIFIER__FREENAME = 1<<0,         // cheeky hiding this in qualifierT, but it can lead to bugs (LORD forbid!). it saves on space, so...
-  LTH_QUALIFIER__CONST    = 1<<1,
-  LTH_QUALIFIER__ARRAY    = 1<<2
-} lth_qualifierT;
+  CTH_QUALIFIER__NONE     = 0,
+  CTH_QUALIFIER__FREENAME = 1<<0,         // cheeky hiding this in qualifierT, but it can lead to bugs (LORD forbid!). it saves on space, so...
+  CTH_QUALIFIER__CONST    = 1<<1,
+  CTH_QUALIFIER__ARRAY    = 1<<2
+} cth_qualifierT;
 
 typedef struct{
   void* internal;                         // internal representation/actual contents of variable.
   const char* name;                       // string name of variable.
   size_t s_name;                          // length of name in bytes.
-  lth_nameT type;                         // value type.
-  lth_qualifierT qualifier;               // qualifiers.
-} lth_variableT;
+  cth_nameT type;                         // value type.
+  cth_qualifierT qualifier;               // qualifiers.
+} cth_variableT;
 
-static size_t lth_type__sizeof(lth_variableT* const restrict variable){
+static size_t cth_type__sizeof(cth_variableT* const restrict variable){
   const size_t sizes[] = {
-    [LTH_TYPE__CHAR]    = 1,
-    [LTH_TYPE__TYPE]    = 0,
-    [LTH_TYPE__BOOLEAN] = 1,
+    [CTH_TYPE__CHAR]    = 1,
+    [CTH_TYPE__TYPE]    = 0,
+    [CTH_TYPE__BOOLEAN] = 1,
 
-    [LTH_TYPE__U8]      = 1,
-    [LTH_TYPE__U16]     = 2,
-    [LTH_TYPE__U32]     = 4,
-    [LTH_TYPE__U64]     = 8,
+    [CTH_TYPE__U8]      = 1,
+    [CTH_TYPE__U16]     = 2,
+    [CTH_TYPE__U32]     = 4,
+    [CTH_TYPE__U64]     = 8,
 
-    [LTH_TYPE__I8]      = 1,
-    [LTH_TYPE__I16]     = 2,
-    [LTH_TYPE__I32]     = 4,
-    [LTH_TYPE__I64]     = 8,
+    [CTH_TYPE__I8]      = 1,
+    [CTH_TYPE__I16]     = 2,
+    [CTH_TYPE__I32]     = 4,
+    [CTH_TYPE__I64]     = 8,
 
-    [LTH_TYPE__F8]      = 1,
-    [LTH_TYPE__F16]     = 2,
-    [LTH_TYPE__F32]     = 4,
-    [LTH_TYPE__F64]     = 8
+    [CTH_TYPE__F8]      = 1,
+    [CTH_TYPE__F16]     = 2,
+    [CTH_TYPE__F32]     = 4,
+    [CTH_TYPE__F64]     = 8
   };
 
-  if(variable->type == LTH_TYPE__STRING) return strlen(variable->internal);
+  if(variable->type == CTH_TYPE__STRING) return strlen(variable->internal);
   return sizes[variable->type];
 }
 
-static lth_variableT* lth_variable_init(
+static cth_variableT* cth_variable_init(
   const char* const restrict name, const size_t s_name,
-  void* const restrict internal, const lth_nameT type, const lth_qualifierT qualifier
+  void* const restrict internal, const cth_nameT type, const cth_qualifierT qualifier
 ){
-  lth_variableT* const restrict var = malloc(sizeof(*var));
+  cth_variableT* const restrict var = malloc(sizeof(*var));
 
   var->internal = internal;
   var->name = name;
@@ -123,50 +123,51 @@ static lth_variableT* lth_variable_init(
   return var;
 }
 
-static void lth_variable_destroy(vfastrht_objT* const restrict var){
-  lth_variableT* const restrict real = (lth_variableT*)var;
-  if(real->qualifier & LTH_QUALIFIER__FREENAME) free((void*)real->name);
+static void cth_variable_destroy(vfastrht_objT* const restrict var){
+  cth_variableT* const restrict real = (cth_variableT*)var;
+  if(real->qualifier & CTH_QUALIFIER__FREENAME) free((void*)real->name);
   free(real->internal);
   free(real);
 }
 
 typedef struct{
   vfastrhtT* correspondences;
-  lth_nameT id_name;
-} lth_variable_ctxT;
+  cth_nameT id_name;
+} cth_variable_ctxT;
 
-static void lth_variable_ctx_destroy(lth_variable_ctxT* const restrict ctx, const bool freectx){
-  vfastrht_table_destroy(ctx->correspondences, lth_variable_destroy);
+static void cth_variable_ctx_destroy(cth_variable_ctxT* const restrict ctx, const bool freectx){
+  vfastrht_table_destroy(ctx->correspondences, cth_variable_destroy);
   if(freectx) free(ctx);
 }
 
-static void lth_variable_add(
-  lth_variable_ctxT* const restrict ctx,
-  const lth_nameT id, const char* const restrict name, const size_t s_name,
-  void* const restrict internal, const lth_nameT type, const lth_qualifierT qualifier
+static void cth_variable_add(
+  cth_variable_ctxT* const restrict ctx,
+  const cth_nameT id, const char* const restrict name, const size_t s_name,
+  void* const restrict internal, const cth_nameT type, const cth_qualifierT qualifier
 ){
-  lth_variableT* const restrict var = lth_variable_init(name, s_name, internal, type, qualifier);
+  cth_variableT* const restrict var = cth_variable_init(name, s_name, internal, type, qualifier);
   vfastrht_put(ctx->correspondences, id, var);
 }
 
-static lth_variableT* lth_variable_search(lth_variable_ctxT* const restrict ctx, const lth__underlying_tokT id){
+static cth_variableT* cth_variable_search(cth_variable_ctxT* const restrict ctx, const cth__underlying_tokT id){
   return vfastrht_search_elem(ctx->correspondences, id);
 }
 
-#define LTH_VARIABLE__ID_ERROR 1
+#define CTH_VARIABLE__ID_ERROR 1
 
-static lth_variable_ctxT* lth_variable_ctx_init(lth_variable_ctxT* restrict ctx){
+// TODO: add initialising all kinds of stuff here.
+static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx){
   if(!ctx) ctx = malloc(sizeof(*ctx));
 
   ctx->correspondences = vfastrht_table_init();
   ctx->id_name = 2;    // if set to 0, conflicts with vfastrht stuff. also, value of id 1 is reserved for an error value used during execution.
 
-  lth_variable_add(ctx, LTH_VARIABLE__ID_ERROR, NULL, 0, NULL, LTH_TYPE__NONE, LTH_QUALIFIER__FREENAME);
+  cth_variable_add(ctx, CTH_VARIABLE__ID_ERROR, NULL, 0, NULL, CTH_TYPE__NONE, CTH_QUALIFIER__FREENAME);
 
   return ctx;
 }
 
-static lth_nameT lth_variable_name(lth_variable_ctxT* restrict ctx){
+static cth_nameT cth_variable_name(cth_variable_ctxT* restrict ctx){
   return ctx->id_name++;
 }
 

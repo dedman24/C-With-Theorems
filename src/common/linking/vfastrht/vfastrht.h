@@ -9,7 +9,7 @@
 // the algorithm is most efficient for when all values inserted have large, random keys. 
 // it is most inefficient when all keys are very similar except for a couple of bits towards the end of the key.
 
-#include "../../tok.h"                  // lth__representation_tokT.
+#include "../../tok.h"                  // cth__representation_tokT.
 
 // stdlib includes.
 #include "stddef.h"                     // for size_t, NULL.
@@ -17,7 +17,7 @@
 #include "string.h"                     // for memcmp.
 #include "stdbool.h"                    // for boolean type.
 
-typedef lth__underlying_tokT vfastrht_keyT;
+typedef cth__underlying_tokT vfastrht_keyT;
 #define VFASTRHT_OBJ_NULL NULL
 
 typedef void* vfastrht_objT;

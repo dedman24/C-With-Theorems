@@ -1,5 +1,5 @@
-#ifndef LTH_TOKENISER_NAME_H_INCLUDED
-#define LTH_TOKENISER_NAME_H_INCLUDED
+#ifndef CTH_TOKENISER_NAME_H_INCLUDED
+#define CTH_TOKENISER_NAME_H_INCLUDED
 
 #include "types/chars.h"                  // char, string escape sequence handling.
 #include "types/vtypes.h"                 // value types.
@@ -12,13 +12,13 @@
 #include "inttypes.h"                     // sscanf formats.
 
 typedef struct{
-  lth_variable_ctxT* variables;   // NOTE: remember to extract this before deleting the whole name ctx.
+  cth_variable_ctxT* variables;   // NOTE: remember to extract this before deleting the whole name ctx.
   vfastbst_strT* names;
   vfastbst_strT values;
-} lth_name_ctxT;
+} cth_name_ctxT;
 
-static void lth_name_ctx_init(lth_name_ctxT* const restrict name){
-  name->variables = lth_variable_ctx_init(NULL);
+static void cth_name_ctx_init(cth_name_ctxT* const restrict name){
+  name->variables = cth_variable_ctx_init(NULL);
   name->names = vfastarr_init(sizeof(*name->names));
   name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
   name->names[0] = VFASTBST_STR_INIT;
@@ -26,7 +26,7 @@ static void lth_name_ctx_init(lth_name_ctxT* const restrict name){
 }
 
 // destroys name ctx, returns whether ctxdepth is 0 or not.
-static bool lth_name_ctx_destroy(lth_name_ctxT* const restrict name, const bool freectx){
+static bool cth_name_ctx_destroy(cth_name_ctxT* const restrict name, const bool freectx){
   const size_t ctxdepth = vfastarr_elcnt(name->names, sizeof(*name->names));
   for(size_t i = 0; i < ctxdepth; i++)
     vfastbst_str_destroy(&name->names[i], false);
@@ -38,12 +38,12 @@ static bool lth_name_ctx_destroy(lth_name_ctxT* const restrict name, const bool 
   return ctxdepth == 1;
 }
 
-static void lth_name_depth_inc(lth_name_ctxT* const restrict name){
+static void cth_name_depth_inc(cth_name_ctxT* const restrict name){
   name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
 }
 
 // returns false if depth goes below 0.
-static bool lth_name_depth_dec(lth_name_ctxT* const restrict name){
+static bool cth_name_depth_dec(cth_name_ctxT* const restrict name){
   const size_t elcnt = vfastarr_elcnt(name, sizeof(*name));
   if(!elcnt) return false;
 
@@ -52,14 +52,14 @@ static bool lth_name_depth_dec(lth_name_ctxT* const restrict name){
   return true;
 }
 
-static size_t lth_name_depth(lth_name_ctxT* const restrict name){
+static size_t cth_name_depth(cth_name_ctxT* const restrict name){
   return vfastarr_elcnt(name, sizeof(*name));
 }
 
 // searches for name, creates nameID if it doesn't find any.
-static lth_nameT lth_name_add(
+static cth_nameT cth_name_add(
   const char* const restrict key, const size_t s_key,
-  lth_error_ctxT* const restrict err, lth_name_ctxT* const restrict name
+  cth_error_ctxT* const restrict err, cth_name_ctxT* const restrict name
 ){
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
 
@@ -70,14 +70,14 @@ static lth_nameT lth_name_add(
       return (*curr_node)->obj;
   }
 
-  const lth_nameT id = lth_variable_name(name->variables);
+  const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(key, s_key, id);
-  lth_variable_add(name->variables, id, key, s_key, NULL, LTH_TYPE__NONE, LTH_QUALIFIER__NONE);
+  cth_variable_add(name->variables, id, key, s_key, NULL, CTH_TYPE__NONE, CTH_QUALIFIER__NONE);
   return id;
 }
 
 // decodes binary string, returns 1 on success, 0 otherwise.
-static int lth_value_decode__binary(
+static int cth_value_decode__binary(
   const char* restrict data, const size_t s_data, uint64_t* const restrict raw, int* const restrict bytes_read
 ){
   *raw = 0;
@@ -89,12 +89,12 @@ static int lth_value_decode__binary(
   return *bytes_read != 0;
 }
 
-static const void* lth_value_decode(
-  const char* restrict data, size_t s_data, size_t* const restrict s_raw, lth_nameT* const restrict type_raw,
-  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
+static const void* cth_value_decode(
+  const char* restrict data, size_t s_data, size_t* const restrict s_raw, cth_nameT* const restrict type_raw,
+  cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
-  const lth_nameT type = lth_vtype(data, s_data, err, path, line, offset);
-  if(type == LTH_TYPE__NONE) 
+  const cth_nameT type = cth_vtype(data, s_data, err, path, line, offset);
+  if(type == CTH_TYPE__NONE) 
     return NULL;
   *type_raw = type;
 
@@ -105,7 +105,7 @@ static const void* lth_value_decode(
   enum{ HEX, DECIMAL, OCTAL, BINARY } encoding;
   if(
     s_data > 2 && data[0] == 0 &&
-    type != LTH_TYPE__F8 && type != LTH_TYPE__F16 && type != LTH_TYPE__F32 && type != LTH_TYPE__F64
+    type != CTH_TYPE__F8 && type != CTH_TYPE__F16 && type != CTH_TYPE__F32 && type != CTH_TYPE__F64
   ){
     if(negated){ data++; s_data--; }
     
@@ -122,24 +122,24 @@ static const void* lth_value_decode(
   else encoding = DECIMAL;
 
   switch(type){
-    case LTH_TYPE__F8:
-    case LTH_TYPE__F16:
-      lth_error_report(LTH_ERROR__VALUE_FORMAT_UNIMPLEMENTED, LTH_ERROR__COMPILER, path, line, offset, err);
+    case CTH_TYPE__F8:
+    case CTH_TYPE__F16:
+      cth_error_report(CTH_ERROR__VALUE_FORMAT_UNIMPLEMENTED, CTH_ERROR__COMPILER, path, line, offset, err);
       return NULL;
-    case LTH_TYPE__F32:
+    case CTH_TYPE__F32:
       *s_raw = sizeof(float);
       raw = malloc(sizeof(float));
       args_read = sscanf(data, "%f%n", (float*)raw, &bytes_read);
       break;
-    case LTH_TYPE__F64:
+    case CTH_TYPE__F64:
       *s_raw = sizeof(double);
       raw = malloc(sizeof(double));
       args_read = sscanf(data, "%lf%n", (double*)raw, &bytes_read);
       break;
-    case LTH_TYPE__U8:
-    case LTH_TYPE__U16:
-    case LTH_TYPE__U32:
-    case LTH_TYPE__U64:
+    case CTH_TYPE__U8:
+    case CTH_TYPE__U16:
+    case CTH_TYPE__U32:
+    case CTH_TYPE__U64:
       *s_raw = sizeof(uint64_t);
       raw = malloc(sizeof(uint64_t));
       switch(encoding){
@@ -155,15 +155,15 @@ static const void* lth_value_decode(
           if(negated) *(uint64_t*)raw = -*(uint64_t*)raw;
           break;
         case BINARY:
-          args_read = lth_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
+          args_read = cth_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
           if(negated) *(uint64_t*)raw = -*(uint64_t*)raw;
           break;
       }
       break;
-    case LTH_TYPE__I8:
-    case LTH_TYPE__I16:
-    case LTH_TYPE__I32:
-    case LTH_TYPE__I64:
+    case CTH_TYPE__I8:
+    case CTH_TYPE__I16:
+    case CTH_TYPE__I32:
+    case CTH_TYPE__I64:
       *s_raw = sizeof(int64_t);
       raw = malloc(sizeof(int64_t));
       switch(encoding){
@@ -179,31 +179,31 @@ static const void* lth_value_decode(
           if(negated) *(int64_t*)raw = -*(int64_t*)raw;
           break;
         case BINARY:
-          args_read = lth_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
+          args_read = cth_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
           if(negated) *(int64_t*)raw = -*(int64_t*)raw;
           break;
       }
       break;
-    case LTH_TYPE__NONE:      // error reported by lth_vtype.
+    case CTH_TYPE__NONE:      // error reported by cth_vtype.
       return NULL;
     default:                          // should not happen, very worrying if it does.
-      lth_error_report__u32(LTH_ERROR__IMPOSSIBILITY, LTH_ERROR__COMPILER, path, line, offset, err, LTH_IMPOSSIBILITY__NAME_H_DEFAULT);
+      cth_error_report__u32(CTH_ERROR__IMPOSSIBILITY, CTH_ERROR__COMPILER, path, line, offset, err, CTH_IMPOSSIBILITY__NAME_H_DEFAULT);
       return NULL;
   }
 
   if(bytes_read != s_data)
-    lth_error_report__u32(LTH_ERROR__VALUE_TOO_FEW_BYTES, LTH_ERROR__COMPILER, path, line, offset, err, bytes_read);
+    cth_error_report__u32(CTH_ERROR__VALUE_TOO_FEW_BYTES, CTH_ERROR__COMPILER, path, line, offset, err, bytes_read);
   return raw;
 }
 
 // searches for value, creates nameID if it doesn't find any.
-static lth_nameT lth_value_add(
-  const char* const restrict data, const size_t s_data, lth_name_ctxT* const restrict name,
-  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
+static cth_nameT cth_value_add(
+  const char* const restrict data, const size_t s_data, cth_name_ctxT* const restrict name,
+  cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
   size_t s_raw;
-  lth_nameT type_raw;
-  const char* const restrict raw = lth_value_decode(data, s_data, &s_raw, &type_raw, err, path, line, offset);
+  cth_nameT type_raw;
+  const char* const restrict raw = cth_value_decode(data, s_data, &s_raw, &type_raw, err, path, line, offset);
 
   vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
   if(*curr_node){
@@ -211,19 +211,19 @@ static lth_nameT lth_value_add(
     return (*curr_node)->obj;
   }
 
-  const lth_nameT id = lth_variable_name(name->variables);
+  const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  lth_variable_add(name->variables, id, raw, s_raw, (void*)raw, type_raw, LTH_QUALIFIER__CONST);
+  cth_variable_add(name->variables, id, raw, s_raw, (void*)raw, type_raw, CTH_QUALIFIER__CONST);
   return id;
 }
 
-static lth_nameT lth_char_add(
-  const char* const restrict data, const size_t s_data, lth_name_ctxT* const restrict name,
-  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
+static cth_nameT cth_char_add(
+  const char* const restrict data, const size_t s_data, cth_name_ctxT* const restrict name,
+  cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
   size_t s_raw;
   char* const restrict raw = malloc(1);
-  raw[0] = lth_vtype_char(data, s_data, true, &s_raw, err, path, line, offset);
+  raw[0] = cth_vtype_char(data, s_data, true, &s_raw, err, path, line, offset);
 
   vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
   if(*curr_node){
@@ -231,18 +231,18 @@ static lth_nameT lth_char_add(
     return (*curr_node)->obj;
   }
 
-  const lth_nameT id = lth_variable_name(name->variables);
+  const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  lth_variable_add(name->variables, id, raw, s_raw, (void*)raw, LTH_TYPE__CHAR, LTH_QUALIFIER__CONST);
+  cth_variable_add(name->variables, id, raw, s_raw, (void*)raw, CTH_TYPE__CHAR, CTH_QUALIFIER__CONST);
   return id;
 }
 
-static lth_nameT lth_string_add(
-  const char* const restrict data, const size_t s_data, lth_name_ctxT* const restrict name,
-  lth_error_ctxT* const restrict err, rcT* const restrict path, const lth_fposT line, const lth_fposT offset
+static cth_nameT cth_string_add(
+  const char* const restrict data, const size_t s_data, cth_name_ctxT* const restrict name,
+  cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
   size_t s_raw;
-  const char* const restrict raw = lth_vtype_string(data, s_data, &s_raw, err, path, line, offset);
+  const char* const restrict raw = cth_vtype_string(data, s_data, &s_raw, err, path, line, offset);
 
   vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
   if(*curr_node){
@@ -250,9 +250,9 @@ static lth_nameT lth_string_add(
     return (*curr_node)->obj;
   }
 
-  const lth_nameT id = lth_variable_name(name->variables);
+  const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  lth_variable_add(name->variables, id, raw, s_raw, (void*)raw, LTH_TYPE__STRING, LTH_QUALIFIER__CONST);
+  cth_variable_add(name->variables, id, raw, s_raw, (void*)raw, CTH_TYPE__STRING, CTH_QUALIFIER__CONST);
   return id;
 }
 

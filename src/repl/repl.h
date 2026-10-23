@@ -1,15 +1,17 @@
-#ifndef LTH_REPL_H_INCLUDED
-#define LTH_REPL_H_INCLUDED
+#ifndef CTH_REPL_H_INCLUDED
+#define CTH_REPL_H_INCLUDED
 
 // this file handles repl stuff.
 // we want an interface that evaluates whatever's written to stdin terminated by a semicolon & executes it.
 // this means that '2+3' does nothing, while '2+3;' prints out 5, or of whatever arithmetic expression is in stdin.
-// also supports piping, like with python3; `echo "whatever;" | ./lth repl` has the same effect as writing `whatever;` by hand.
+// also supports piping, like with python3; `echo "whatever;" | ./cth repl` has the same effect as writing `whatever;` by hand.
+
+#include "../parse/version.h"
 
 #include "../common/_common.h"
 #include "../common/ansi_colours.h"       // all manners of colours.
 
-#include "../tokeniser/tokeniser.h"       // 
+#include "../tokeniser/tokeniser.h"       // tokeniser stuff.
 #include "../interpreter/interpreter.h"   // interpreterT.
 
 // stdlib includes.
@@ -18,31 +20,31 @@
 // posix stuff.
 #include "unistd.h"             // isatty.
 
-static void lth_repl__result(lth_nameT* const restrict name, lth_variable_ctxT* const restrict variables){
+static void cth_repl__result(cth_nameT* const restrict name, cth_variable_ctxT* const restrict variables){
   const size_t c_name = vfastarr_elcnt(name, sizeof(*name));
 
   for(size_t i = 0; i < c_name; i++){
-    lth_variableT* const restrict var = lth_variable_search(variables, name[i]);
+    cth_variableT* const restrict var = cth_variable_search(variables, name[i]);
 
     switch(var->type){
-      case LTH_TYPE__U8:  fprintf(stdout, "%u",  *(uint8_t*)var->internal); break;
-      case LTH_TYPE__U16: fprintf(stdout, "%u",  *(uint16_t*)var->internal); break;
-      case LTH_TYPE__U32: fprintf(stdout, "%u",  *(uint32_t*)var->internal); break;
-      case LTH_TYPE__U64: fprintf(stdout, "%lu", *(uint64_t*)var->internal); break;
+      case CTH_TYPE__U8:  fprintf(stdout, "%u",  *(uint8_t*)var->internal); break;
+      case CTH_TYPE__U16: fprintf(stdout, "%u",  *(uint16_t*)var->internal); break;
+      case CTH_TYPE__U32: fprintf(stdout, "%u",  *(uint32_t*)var->internal); break;
+      case CTH_TYPE__U64: fprintf(stdout, "%lu", *(uint64_t*)var->internal); break;
 
-      case LTH_TYPE__I8:  fprintf(stdout, "%d",  *(int8_t*)var->internal); break;
-      case LTH_TYPE__I16: fprintf(stdout, "%d",  *(int16_t*)var->internal); break;
-      case LTH_TYPE__I32: fprintf(stdout, "%d",  *(int32_t*)var->internal); break;
-      case LTH_TYPE__I64: fprintf(stdout, "%ld", *(int64_t*)var->internal); break;
+      case CTH_TYPE__I8:  fprintf(stdout, "%d",  *(int8_t*)var->internal); break;
+      case CTH_TYPE__I16: fprintf(stdout, "%d",  *(int16_t*)var->internal); break;
+      case CTH_TYPE__I32: fprintf(stdout, "%d",  *(int32_t*)var->internal); break;
+      case CTH_TYPE__I64: fprintf(stdout, "%ld", *(int64_t*)var->internal); break;
 
-      case LTH_TYPE__F32: fprintf(stdout, "%f", *(float*)var->internal); break;
-      case LTH_TYPE__F64: fprintf(stdout, "%f", *(double*)var->internal); break;
+      case CTH_TYPE__F32: fprintf(stdout, "%f", *(float*)var->internal); break;
+      case CTH_TYPE__F64: fprintf(stdout, "%f", *(double*)var->internal); break;
 
       default:
         fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
     }
     fputs(" : ", stdout);
-    fputs(lth_type__strings[var->type], stdout);
+    fputs(cth_type__strings[var->type], stdout);
 
     if(i != c_name - 1)
       fputs(", ", stdout);
@@ -50,29 +52,29 @@ static void lth_repl__result(lth_nameT* const restrict name, lth_variable_ctxT* 
   fputc('\n', stdout);
 }
 
-static void lth_repl__line(const char* const restrict code){
+static void cth_repl__line(const char* const restrict code){
   const size_t s_code = vfastarr_size(code);
   if(!s_code) return;
 
-  lth_variable_ctxT* variables;
-  lth_error_ctxT err; lth_error_ctx_init(&err);
-  lth_outputT tokenised = lth_tokenise(code, "repl", strlen("repl"), &variables, &err);
+  cth_variable_ctxT* variables;
+  cth_error_ctxT err; cth_error_ctx_init(&err);
+  cth_outputT tokenised = cth_tokenise(code, "repl", strlen("repl"), &variables, &err);
 
-  lth_nameT* const restrict name = lth_interpreter_run(tokenised, vfastarr_elcnt(tokenised, sizeof(lth_tokT)), &err, variables, true);
-  lth_repl__result(name, variables);
+  cth_nameT* const restrict name = cth_interpreter_run(tokenised, vfastarr_elcnt(tokenised, sizeof(cth_tokT)), &err, variables, true);
+  cth_repl__result(name, variables);
 
   vfastarr_destroy(name);
   vfastarr_destroy(tokenised);
-  lth_error_print(&err, false);
-  lth_variable_ctx_destroy(variables, true);
+  cth_error_print(&err, false);
+  cth_variable_ctx_destroy(variables, true);
 }
 
 // loop that evaluates everything coming from stdin.
-static lth_outputT lth_repl(void){
+static cth_outputT cth_repl(void){
 // to detect whether piping from stdout of another process is used, or this is just a normal user interface.
   const bool ishuman = isatty(STDIN_FILENO);
   if(ishuman){
-    fputs(ANSI_COLOUR_MAGENTA "Satisfiable REPL" ANSI_COLOUR_RESET ".\n", stdout);
+    cth_parse__version();
     fwrite("> ", 2, 1, stdout);
     fflush(stdout);
   }
@@ -92,7 +94,7 @@ static lth_outputT lth_repl(void){
     }
     else if(c == ';'){          // execute REPLed code, empty line.
       line = vfastarr_append(line, "\0", 1);
-      lth_repl__line(line);
+      cth_repl__line(line);
       vfastarr_empty(line);
     }
   }
@@ -104,7 +106,7 @@ static lth_outputT lth_repl(void){
 
   if(!ishuman){
     vfastarr_append(line, ";", sizeof(";"));      // appends ';\0'. TODO: enable.
-    lth_repl__line(line);
+    cth_repl__line(line);
   }
 */
   vfastarr_destroy(line);

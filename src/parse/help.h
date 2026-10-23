@@ -1,15 +1,15 @@
-#ifndef LTH_PARSE_HELP_H_INCLUDED
-#define LTH_PARSE_HELP_H_INCLUDED
+#ifndef CTH_PARSE_HELP_H_INCLUDED
+#define CTH_PARSE_HELP_H_INCLUDED
 
 #include "version.h"
 
 // stdlib includes.
 #include "stdio.h"              // printf.
 
-static void lth_parse__help(const char* const restrict invoke_cmd){
-    lth_parse__version();
+static void cth_parse__help(const char* const restrict invoke_cmd){
+    cth_parse__version();
 
-    printf("Usage: '%s [options] src_file.lth'.\n", invoke_cmd);
+    printf("Usage: '%s [options] src_file.cth'.\n", invoke_cmd);
     fputs(
         "Options:\n"
         "  help       ~ prints out help information.\n"

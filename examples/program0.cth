@@ -1,0 +1,49 @@
+// example of a program implementing theorem proving in an imperative manner in C With Theorems.
+
+type_t nat_t = enum{
+  z,
+  nat_t succ(nat_t)
+};
+
+// for normal code, C-style declaration is fine.
+// imperative-style code that wishes to use dependent typing stuff must use arrows to specify what state is updated.
+// in this function, since there's only one nat_t* that _can_ be updated, it's obvious it _has_ to be dst.
+// if the variable is the sole one to be updated, one doesn't have to explicit it.
+// all ptrs whose underlying data is not const are assumed to be updated; they don't have to be explicited.
+
+// therefore:
+//      void add(nat_t a, nat_t b, nat_t* dst) -> nat_t dst;
+//      void add(nat_t a, nat_t b, nat_t* dst) -> nat_t;
+//      void add(nat_t a, nat_t b, nat_t* dst);
+// are all equivalent & equally usable in theorem proving.
+// arrows exist to specify the state that changes, when it isn't obvious.
+// in theorem proving, functions that change state return said changed state explicitly as if it were their return argument.
+
+void add(nat_t a, nat_t b, nat_t* dst) -> nat_t dst{
+  *dst = switch a
+    z = b,
+    succ(x) = succ(add(x, b));
+}
+
+// also another way of writing function declarations, where the return type is explicited like how updated states are.
+// fn add(nat_t a, nat_t b) -> nat_t{
+//   
+// }
+
+// how are theorems represented with the way C writes types?
+// one way is to write them as:
+//  add(a, 0) == add(0, a) add0(nat_t a);
+// this method is very ugly, it doesn't keep the type visually distinct and it requires one to already know what the values in the function type are.
+//  theorem th_name(types) -> return_arg;
+// this is in-line with the other way of writing theorems.
+// in theorems, stuff that gets updated by state & is explicited in the function type is returned as normal values, like how it would be in a functional language.
+theorem add0(nat_t a) -> add(a, 0, dst) == add(0, a, dst) = 
+  switch a
+    z = refl,
+    succ(x) = succ(add0(x));
+
+// '~' is used for universal function call syntax; it leads to prettier code without requiring a whole method subsystem.
+theorem add_commutative(nat_t a, nat_t b) -> add(a, b, dst) == add(b, a, dst) =
+  switch a
+    z = add0(b),
+    succ(x) = add_commutative(x, b)~succ();

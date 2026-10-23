@@ -1,4 +1,5 @@
 ### Changelog 2026/10/23.
+ - added AST formation.
 
 ### Current errors:
  - values terminating in standard rust-like integer suffixes do not work properly, lead to segfaults.

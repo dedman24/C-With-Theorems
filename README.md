@@ -11,8 +11,8 @@ The following mutually exclusive options can be used:
 * `help` ~ prints help string to stdout.
 * `version` ~ prints current version & copyright info to stdout.
 * `check` ~ type-checks code.
-* `repl` ~ executes command-line REPL, useful for debugging programs.
-If no options are explicited, all code is type-checked & interpreted.
+* `repl` ~ starts command-line REPL, useful for debugging programs.
+If no options are explicited, all code is type-checked & compiled.
 
 ## Syntax.
 Syntax is very simple, made to be visually unique & easy to read.\
@@ -23,4 +23,4 @@ I tried to give cth similar expressiveness as other dependent-typed theorem prov
 cth is **imperative**. This was done to make code faster.
 
 ## Why C With Theorems.
-I really like C and C-like programming languages. I thought about coding a LISP but they're too ugly.
+I really like C and C-like programming languages. I wanted a language _just like C_ so that all of my code is source-compatible, but with _a few things done differently_ (defer statements, dependent types, better safety).\

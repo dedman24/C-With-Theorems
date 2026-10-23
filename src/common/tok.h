@@ -1,9 +1,14 @@
 #ifndef CTH_COMMON_TOK_H_INCLUDED
 #define CTH_COMMON_TOK_H_INCLUDED
 
-#include "string.h"
-#include "stddef.h"
-#include "stdint.h"
+#include "fposT.h"        // fposT.
+
+// stdlib includes.
+#include "stddef.h"       // size_t, NULL.
+#include "stdint.h"       // integer types.
+#include "string.h"       // strncmp.
+
+typedef uint32_t cth_nameT;
 
 typedef enum{
   CTH_TOK__IN = 38,
@@ -77,7 +82,12 @@ typedef enum{
   CTH_TOK__NAME,
   CTH_TOK__VALUE,
   CTH_TOK__CHAR,
-  CTH_TOK__STRING
+  CTH_TOK__STRING,
+
+  CTH_TOK__SPECIAL_IMPOSSIBILITY,
+  CTH_TOK__WHITESPACE,
+  CTH_TOK__NEWLINE,
+  CTH_TOK__EOF
 } cth_tokT;
 
 // hash function, generated with vfasttables version 1.1.0.
@@ -178,8 +188,95 @@ static cth_tokT cth_tok__search(const char* const restrict str, const size_t len
   return strncmp(table[index], str, len) == 0? index: CTH_TOK__NONE;
 }
 
-static cth_tokT cth_tok(const char* const restrict str){
+static size_t cth_tok__oplen(const char* const restrict str){
+  return strspn(str, "+-*/%:;?&|^~!~=><()[]{},.\\");
+}
 
+// find position of terminator.
+// if preceeded by '\', find next.
+static size_t cth_tok__strlen(const char* const restrict base, const char terminator){
+  const char* off = base + 1;                         // to skip initial character.
+  while(1){
+    const char* const term = strchr(off, terminator);
+    if(!term) return strlen(base);
+    if(off[-1] != '\\') return off - base;
+    else off = term + 1;
+  }
+}
+
+// supports binary. hex. octal & fp encoding.
+// all of these share that the starting digit is 0 through 9.
+static size_t cth_tok__numlen(const char* const restrict str){
+// first char is digit?
+//  y -> strspn.
+//  n -> first char is - or .?
+//      y -> second char is . or digit?
+//          y -> strspn.
+//          n -> return 0.
+//      n -> return 0.
+// this can still pass values like '..0', which is wrong.
+  #define CHARACTER_IS_DIGIT(c) ((unsigned char)(c) - '0' <= 9)
+  if(CHARACTER_IS_DIGIT(str[0])) 
+    return strspn(str, "0123456789ABCDEFIOXabcdefiox.");
+  if(str[0] != '-' && str[0] != '.') return 0;
+  if(!CHARACTER_IS_DIGIT(str[1]) && str[1] != '.') return 0;
+  return 1 + strspn(str + 1, "0123456789ABCDEFIOXabcdefiox.");
+  #undef CHARACTER_IS_DIGIT
+}
+
+static size_t cth_tok__codelen(const char* const restrict str){
+  const char sp_first = str[0] & ~0x20;
+  if(
+    'A' <= sp_first && 'Z' >= sp_first ||
+    str[0] == '_' ||
+    str[0] == '$'
+  )
+    return strspn(str, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$");
+  else return 0;
+}
+
+static cth_tokT cth_tok__gettok(const char* const restrict str, const size_t len){
+  const cth_tokT tok = cth_tok__search(str, len);
+  if(tok == CTH_TOK__NONE)
+    return CTH_TOK__NAME;
+  return tok;
+}
+
+static cth_tokT cth_tok__gettok_op(const char* const restrict str, size_t* const restrict len){
+  cth_tokT tok;
+  while((tok = cth_tok__search(str, *len)) == CTH_TOK__NONE && *len != 0)
+    *len -= 1;
+  return tok;
+}
+
+// full parsing function, returns token & length of token.
+// one just has to call this & the token is returned.
+// str ~ null-terminated string holding code.
+// len ~ length of section of text to tokenise; must not contain any whitespaces.
+// may return 'cth_TOK__SPECIAL_IMPOSSIBILITY', which has to be handled by the underlying machine.
+static cth_tokT cth_tok(const char* const restrict str, size_t* const restrict len, const cth_fposT line, const cth_fposT offset){
+// the way returning stuff's handled is very ugly.
+// checks for newlines & whitespaces.
+  if(str[0] == '\0') return CTH_TOK__EOF;
+  else if(str[0] == '\n'){ *len = 1; return CTH_TOK__NEWLINE; }
+
+  const bool iswhitespace = strchr(" \t\v\r\f", str[0]);
+  if(iswhitespace){ *len = strspn(str, " \t\v\r\f"); return CTH_TOK__WHITESPACE; }
+  if(str[0] == '\''){ *len = cth_tok__strlen(str + 1, '\'') + 1; return CTH_TOK__CHAR; }
+  if(str[0] == '\"'){ *len = cth_tok__strlen(str + 1, '\"') + 1; return CTH_TOK__STRING; }
+
+  *len = cth_tok__numlen(str);
+  if(*len) return CTH_TOK__VALUE;
+
+  *len = cth_tok__codelen(str);
+  if(*len) return cth_tok__gettok(str, *len);
+
+  *len = cth_tok__oplen(str);
+  if(*len)
+    return cth_tok__gettok_op(str, len);
+// technically nothing should be able to get here.
+  *len = 1;                   // we have to do this or else no program gets compiled.
+  return CTH_TOK__SPECIAL_IMPOSSIBILITY;
 }
 
 #endif

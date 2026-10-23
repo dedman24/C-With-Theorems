@@ -104,7 +104,7 @@ static const char* cth_tokenise__include(
   return code;
 }
 
-static const char* cth_tokenise__comment(
+static const char* cth_tokenise__comment_single(
   const char* restrict code,
   cth_fposT* const restrict line,
   cth_fposT* const restrict offset
@@ -117,6 +117,49 @@ static const char* cth_tokenise__comment(
   return n_code;
 }
 
+static const char* cth_tokenise__comment_multi(
+  const char* restrict code,
+  cth_fposT* const restrict line,
+  cth_fposT* const restrict offset
+){
+// we want to support arbitrarily nested comments. how?
+  unsigned int depth = 1;
+  const char* restrict newln = strchr(code, '\n');
+  const char* restrict closest_opened = strstr(code, "/*");
+  const char* restrict closest_closed = strstr(code, "*/");
+// congrats: the world's ugliest code!
+  do{
+    if(
+      newln &&
+      (newln < closest_closed || !closest_closed) &&
+      (newln < closest_opened || !closest_opened)
+    ){ 
+      *line += 1; *offset = 0;
+      code = newln + 1;
+      newln = strchr(code, '\n');
+    }
+    else if(
+      closest_opened &&
+      (closest_opened < newln || !newln) &&
+      (closest_opened < closest_closed || !closest_closed)
+    ){
+      *offset += closest_opened - code; depth++;
+      code = closest_opened + 2 + 1;
+      closest_opened = strstr(code, "/*");
+    }
+    else if(
+      closest_closed &&
+      (closest_closed < newln || !newln) &&
+      (closest_closed < closest_opened || !closest_opened)
+    ){
+      *offset += closest_closed - code; depth--;
+      code = closest_closed + 2 + 1;
+      closest_closed = strstr(code, "*/");
+    }
+  } while(depth && code[0]);
+  return code;
+}
+
 // tokenises code pointed at by 'code' variable.
 static void cth_tokenise__single(
   const char* restrict code, rcT* const restrict path, const size_t s_path,
@@ -126,7 +169,7 @@ static void cth_tokenise__single(
 
   while(1){
     size_t len;
-    const cth_tok_typeT tok = cth_tok(code, &len);
+    const cth_tokT tok = cth_tok(code, &len);
 // tokens that should be ignored.
     switch(tok){
       case CTH_TOK__NEWLINE:
@@ -135,16 +178,19 @@ static void cth_tokenise__single(
         continue;
       case CTH_TOK__WHITESPACE:
         break;
-      case CTH_TOK__COMMENT:
-        code = cth_tokenise__comment(code + len, &line, &offset);
+      case CTH_TOK__OPENED_SINGLE_LINE_COMMENT:
+        code = cth_tokenise__comment_single(code + len, &line, &offset);
+        continue;
+      case CTH_TOK__OPENED_MULTI_LINE_COMMENT:
+        code = cth_tokenise__comment_multi(code + len, &line, &offset);
         continue;
       case CTH_TOK__EOF:
         return;
   
-      case CTH_TOK__OPENED_BRACKET:
+      case CTH_TOK__OPENED_CURLY_BRACKET:
         cth_name_depth_inc(&tokeniser->name);
         break;
-      case CTH_TOK__CLOSED_BRACKET:
+      case CTH_TOK__CLOSED_CURLY_BRACKET:
         if(!cth_name_depth_dec(&tokeniser->name))
           cth_error_report(CTH_ERROR__INDENTATION_DEPTH_NEGATIVE, CTH_ERROR__COMPILER, path, line, offset, err);
         break;

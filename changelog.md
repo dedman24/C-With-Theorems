@@ -1,4 +1,6 @@
-### Changelog 2026/10/23.
+### Changelog 2026/10/24.
+ - added licence.
+ - added tokenisation stuff, multi-line comment stuff back.
  - added AST formation.
 
 ### Current errors:

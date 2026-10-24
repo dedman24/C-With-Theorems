@@ -17,7 +17,7 @@
 #include "string.h"                     // for memcmp.
 #include "stdbool.h"                    // for boolean type.
 
-typedef cth__underlying_tokT vfastrht_keyT;
+typedef cth_nameT vfastrht_keyT;
 #define VFASTRHT_OBJ_NULL NULL
 
 typedef void* vfastrht_objT;

@@ -149,7 +149,7 @@ static void cth_variable_add(
   vfastrht_put(ctx->correspondences, id, var);
 }
 
-static cth_variableT* cth_variable_search(cth_variable_ctxT* const restrict ctx, const cth__underlying_tokT id){
+static cth_variableT* cth_variable_search(cth_variable_ctxT* const restrict ctx, const cth_nameT id){
   return vfastrht_search_elem(ctx->correspondences, id);
 }
 
@@ -160,7 +160,7 @@ static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx)
   if(!ctx) ctx = malloc(sizeof(*ctx));
 
   ctx->correspondences = vfastrht_table_init();
-  ctx->id_name = 2;    // if set to 0, conflicts with vfastrht stuff. also, value of id 1 is reserved for an error value used during execution.
+  ctx->id_name = 1;
 
   cth_variable_add(ctx, CTH_VARIABLE__ID_ERROR, NULL, 0, NULL, CTH_TYPE__NONE, CTH_QUALIFIER__FREENAME);
 
@@ -168,7 +168,7 @@ static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx)
 }
 
 static cth_nameT cth_variable_name(cth_variable_ctxT* restrict ctx){
-  return ctx->id_name++;
+  return ctx->id_name += 2;
 }
 
 #endif

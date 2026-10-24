@@ -1,4 +1,4 @@
-#define LTH_IMPLEMENTATION
+#define CTH_IMPLEMENTATION
 #include "cth.h"
 
 // TODO: add the very basics of compiler arg processing.

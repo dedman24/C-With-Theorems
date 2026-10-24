@@ -5,14 +5,14 @@
 // uses reference-counted strings.
 // exists specifically for the cth programming language.
 
-#include "../../tok.h"      // cth__representation_tokT.
+#include "../../tok.h"      // cth_nameT.
 
 // stdlib includes.
 #include "stddef.h"         // for NULL, size_t.
 #include "stdlib.h"         // for calloc, free.
 #include "string.h"         // for strcmp.
 
-typedef cth__underlying_tokT vfastbst_str_objT;
+typedef cth_nameT vfastbst_str_objT;
 
 typedef struct vfastbst_str_nodeS{
   struct vfastbst_str_nodeS* leaf[2];

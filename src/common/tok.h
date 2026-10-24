@@ -8,7 +8,7 @@
 #include "stdint.h"       // integer types.
 #include "string.h"       // strncmp.
 
-typedef uint32_t cth_nameT;
+typedef uintptr_t cth_nameT;
 
 typedef enum{
   CTH_TOK__IN = 38,
@@ -86,9 +86,28 @@ typedef enum{
 
   CTH_TOK__SPECIAL_IMPOSSIBILITY,
   CTH_TOK__WHITESPACE,
-  CTH_TOK__NEWLINE,
-  CTH_TOK__EOF
+  CTH_TOK__NEWLINE
 } cth_tokT;
+
+cth_tokT cth_tok(const char* const restrict str, size_t* const restrict len);
+
+typedef enum{
+  CTH_PRIORITY__LOWEST,
+  CTH_PRIORITY__SEMICOLON,
+  CTH_PRIORITY__HIGHEST
+} cth_priorityT;
+
+#ifndef CTH_IMPLEMENTATION
+extern const cth_priorityT cth_priority[];
+extern const uint8_t isunary[];
+
+#else 
+
+const cth_priorityT cth_priority[] ={
+  [CTH_TOK__SEMICOLON]      = CTH_PRIORITY__SEMICOLON,
+};
+
+
 
 // hash function, generated with vfasttables version 1.1.0.
 static cth_tokT cth_tok__hash(const char* str, const size_t len){
@@ -254,11 +273,8 @@ static cth_tokT cth_tok__gettok_op(const char* const restrict str, size_t* const
 // str ~ null-terminated string holding code.
 // len ~ length of section of text to tokenise; must not contain any whitespaces.
 // may return 'cth_TOK__SPECIAL_IMPOSSIBILITY', which has to be handled by the underlying machine.
-static cth_tokT cth_tok(const char* const restrict str, size_t* const restrict len, const cth_fposT line, const cth_fposT offset){
-// the way returning stuff's handled is very ugly.
-// checks for newlines & whitespaces.
-  if(str[0] == '\0') return CTH_TOK__EOF;
-  else if(str[0] == '\n'){ *len = 1; return CTH_TOK__NEWLINE; }
+cth_tokT cth_tok(const char* const restrict str, size_t* const restrict len){
+  if(str[0] == '\n'){ *len = 1; return CTH_TOK__NEWLINE; }
 
   const bool iswhitespace = strchr(" \t\v\r\f", str[0]);
   if(iswhitespace){ *len = strspn(str, " \t\v\r\f"); return CTH_TOK__WHITESPACE; }
@@ -279,4 +295,5 @@ static cth_tokT cth_tok(const char* const restrict str, size_t* const restrict l
   return CTH_TOK__SPECIAL_IMPOSSIBILITY;
 }
 
+#endif
 #endif

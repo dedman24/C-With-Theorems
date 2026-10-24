@@ -58,9 +58,10 @@ static void cth_repl__line(const char* const restrict code){
 
   cth_variable_ctxT* variables;
   cth_error_ctxT err; cth_error_ctx_init(&err);
-  cth_outputT tokenised = cth_tokenise(code, "repl", strlen("repl"), &variables, &err);
+  cth_outputT tokenised = cth_tokenise(code, "repl", &variables, &err);
 
-  cth_nameT* const restrict name = cth_interpreter_run(tokenised, vfastarr_elcnt(tokenised, sizeof(cth_tokT)), &err, variables, true);
+  cth_nameT* const restrict name = NULL;
+    /*was cth_interpreter_run(tokenised, vfastarr_elcnt(tokenised, sizeof(cth_tokT)), &err, variables, true);*/
   cth_repl__result(name, variables);
 
   vfastarr_destroy(name);

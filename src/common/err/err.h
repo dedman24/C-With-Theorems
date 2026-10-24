@@ -27,6 +27,11 @@ typedef enum{
   CTH_ERROR__NONE,
   CTH_ERROR__IMPOSSIBILITY,
 
+  CTH_ERROR__AST_TOO_FEW_OPERANDS,
+
+  CTH_ERROR__TOKENISER_UNKNOWN_TOKEN,
+  CTH_ERROR__TOKENISER_ADJACENT_OPERANDS,
+
   CTH_ERROR__INDENTATION_DEPTH_NEGATIVE,
   CTH_ERROR__INDENTATION_DEPTH_TOO_HIGH,
 
@@ -46,10 +51,8 @@ typedef enum{
 
   CTH_ERROR__INTERPRETER_DIVIDE_BY_ZERO,
   CTH_ERROR__INTERPRETER_OP_UNIMPLEMENTED,
-  CTH_ERROR__INTERPRETER_TOO_FEW_OPERANDS,
   CTH_ERROR__INTERPRETER_TYPE_UNSUPPORTED,
   CTH_ERROR__INTERPRETER_VARIABLE_MISSING,
-  CTH_ERROR__INTERPRETER_ADJACENT_OPERANDS,
 
   CTH_ERROR__INCLUDE_NO_LEADING_QUOTES,
   CTH_ERROR__INCLUDE_NO_TRAILING_QUOTES,
@@ -73,9 +76,14 @@ typedef enum{
 const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__NONE]                           = "no error, you shouldn't be seeing this. contact devs.\n",
   [CTH_ERROR__IMPOSSIBILITY]                  = "an 'impossibility', something that shouldn't happen, just did "
-                                                        "(Satisfiable version " CTH_VERSION_STR "). "
-                                                        "contact devs. " 
-                                                        ANSI_COLOUR_RED "ERROR CODE: %08xh" ANSI_COLOUR_RESET ".\n",
+                                                 "(C With Theorems version " CTH_VERSION_STR "). "
+                                                 "contact devs. " 
+                                                 ANSI_COLOUR_RED "ERROR CODE: %08xh" ANSI_COLOUR_RESET ".\n",
+
+  [CTH_ERROR__AST_TOO_FEW_OPERANDS]           = "too few operands present for op to be converted into abstract syntax tree format.\n",
+
+  [CTH_ERROR__TOKENISER_UNKNOWN_TOKEN]        = "unknown token met during tokenisation; possibly an issue with the compiler.\n",
+  [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "two operands are adjacent with no operator between them.\n",
 
   [CTH_ERROR__INDENTATION_DEPTH_NEGATIVE]     = "scope depth is negative, due to extra '}'.\n",
   [CTH_ERROR__INDENTATION_DEPTH_TOO_HIGH]     = "at end of tokenisation, indentation depth is not 0.\n",
@@ -85,10 +93,8 @@ const char* const restrict cth_error_strings[] = {
 
   [CTH_ERROR__INTERPRETER_DIVIDE_BY_ZERO]     = "divide-by-zero happened.\n",
   [CTH_ERROR__INTERPRETER_OP_UNIMPLEMENTED]   = "operator is unimplemented.\n",
-  [CTH_ERROR__INTERPRETER_TOO_FEW_OPERANDS]   = "too few operands present for op to be executed.\n",
   [CTH_ERROR__INTERPRETER_TYPE_UNSUPPORTED]   = "type '%s' does not support specified operation.\n",
   [CTH_ERROR__INTERPRETER_VARIABLE_MISSING]   = "could not find variable in variable_ctxT. contact devs.\n",
-  [CTH_ERROR__INTERPRETER_ADJACENT_OPERANDS]  = "two operands are adjacent with no operator between them.\n",
 
   [CTH_ERROR__VALUE_UNDEFINED]                = "value is used before being defined.\n",        // definition ~ giving type to variable through ':'.
   [CTH_ERROR__VALUE_UNASSIGNED]               = "value is used before being assigned.\n",       // assignment ~ giving value to variable through '='.

@@ -1,13 +1,15 @@
 ### Changelog 2026/10/24.
- - added licence.
- - added tokenisation stuff, multi-line comment stuff back.
- - added AST formation.
+ - renamed `examples/program0.cth` to `examples/naturals.cth`, made it more legible.
+ - added AST stuff somewhat.
+ - updated README.md.
+ - now compiles, but idk if it works rofl.
 
 ### Current errors:
  - values terminating in standard rust-like integer suffixes do not work properly, lead to segfaults.
  - all strings lead to segfaults.
 
 ### Things to add:
+ - working include stuff.
  - more ops (arithmetic & non).
  - '&&', '||', '^^' short-circuiting & not executing other stuff when it gets evaluated (within arbitrary expressions).
  - first-class support for arrays.

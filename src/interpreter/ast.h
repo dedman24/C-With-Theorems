@@ -128,55 +128,56 @@ static cth_astT* cth_ast_init(
   return node;
 }
 
-static void cth_ast_destroy(cth_astT* const restrict node, const bool freenode);
+static void cth_ast_destroy(cth_astT* const restrict node);
 
-// destroys cth_astT* array initialised with vfastarr/
+// destroys cth_astT* array initialised with vfastarr.
+// may be passed NULL, still handles it.
 static void cth_ast_destroy__array(cth_astT** const restrict arr){
-  const size_t count = vfastarr_elcnt(arr, sizeof(*arr));
+  if(!arr) return;
 
+  const size_t count = vfastarr_elcnt(arr, sizeof(*arr));
   for(size_t i = 0; i < count; i++)
-    cth_ast_destroy(arr[i], false);
+    cth_ast_destroy(arr[i]);
 
   vfastarr_destroy(arr);
 }
 
-static void cth_ast_destroy(cth_astT* const restrict node, const bool freenode){
+static void cth_ast_destroy(cth_astT* const restrict node){
   switch(node->type){
     case CTH_AST__ID: break;
     case CTH_AST__IF:
-      cth_ast_destroy(node->data._if.condition, true);
+      cth_ast_destroy(node->data._if.condition);
       cth_ast_destroy__array(node->data._if.success);
       cth_ast_destroy__array(node->data._if.failure);
       break;
     case CTH_AST__FOR:
-      cth_ast_destroy(node->data._for.init, true);
-      cth_ast_destroy(node->data._for.condition, true);
-      cth_ast_destroy(node->data._for.update, true);
-      if(node->data._for.code) cth_ast_destroy(node->data._for.condition, true);
+      cth_ast_destroy(node->data._for.init);
+      cth_ast_destroy(node->data._for.condition);
+      cth_ast_destroy(node->data._for.update);
+      if(node->data._for.code) cth_ast_destroy(node->data._for.condition);
       break;
     case CTH_AST__DEFER:
       cth_ast_destroy__array(node->data._defer.code);
       break;
     case CTH_AST__WHILE:
-      cth_ast_destroy(node->data._while.condition, true);
+      cth_ast_destroy(node->data._while.condition);
       cth_ast_destroy__array(node->data._while.code);
       break;
     case CTH_AST__SWITCH:
       cth_ast_destroy__array(node->data._switch.cases);
       break;
     case CTH_AST__UNARY:
-      cth_ast_destroy(node->data._unary.src, true);
+      cth_ast_destroy(node->data._unary.src);
       break;
     case CTH_AST__BINARY:
-      cth_ast_destroy(node->data._binary.s0, true);
-      cth_ast_destroy(node->data._binary.s1, true);
+      cth_ast_destroy(node->data._binary.s0);
+      cth_ast_destroy(node->data._binary.s1);
       break;
     case CTH_AST__PROGRAM:
       cth_ast_destroy__array(node->data.program.program);
       break;
   }
-
-  if(freenode) free(node);
+  free(node);
 }
 
 #endif

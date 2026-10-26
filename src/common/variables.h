@@ -70,9 +70,14 @@ const char* const restrict cth_type__strings[] = {
 typedef enum: uint8_t{
   CTH_QUALIFIER__NONE     = 0,
   CTH_QUALIFIER__FREENAME = 1<<0,         // cheeky hiding this in qualifierT, but it can lead to bugs (LORD forbid!). it saves on space, so...
-  CTH_QUALIFIER__CONST    = 1<<1,
-  CTH_QUALIFIER__ARRAY    = 1<<2
+  CTH_QUALIFIER__FREEALL  = 1<<1,
+  CTH_QUALIFIER__CONST    = 1<<2,
+  CTH_QUALIFIER__ARRAY    = 1<<3
 } cth_qualifierT;
+
+static cth_qualifierT cth_qualifier_op2(const cth_qualifierT q0, const cth_qualifierT q1){
+  return q0 & q1;
+}
 
 typedef struct{
   void* internal;                         // internal representation/actual contents of variable.
@@ -123,7 +128,13 @@ static cth_variableT* cth_variable_init(
   return var;
 }
 
-static void cth_variable_destroy(vfastrht_objT* const restrict var){
+static void cth_variable_destroy(cth_variableT* const restrict real){
+  if(real->qualifier & CTH_QUALIFIER__FREENAME) free((void*)real->name);
+  free(real->internal);
+  free(real);
+}
+
+static void cth_variable_destroy__rht(vfastrht_objT* const restrict var){
   cth_variableT* const restrict real = (cth_variableT*)var;
   if(real->qualifier & CTH_QUALIFIER__FREENAME) free((void*)real->name);
   free(real->internal);
@@ -136,7 +147,7 @@ typedef struct{
 } cth_variable_ctxT;
 
 static void cth_variable_ctx_destroy(cth_variable_ctxT* const restrict ctx, const bool freectx){
-  vfastrht_table_destroy(ctx->correspondences, cth_variable_destroy);
+  vfastrht_table_destroy(ctx->correspondences, cth_variable_destroy__rht);
   if(freectx) free(ctx);
 }
 

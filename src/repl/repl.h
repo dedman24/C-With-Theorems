@@ -20,12 +20,11 @@
 // posix stuff.
 #include "unistd.h"             // isatty.
 
-static void cth_repl__result(cth_nameT* const restrict name, cth_variable_ctxT* const restrict variables){
-  const size_t c_name = vfastarr_elcnt(name, sizeof(*name));
+static void cth_repl__result(cth_variableT** const restrict variables){
+  const size_t c_vars = vfastarr_elcnt(variables, sizeof(*variables));
 
-  for(size_t i = 0; i < c_name; i++){
-    cth_variableT* const restrict var = cth_variable_search(variables, name[i]);
-
+  for(size_t i = 0; i < c_vars; i++){
+    cth_variableT* const var = variables[i];
     switch(var->type){
       case CTH_TYPE__U8:  fprintf(stdout, "%u",  *(uint8_t*)var->internal); break;
       case CTH_TYPE__U16: fprintf(stdout, "%u",  *(uint16_t*)var->internal); break;
@@ -46,8 +45,11 @@ static void cth_repl__result(cth_nameT* const restrict name, cth_variable_ctxT* 
     fputs(" : ", stdout);
     fputs(cth_type__strings[var->type], stdout);
 
-    if(i != c_name - 1)
+    if(i != c_vars - 1)
       fputs(", ", stdout);
+
+    if(var->qualifier & CTH_QUALIFIER__FREEALL)
+      cth_variable_destroy(var);
   }
   fputc('\n', stdout);
 }
@@ -60,12 +62,11 @@ static void cth_repl__line(const char* const restrict code){
   cth_error_ctxT err; cth_error_ctx_init(&err);
   cth_outputT tokenised = cth_tokenise(code, "repl", &variables, &err);
 
-  cth_nameT* const restrict name = NULL;
-    /*was cth_interpreter_run(tokenised, vfastarr_elcnt(tokenised, sizeof(cth_tokT)), &err, variables, true);*/
-  cth_repl__result(name, variables);
+  cth_variableT** const restrict output = cth_interpret(tokenised, variables, NULL, &err);
+  cth_repl__result(output);
 
-  vfastarr_destroy(name);
-  vfastarr_destroy(tokenised);
+  vfastarr_destroy(output);
+  cth_ast_destroy(tokenised);
   cth_error_print(&err, false);
   cth_variable_ctx_destroy(variables, true);
 }

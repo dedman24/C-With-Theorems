@@ -55,18 +55,14 @@ static const char* cth_tokeniser_dispatch(
     vfastarr_remove(tokeniser->ops, sizeof(*tokeniser->ops));
     do{
       cth_tokeniser_dispatch__ast(top, tokeniser, path, err);
-      vfastarr_pop(&tokeniser->ops, &top, sizeof(top));
+      if(!vfastarr_pop(tokeniser->ops, &top, sizeof(top)))
+        break;
     } while(cth_priority[top] > cth_priority[tok]);
   }
 SKIP_PRIO:
   tokeniser->state &= ~CTH_TOKENISER__PREV_WAS_NAME;
   if(tok != CTH_TOK__SEMICOLON)
-    vfastarr_append(&tokeniser->ops, &tok, sizeof(tok));
-  else{
-    // we should do something, because stuff like for(;;) shouldn't have a NULL field.
-    // or perhaps just allow NULL fields in stuff like that, dumbass.
-    // TODO: ^^^ DO THIS SOOT!
-  }
+    vfastarr_append(tokeniser->ops, &tok, sizeof(tok));
 
   return code + len;
 }

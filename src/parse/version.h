@@ -12,7 +12,7 @@ static void cth_parse__version(){
 // so pretty :PPPPPP.
   puts(
     ANSI_COLOUR_GREEN
-    "Lisp With Theorems version " CTH_VERSION_STR
+    "C With Theorems version " CTH_VERSION_STR
     ANSI_COLOUR_RESET
     ", copyright 0xded "
     ANSI_COLOUR_CYAN

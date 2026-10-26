@@ -11,7 +11,7 @@
 typedef uintptr_t cth_nameT;
 
 typedef enum{
-  CTH_TOK__IN = 38,
+//  CTH_TOK__IN = 38,             // why does this even exist?
   CTH_TOK__TYPEDEF = 70,
   CTH_TOK__TILDE = 67,
   CTH_TOK__OPENED_ANGLE_BRACKET = 57,
@@ -91,9 +91,23 @@ typedef enum{
 
 cth_tokT cth_tok(const char* const restrict str, size_t* const restrict len);
 
+// NOTE: how do we handle certain C ops having different associativity directions (L->R vs R->L)?
 typedef enum{
   CTH_PRIORITY__LOWEST,
-  CTH_PRIORITY__SEMICOLON,
+  CTH_PRIORITY__SEMICOLON,                                  // ';'.
+  CTH_PRIORITY__COMMA,                                      // ','.
+  CTH_PRIORITY__IF,                                         // 'if', ternary if.
+  CTH_PRIORITY__LOGICAL_OR,                                 // '||'.
+  CTH_PRIORITY__LOGICAL_XOR,                                // '^^'.
+  CTH_PRIORITY__LOGICAL_AND,                                // '&&'.
+  CTH_PRIORITY__BITWISE_OR,                                 // '|'.
+  CTH_PRIORITY__BITWISE_XOR,                                // '^'.
+  CTH_PRIORITY__BITWISE_AND,                                // '&'.
+  CTH_PRIORITY__EQUALITY,                                   // '==', '!='.
+  CTH_PRIORITY__RELATIONS,                                  // '>', '>=', '<', '<='.
+  CTH_PRIORITY__SHIFTS,                                     // '<<', '>>', '<<<', '>>>'.
+  CTH_PRIORITY__SIMPLE_ARITH,                               // '+', binary '-'.
+  CTH_PRIORITY__COMPLEX_ARITH,                              // '*', '/', '%'.
   CTH_PRIORITY__HIGHEST
 } cth_priorityT;
 
@@ -104,7 +118,40 @@ extern const uint8_t isunary[];
 #else 
 
 const cth_priorityT cth_priority[] ={
-  [CTH_TOK__SEMICOLON]      = CTH_PRIORITY__SEMICOLON,
+  [CTH_TOK__SEMICOLON]            = CTH_PRIORITY__SEMICOLON,
+
+  [CTH_TOK__COMMA]                = CTH_PRIORITY__COMMA,
+
+  [CTH_TOK__IF]                   = CTH_PRIORITY__IF,
+  [CTH_TOK__QUESTION]             = CTH_PRIORITY__IF,
+
+  [CTH_TOK__ORL]                  = CTH_PRIORITY__LOGICAL_OR,
+  [CTH_TOK__XORL]                 = CTH_PRIORITY__LOGICAL_XOR,
+  [CTH_TOK__ANDL]                 = CTH_PRIORITY__LOGICAL_AND,
+
+  [CTH_TOK__BAR]                  = CTH_PRIORITY__BITWISE_OR,
+  [CTH_TOK__CARAT]                = CTH_PRIORITY__BITWISE_XOR,
+  [CTH_TOK__AMPERSAND]            = CTH_PRIORITY__BITWISE_AND,
+  
+  [CTH_TOK__EQ]                   = CTH_PRIORITY__EQUALITY,
+  [CTH_TOK__NEQ]                  = CTH_PRIORITY__EQUALITY,
+
+  [CTH_TOK__OPENED_ANGLE_BRACKET] = CTH_PRIORITY__RELATIONS,
+  [CTH_TOK__CLOSED_ANGLE_BRACKET] = CTH_PRIORITY__RELATIONS,
+  [CTH_TOK__GTEQ]                 = CTH_PRIORITY__RELATIONS,
+  [CTH_TOK__LTEQ]                 = CTH_PRIORITY__RELATIONS,
+
+  [CTH_TOK__SHL]                  = CTH_PRIORITY__SHIFTS,
+  [CTH_TOK__SHR]                  = CTH_PRIORITY__SHIFTS,
+  [CTH_TOK__ROL]                  = CTH_PRIORITY__SHIFTS,
+  [CTH_TOK__ROR]                  = CTH_PRIORITY__SHIFTS,
+
+  [CTH_TOK__PLUS]                 = CTH_PRIORITY__SIMPLE_ARITH,
+  [CTH_TOK__MINUS]                = CTH_PRIORITY__SIMPLE_ARITH,
+
+  [CTH_TOK__STAR]                 = CTH_PRIORITY__COMPLEX_ARITH,
+  [CTH_TOK__SLASH]                = CTH_PRIORITY__COMPLEX_ARITH,
+  [CTH_TOK__PERCENT]              = CTH_PRIORITY__COMPLEX_ARITH,
 };
 
 
@@ -128,7 +175,7 @@ static cth_tokT cth_tok__hash(const char* str, const size_t len){
   };
   uint8_t hash = associated_values[len];
   for(size_t i = 0; i < sizeof(indices)/sizeof(*indices); i++)
-    hash += str[associated_values[indices[i]] % len];
+    hash += associated_values[str[indices[i] % len]];
 
   hash %= 100;
   return hash;
@@ -137,7 +184,7 @@ static cth_tokT cth_tok__hash(const char* str, const size_t len){
 static cth_tokT cth_tok__search(const char* const restrict str, const size_t len){
   const cth_tokT index = cth_tok__hash(str, len);
   const char* table[100] = {
-    [CTH_TOK__IN] = "in",
+//    [CTH_TOK__IN] = "in",                 // consider removing outright.
     [CTH_TOK__TYPEDEF] = "typedef",
     [CTH_TOK__TILDE] = "~",
     [CTH_TOK__OPENED_ANGLE_BRACKET] = ">",

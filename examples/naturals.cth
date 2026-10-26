@@ -14,7 +14,7 @@ type_t nat_t = enum{
 //      void add(nat_t a, nat_t b, nat_t* dst) -> dst;
 //      void add(nat_t a, nat_t b, nat_t* dst);
 // are all equivalent & equally usable in theorem proving.
-// arrows exist to specify the state that changes, when it isn't obvious to the programmer.
+// arrows exist to explicit the state that changes, when may not be obvious to the programmer.
 // in theorem proving, functions that change state return said changed state explicitly as if it were their return argument.
 
 void add(nat_t a, nat_t b, nat_t* dst) -> nat_t dst{
@@ -23,14 +23,10 @@ void add(nat_t a, nat_t b, nat_t* dst) -> nat_t dst{
     succ(x) = succ(add(x, b));
 }
 
-// also another way of writing function declarations, where the return type is explicited like how updated states are.
-//  fn add(nat_t a, nat_t b) -> nat_t;
-// this style is more functional; one would rewrite the above example as:
-//  fn add(nat_t a, nat_t b, nat_t* dst) -> dst;
-
 // theorems are written as:
 //  theorem th_name(types) -> result;
 // since add has type ... -> dst, in theorems dst is treated as the theorem's _actual return value_.
+// theorems are written using side-effect notation, unlike C functions, because 
 theorem add0(nat_t a) -> add(a, 0, dst) == add(0, a, dst) = 
   switch a
     z = refl,

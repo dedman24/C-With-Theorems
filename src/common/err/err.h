@@ -49,6 +49,7 @@ typedef enum{
   CTH_ERROR__TYPE_INCOMPATIBLE_OP,
   CTH_ERROR__TYPE_INCOMPATIBLE_RETURN,
 
+  CTH_ERROR__INTERPRETER_AST_TYPE,
   CTH_ERROR__INTERPRETER_DIVIDE_BY_ZERO,
   CTH_ERROR__INTERPRETER_OP_UNIMPLEMENTED,
   CTH_ERROR__INTERPRETER_TYPE_UNSUPPORTED,
@@ -91,12 +92,13 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__TYPE_INCOMPATIBLE_OP]           = "in expression, type %s is incompatible with type %s.\n",
   [CTH_ERROR__TYPE_INCOMPATIBLE_RETURN]       = "expected return type %s is incompatible with type %s.\n",
 
+  [CTH_ERROR__INTERPRETER_AST_TYPE]           = "ast node is of type %d, while interpreter dispatched op of type %d. contact devs.\n",
   [CTH_ERROR__INTERPRETER_DIVIDE_BY_ZERO]     = "divide-by-zero happened.\n",
   [CTH_ERROR__INTERPRETER_OP_UNIMPLEMENTED]   = "operator is unimplemented.\n",
   [CTH_ERROR__INTERPRETER_TYPE_UNSUPPORTED]   = "type '%s' does not support specified operation.\n",
   [CTH_ERROR__INTERPRETER_VARIABLE_MISSING]   = "could not find variable in variable_ctxT. contact devs.\n",
 
-  [CTH_ERROR__VALUE_UNDEFINED]                = "value is used before being defined.\n",        // definition ~ giving type to variable through ':'.
+  [CTH_ERROR__VALUE_UNDEFINED]                = "value is used before being defined.\n",        // definition ~ giving type to variable through '::'.
   [CTH_ERROR__VALUE_UNASSIGNED]               = "value is used before being assigned.\n",       // assignment ~ giving value to variable through '='.
   [CTH_ERROR__VALUE_TOO_FEW_BYTES]            = "immediate is read, but not entirely; only %u bytes are.\n",
   [CTH_ERROR__VALUE_CHAR_TOO_LONG]            = "single quotes hold too many characters.\n",
@@ -214,6 +216,21 @@ static void cth_error_report__u32(
   cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
 }
 
+static void cth_error_report__u32_2(
+  const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
+  const cth_fposT line, const cth_fposT offset,
+  cth_error_ctxT* const restrict ctx,
+  const uint32_t value0, const uint32_t value1
+){
+  const size_t len_message = strlen(cth_error_strings[type]) + 2*sizeof(value0) + 2*sizeof(value1);
+  char* const restrict message = malloc(len_message + 1);
+  sprintf(message, cth_error_strings[type], value0, value1);
+
+  const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
+  ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
+  cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+}
+
 static void cth_error_report__str(
   const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
   const cth_fposT line, const cth_fposT offset,
@@ -229,7 +246,7 @@ static void cth_error_report__str(
   cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
 }
 
-static void cth_error_report__type1(
+static void cth_error_report__type(
   const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
   const cth_fposT line, const cth_fposT offset,
   cth_error_ctxT* const restrict ctx,
@@ -244,7 +261,7 @@ static void cth_error_report__type1(
   cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
 }
 
-static void cth_error_report__type2(
+static void cth_error_report__type_2(
   const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
   const cth_fposT line, const cth_fposT offset,
   cth_error_ctxT* const restrict ctx,

@@ -1,0 +1,6 @@
+// provably secure sha2.
+// important theorems:
+//  no segfaults/illegal memory accesses.
+//  no memory leaks.
+//  passes test suite.
+//  implements each step correctly.

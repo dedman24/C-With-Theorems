@@ -1,0 +1,4 @@
+// used to test addition on cth.
+// it should at least handle this much...
+
+3+2;

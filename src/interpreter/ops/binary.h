@@ -13,7 +13,7 @@ static cth_variableT* cth_op__add(const cth_astT* const restrict node, cth_varia
   }
 
   cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
-                *const v1 = cth_interpret(node->data._binary.s0, variables, path, err);
+                *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
 
   if(v0->type != v1->type){
     cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, v0->type, v1->type);

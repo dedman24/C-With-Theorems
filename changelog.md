@@ -1,13 +1,7 @@
 ### Changelog 2026/10/26.
- - updated build script, now supports `small` option.
- - added `meta/`.
- - added disclaimer to `README.md`.
- - removed `in` keyword.
- - added proper handling of variableT in interpreter; now does not leak memory.
- - readded working repl, can parse simple expressions like `1+2;`.
+ - expressions like `1+2;` are not parsed as `2+2;` anymore.
 
 ### Current errors:
- - expressions like `1+2;` is evaluated as if it were `2+2;` (**really huge error fix this ASAP!**).
  - values terminating in rust-like integer suffixes do not work properly, lead to segfaults.
  - all strings lead to segfaults.
 

@@ -16,7 +16,7 @@ static cth_nameT cth_vtype__hash(const char* str, const size_t len){
 // hand-optimised B))).
     const uint8_t associated_values[] = {
         [2] = 4,
-        [4] = 4,
+        [3] = 4,
         ['u'] = 0,
         ['i'] = 4,
         ['8'] = 0,
@@ -38,6 +38,7 @@ static cth_nameT cth_vtype__hash(const char* str, const size_t len){
 }
 
 static cth_nameT cth_vtype__search(const char* const restrict str, const size_t len){
+    if(!len) return CTH_TYPE__NONE;
     const cth_nameT index = cth_vtype__hash(str, len);
     char* table[12] = {
        [CTH_TYPE__U8]  = "u8",
@@ -55,29 +56,31 @@ static cth_nameT cth_vtype__search(const char* const restrict str, const size_t 
 
 // really it should be encoding (hex, decimal, octal, binary) + type (whatever :ppp).
 static cth_nameT cth_vtype(
-    const char* const restrict data, const size_t s_data,
+    const char* const restrict data, const size_t s_data, size_t* const restrict s_format_specifier,
     cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
     if(s_data >= 3){
         const size_t max = strcspn(data, "iu");
         if(max > s_data) goto SKIP_SEARCH;
-        if(s_data - max > 2 || s_data - max == 0){
-            cth_error_report(CTH_ERROR__VALUE_FORMAT_UNKNOWN, CTH_ERROR__COMPILER, path, line, offset, err);
-            return CTH_TYPE__NONE;
-        }
-        const cth_nameT type = cth_vtype__search(data + s_data - 3, 3);
+        const cth_nameT type = cth_vtype__search(data + max, s_data - max);
         if(type == CTH_TYPE__NONE)
             cth_error_report(CTH_ERROR__VALUE_FORMAT_UNKNOWN, CTH_ERROR__COMPILER, path, line, offset, err);
+        else
+            *s_format_specifier = s_data - max;
         return type;
     }
 SKIP_SEARCH:
     const char* const restrict period = strchr(data, '.');
     if(period && period - data < s_data){
-        if(data[s_data - 1] == 'f')
+        if(data[s_data - 1] == 'f'){
+            *s_format_specifier = 1;
             return CTH_TYPE__F32;
-        else return CTH_TYPE__F64;
+        }
+        *s_format_specifier = 0;
+        return CTH_TYPE__F64;
     }
 // default type for literals.
+    *s_format_specifier = 0;
     return CTH_TYPE__I32;
 }
 

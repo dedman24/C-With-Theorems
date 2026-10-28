@@ -26,16 +26,16 @@ C's aliasing rules are ugly, but they exist for a reason. We propose to overhaul
      where `alias` specifies what aliases with other pointers. Without the alias specifies all of the variables would've aliased, this only _explicits which ones do_.\
      `alias` isn't a keyword, just some syntactic sugar that can be written after a function to explicit aliasing better. It can be defined as whatever by the program.\
      `restrict` by itself after a function states that _no pointers alias_. 
- 4. `restrict` acts as it does in C, and it's very powerful in C already. 
+ 4. `restrict` still exists and it acts as it does in C; it is still _very powerful_. 
 
 ## Pointer safety.
 Normal C pointers are nullable, which in theory means that for maximum safety one should check if any function returning a ptr returns `NULL` or not. This is _cumbersome_ and rarely done in code.\
 We keep the traditional nullable pointer `*` and add a non-nullable pointer `&`, reminiscent of C++ references. `&` pointers are still pointers, though, and they behave exactly like `*`, the only difference being that `*` can encode the error value `NULL` and `&` can't. One can think of `*` as similar to `&?` (optional reference), although the two are different.\
-Code inside `.cth`, `.hth` files (when compiled with the highest level of safety) _must_ unwrap nullable pointers, now defined as `enum{ void some(...), NULL }`, with something akin to `switch ptr NULL = ..., some(x) = ...;` or an _error is generated_. See option types if something isn't clear.
+Code inside `.cth`, `.hth` files (when compiled with the highest level of safety) _must_ unwrap nullable pointers, now defined as `enum{ ...* some, NULL }`, with something akin to `switch ptr NULL = ..., some = ...;` or an _error is generated_. See option types if something isn't clear.
 
 ## Option types.
-To further aide error handling, we introduce the `?` option type; at its simplest, a type `qux_t?` is an enum `enum{ void some(qux_t), none }` that cannot be used without _it being unwrapped_ (and therefore without one checking for errors).\
-A more explicit error type `type error_t(type t, type err) = enum{ t some, err none }` can be used to report more complex errors. it is provided with `include stdc.error`.
+To further aide error handling, we introduce the `?` option type; at its simplest, a type `qux_t?` is an enum `enum{ qux_t some, none }` that cannot be used without _it being unwrapped_ (and therefore without one checking for errors).\
+A more explicit error type `type error_t(type t, type err) = enum{ t some, err none }` can be used to report more complex errors. It is provided with `include stdc.error`.
 
 ## Mutability and const.
 `const` in C is horrible, because code isn't actually forced to follow it. Given a `const char* x`, `*(char*)x = 10;` compiles, when it _shouldn't_.\
@@ -45,7 +45,8 @@ Much more powerful is `constexpr`, which acts like `consteval` in C++. This too 
 ## Ugly includes & boilerplare.
 The usual way of including files in C (through `#include`) is very ugly because it has lots of special rules one must follow (end file in newline, have file guards, split header-implementation files, `#define WHATEVER_IMPLEMENTATION` before inclusion somewhere & forget). I also quite dislike how standard libraries are included; many stdc libs from C99 and before have names that often conflict with user headed files (`math.h` is too generic for it to be a stdlib's name).\
 For these reasons cth has a secondary way of including files, exposed to programs ending in `.c/.h` as `_Include` and to `.cth/.hth` as `include`. It is an operator that, if assigned to a variable of type `namespace`, has that variable act as a de-facto namespace for its contents; otherwise, if it isn't assigned, the included file's contents are available without namespacing.\
-Example usage:\
+Example usage:
+
 > `namespace foo = include "foo.cth";`\
 > `// the contents of 'foo.cth' are exposed under the variable foo, and accessible as normal struct elements.`\
 > `// if foo.cth exposes two functions 'add(void)', 'mul(void)', then one may access them as:`\
@@ -53,7 +54,7 @@ Example usage:\
 
 `include` handles files being included multiple times in the same project _by itself_; therefore no include guards _have to be used_.
 
-Regarding standard libraries, these aren't paths anymore; all standard libraries are automatically accessible through the `stdc` variable, which is just a collection of namespaces; instead of including `"stdlib.h"` to use `malloc`, one can just write `stdc.lib.malloc`, with `stdc.lib` being a namespace. `stdc` is a variable only accessible in files ending with `.cth` or `.hth`.\
+Regarding standard libraries, these aren't paths anymore; all standard libraries are automatically accessible through the `stdc` variable, which is just a collection of namespaces; instead of including `"stdlib.h"` to use `malloc`, one can just write `stdc.lib.malloc`, with `stdc.lib` being a namespace. `stdc` is a variable accessible in files ending with `.cth` or `.hth`; in `.c`, `.h` files it is accessible as _Stdc.\
 Fear not program size bloat, for cth _should_ only pull into the code what it effectively uses from standard libraries.
 
 Including a `namespace`-typed variable either:

@@ -251,7 +251,7 @@ static cth_tokT cth_tok__search(const char* const restrict str, const size_t len
     [CTH_TOK__QUESTION] = "?",
     [CTH_TOK__TYPEOF] = "typeof"
   };
-  return strncmp(table[index], str, len) == 0? index: CTH_TOK__NONE;
+  return table[index] && strncmp(table[index], str, len) == 0? index: CTH_TOK__NONE;
 }
 
 static size_t cth_tok__oplen(const char* const restrict str){

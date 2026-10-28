@@ -16,4 +16,5 @@ The greatest example of this is with type declarations:
  - cth types are defined as variables are, using the `type` type, as `type dst = src;`. In this example, `dst` is _always incompatible with `src`, and no implicit conversion between the two may happen.\
 One can see all the differences in `meta/issues-with-C.md`.
 
-C syntax might be the prettiest out of all languages.
+## Why C.
+C syntax might be the prettiest out of all languages, nothing really comes close to it.

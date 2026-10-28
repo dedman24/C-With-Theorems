@@ -84,16 +84,15 @@ static cth_optionsT* cth_parse(
   const char* const restrict* const restrict argv,
   cth_error_ctxT* const restrict error
 ){
-// ./cth, instead of erroring out, returns help info.
-  if(argc == 1){
-    cth_parse__help(argv[0]);
-    return NULL;
-  }
-
   const bool dynamically_allocated = options == NULL;
   if(dynamically_allocated) options = malloc(sizeof(*options));
-  options->op = CTH_OPTIONS__NONE;
   options->path_src = NULL;
+// ./cth, instead of erroring out, runs REPLh.
+  if(argc == 1){
+    options->op = CTH_OPTIONS__REPL;
+    return options;
+  }
+  options->op = CTH_OPTIONS__NONE;
 
   for(size_t i = 1; i < argc; i++){
     const cth_opT op = cth_op__search(argv[i], strlen(argv[i]));

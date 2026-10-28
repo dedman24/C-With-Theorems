@@ -93,7 +93,8 @@ static const void* cth_value_decode(
   const char* restrict data, size_t s_data, size_t* const restrict s_raw, cth_nameT* const restrict type_raw,
   cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
-  const cth_nameT type = cth_vtype(data, s_data, err, path, line, offset);
+  size_t s_format_specifier;                      // values can be terminated by format specifier; its length has to be accounted for.
+  const cth_nameT type = cth_vtype(data, s_data, &s_format_specifier, err, path, line, offset);
   if(type == CTH_TYPE__NONE) 
     return NULL;
   *type_raw = type;
@@ -191,6 +192,7 @@ static const void* cth_value_decode(
       return NULL;
   }
 
+  bytes_read += s_format_specifier;
   if(bytes_read != s_data)
     cth_error_report__u32(CTH_ERROR__VALUE_TOO_FEW_BYTES, CTH_ERROR__COMPILER, path, line, offset, err, bytes_read);
   return raw;

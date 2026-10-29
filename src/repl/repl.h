@@ -22,7 +22,6 @@
 
 static void cth_repl__result(cth_variableT** const restrict variables){
   const size_t c_vars = vfastarr_elcnt(variables, sizeof(*variables));
-  size_t nonnull = 0;
 
   for(size_t i = 0; i < c_vars; i++){
     cth_variableT* const var = variables[i];
@@ -32,7 +31,6 @@ static void cth_repl__result(cth_variableT** const restrict variables){
         fputs(", ", stdout);
       continue;
     }
-    else nonnull++;
     switch(var->type){
       case CTH_TYPE__U8:  fprintf(stdout, "%u",  *(uint8_t*)var->internal); break;
       case CTH_TYPE__U16: fprintf(stdout, "%u",  *(uint16_t*)var->internal); break;
@@ -59,8 +57,7 @@ static void cth_repl__result(cth_variableT** const restrict variables){
     if(var->qualifier & CTH_QUALIFIER__FREEALL)
       cth_variable_destroy(var);
   }
-  if(nonnull)
-    fputc('\n', stdout);
+  fputc('\n', stdout);
 }
 
 static void cth_repl__line(const char* const restrict code, cth_tokeniserT* const restrict tokeniser){

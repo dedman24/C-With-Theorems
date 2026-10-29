@@ -1,9 +1,5 @@
-### Changelog 2026/10/29::2.
- - added `::` operator, which is explicit compile-time typechecking enforced through type errors.
- - fixed issues with type suffixes caused by old design.
- - added variable declarations (`int32_t x = 10;`), testable in repl _right now_ (run `echo "int32_t x = 2; x + 1;" | ./cth`).
- - printing a variable or a literal by itself (like `100;`) now prints its value. 
- - same variable/literal in two different statements in repl had different variableT context; not anymore :PPP.
+### Changelog 2026/10/29::3.
+ - fixed `::` operator, which broke.
 
 > `BEGIN snca;`
 

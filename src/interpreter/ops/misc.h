@@ -25,11 +25,11 @@ static cth_variableT* cth_op__typechecking(const cth_astT* const restrict node, 
     cth_error_report__u32(CTH_ERROR__IMPOSSIBILITY, CTH_ERROR__COMPILER, path, node->line, node->offset, err, CTH_IMPOSSIBILITY__MISSING_SRC);
     return NULL;
   }
-  cth_variableT* const vtype = cth_variable_search(variables, v0->type);
+  cth_variableT* const vtype = cth_variable_search(variables, v1->type);
 
-  if(v1->type != CTH_TYPE__TYPE)
+  if(v0->type != CTH_TYPE__TYPE)
     cth_error_report(CTH_ERROR__TYPEIS_SECOND_ARG, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
-  else if(vtype != v1)
+  else if(vtype != v0)
     cth_error_report__str_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, vtype->name, v1->name);
 
   if(v0->qualifier & CTH_QUALIFIER__FREEALL) cth_variable_destroy(v0);

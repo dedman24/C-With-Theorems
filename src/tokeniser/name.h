@@ -21,7 +21,10 @@ static void cth_name_ctx_init(cth_name_ctxT* const restrict name){
   name->variables = cth_variable_ctx_init(NULL);
   name->names = vfastarr_init(sizeof(*name->names));
   name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
-  name->names[0] = VFASTBST_STR_INIT;
+
+  for(size_t i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i++)
+    vfastbst_str_put(&name->names[0], cth_type__strings[i], cth_type__strlen[i], i);
+
   name->values = VFASTBST_STR_INIT;
 }
 
@@ -58,7 +61,7 @@ static size_t cth_name_depth(cth_name_ctxT* const restrict name){
 
 // searches for name, creates nameID if it doesn't find any.
 static cth_nameT cth_name_add(
-  const char* const restrict key, const size_t s_key,
+  const char* const restrict key, const size_t s_key, const cth_nameT type, const cth_qualifierT qualifier,
   cth_error_ctxT* const restrict err, cth_name_ctxT* const restrict name
 ){
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
@@ -72,7 +75,7 @@ static cth_nameT cth_name_add(
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(key, s_key, id);
-  cth_variable_add(name->variables, id, key, s_key, NULL, CTH_TYPE__NONE, CTH_QUALIFIER__NONE);
+  cth_variable_add(name->variables, id, key, s_key, NULL, type, qualifier);
   return id;
 }
 

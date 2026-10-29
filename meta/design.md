@@ -13,7 +13,7 @@ cth usually exposes two ways of doings things:
 
 The greatest example of this is with type declarations:
  - C types are declared using `typedef`s, and a type defined using `typedef` can be replaced (except in pointers) with the ones it is defined as. They're little better than just using `#define`.
- - cth types are defined as variables are, using the `type` type, as `type dst = src;`. In this example, `dst` is _always incompatible with `src`, and no implicit conversion between the two may happen.\
+ - cth types are defined as variables are, using the `type` type, as `type dst = src;`. In this example, `dst` is _always_ incompatible with `src`, and no implicit conversion between the two may happen.\
 One can see all the differences in `meta/issues-with-C.md`.
 
 ## Why C.

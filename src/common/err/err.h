@@ -19,7 +19,9 @@
 enum{
   CTH_IMPOSSIBILITY__PARSE_OPTION,
   CTH_IMPOSSIBILITY__NAME_H_DEFAULT,
-  CTH_IMPOSSIBILITY__OP_TYPE
+  CTH_IMPOSSIBILITY__OP_TYPE,
+  CTH_IMPOSSIBILITY__VARIABLE_TYPE,
+  CTH_IMPOSSIBILITY__TOKENISER_STATE_NAME
 };
 
 // lovely way of handling errors, isn't it?
@@ -84,7 +86,7 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__AST_TOO_FEW_OPERANDS]           = "too few operands present for op to be converted into abstract syntax tree format.\n",
 
   [CTH_ERROR__TOKENISER_UNKNOWN_TOKEN]        = "unknown token met during tokenisation; possibly an issue with the compiler.\n",
-  [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "two operands are adjacent with no operator between them.\n",
+  [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "two operands are adjacent with no operator between them, and the former isn't a type.\n",
 
   [CTH_ERROR__INDENTATION_DEPTH_NEGATIVE]     = "scope depth is negative, due to extra '}'.\n",
   [CTH_ERROR__INDENTATION_DEPTH_TOO_HIGH]     = "at end of tokenisation, indentation depth is not 0.\n",

@@ -15,8 +15,8 @@ static cth_nameT cth_vtype__hash(const char* str, const size_t len){
 // associated values generated for hash function.
 // hand-optimised B))).
     const uint8_t associated_values[] = {
-        [2] = 4,
-        [3] = 4,
+        [2] = 5,
+        [3] = 5,
         ['u'] = 0,
         ['i'] = 4,
         ['8'] = 0,
@@ -40,7 +40,7 @@ static cth_nameT cth_vtype__hash(const char* str, const size_t len){
 static cth_nameT cth_vtype__search(const char* const restrict str, const size_t len){
     if(!len) return CTH_TYPE__NONE;
     const cth_nameT index = cth_vtype__hash(str, len);
-    char* table[12] = {
+    char* table[] = {
        [CTH_TYPE__U8]  = "u8",
        [CTH_TYPE__U16] = "u16",
        [CTH_TYPE__U32] = "u32",

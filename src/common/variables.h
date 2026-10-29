@@ -16,7 +16,8 @@
 
 // types defined when initialising value ctx.
 enum{
-  CTH_TYPE__CHAR,
+  CTH_TYPE_MIN = 1,                       // all predefined CTH types are in the interval [CTH_TYPE_MIN, CTH_TYPE_MAX).
+  CTH_TYPE__CHAR = 1,                     // starts from 1 or otherwise encounters issues.
   CTH_TYPE__TYPE,
   CTH_TYPE__STRING,
   CTH_TYPE__BOOLEAN,
@@ -36,8 +37,9 @@ enum{
   CTH_TYPE__F32,
   CTH_TYPE__F64,
 
-  CTH_TYPE__NONE,                         // used for error values.
-  CTH_TYPE__UNDEFINED,                    // used for yet-to-be-defined variables.
+  CTH_TYPE__NONE,
+
+  CTH_TYPE_MAX,
 };
 
 // possibly avoid c-like type names?
@@ -63,7 +65,30 @@ const char* const restrict cth_type__strings[] = {
   [CTH_TYPE__F64]       = "f64",
 
   [CTH_TYPE__NONE]      = "ERROR",
-  [CTH_TYPE__UNDEFINED] = "UNDEFINED"
+};
+
+const size_t cth_type__strlen[] = {
+  [CTH_TYPE__CHAR]      = strlen("char"),
+  [CTH_TYPE__TYPE]      = strlen("type"),
+  [CTH_TYPE__STRING]    = strlen("string"),
+  [CTH_TYPE__BOOLEAN]   = strlen("bool"),
+
+  [CTH_TYPE__U8]        = strlen("u8"),
+  [CTH_TYPE__U16]       = strlen("u16"),
+  [CTH_TYPE__U32]       = strlen("u32"),
+  [CTH_TYPE__U64]       = strlen("u64"),
+
+  [CTH_TYPE__I8]        = strlen("i8"),
+  [CTH_TYPE__I16]       = strlen("i16"),
+  [CTH_TYPE__I32]       = strlen("i32"),
+  [CTH_TYPE__I64]       = strlen("i64"),
+
+  [CTH_TYPE__F8]        = strlen("f8"),
+  [CTH_TYPE__F16]       = strlen("f16"),
+  [CTH_TYPE__F32]       = strlen("f32"),
+  [CTH_TYPE__F64]       = strlen("f64"),
+
+  [CTH_TYPE__NONE]      = strlen("ERROR"),
 };
 
 // doesn't really work for user-defined qualifiers, but those are an abstract idea anyways.
@@ -72,7 +97,8 @@ typedef enum: uint8_t{
   CTH_QUALIFIER__FREENAME = 1<<0,         // cheeky hiding this in qualifierT, but it can lead to bugs (LORD forbid!). it saves on space, so...
   CTH_QUALIFIER__FREEALL  = 1<<1,
   CTH_QUALIFIER__CONST    = 1<<2,
-  CTH_QUALIFIER__ARRAY    = 1<<3
+  CTH_QUALIFIER__IMMUT    = 1<<3,
+  CTH_QUALIFIER__ARRAY    = 1<<4,
 } cth_qualifierT;
 
 static cth_qualifierT cth_qualifier_op2(const cth_qualifierT q0, const cth_qualifierT q1){
@@ -164,16 +190,15 @@ static cth_variableT* cth_variable_search(cth_variable_ctxT* const restrict ctx,
   return vfastrht_search_elem(ctx->correspondences, id);
 }
 
-#define CTH_VARIABLE__ID_ERROR 1
-
 // TODO: add initialising all kinds of stuff here.
 static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx){
   if(!ctx) ctx = malloc(sizeof(*ctx));
 
   ctx->correspondences = vfastrht_table_init();
-  ctx->id_name = 1;
+  ctx->id_name = CTH_TYPE_MAX | 1;          // must be odd.
 
-  cth_variable_add(ctx, CTH_VARIABLE__ID_ERROR, NULL, 0, NULL, CTH_TYPE__NONE, CTH_QUALIFIER__FREENAME);
+  for(cth_nameT i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i++)
+    cth_variable_add(ctx, i, NULL, 0, NULL, CTH_TYPE__TYPE, CTH_QUALIFIER__IMMUT | CTH_QUALIFIER__FREENAME);
 
   return ctx;
 }

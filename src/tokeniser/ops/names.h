@@ -7,12 +7,26 @@ static const char* cth_tokeniser_op__name(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME)
-    /* we shouldn't report an error here, but do smth regarding types & the like */;
+  cth_nameT type = CTH_TYPE__NONE;
+  if(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME){
+    if(!vfastarr_pop(tokeniser->values, &type, sizeof(type))){
+      cth_error_report__u32(CTH_ERROR__IMPOSSIBILITY, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err, CTH_IMPOSSIBILITY__TOKENISER_STATE_NAME);
+      type = CTH_TYPE__TYPE;
+    }
+    cth_variableT* const restrict var = cth_variable_search(tokeniser->name.variables, type);
+    if(!var){
+      cth_error_report__u32(CTH_ERROR__IMPOSSIBILITY, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err, CTH_IMPOSSIBILITY__VARIABLE_TYPE);
+      type = CTH_TYPE__NONE;
+    }
+    else if(var->type != CTH_TYPE__TYPE){
+      cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+      type = CTH_TYPE__NONE;
+    }
+  }
   else
     tokeniser->state |= CTH_TOKENISER__PREV_WAS_NAME;
 
-  const cth_nameT name = cth_name_add(code, len, err, &tokeniser->name);
+  const cth_nameT name = cth_name_add(code, len, type, CTH_QUALIFIER__NONE, err, &tokeniser->name);
   tokeniser->values = vfastarr_append(tokeniser->values, &name, sizeof(name));
   return code + len;
 }

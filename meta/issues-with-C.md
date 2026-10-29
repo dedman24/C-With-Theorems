@@ -70,7 +70,7 @@ POSIX reserves all types ending in `_t`, which is unfortunate because it is the 
 ~~seriously screw the guys at POSIX why even reserve the `_t` prefix it is _ubiquitous_!!!~~
 
 ## Precedence.
-This might be a dumb idea, but the rules of operator precedence in `.c`, `.h` files is somewhat different than the rules in `.cth`, `.hth`.\
+This might be dumb, but the rules of operator precedence in `.c`, `.h` files should be altered in `.cth`, `.hth` files.\
 The only difference is that bitwise operators have _higher precedence_ than relational ones in `.cth`, `.hth` (while in ISO C they don't).
 The C way is legacy cruft from an evil age that doesn't really make sense. This split precedence stuff may be changed in the future, but if I had to change _one_ thing about C it would be this.\
 Seriously, in any _modern_ language `if(1 & 0 == 0) printf("hello\n");` wouldn't do anything, but in C it _prints_ because it's treated as `if(1 & (1 == 0))`, which evaluates to `if(1 & 1)` TwT...

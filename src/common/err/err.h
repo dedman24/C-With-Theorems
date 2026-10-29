@@ -16,12 +16,17 @@
 #include "stdbool.h"                    // bool.
 
 // enum holding all impossibilities.
+// on adding impossibilities:
+//  only add them at the end.
+//  when removing impossibilities, do not alter values of old impossibilities; error codes should stay consistent across versions.
 enum{
-  CTH_IMPOSSIBILITY__PARSE_OPTION,
-  CTH_IMPOSSIBILITY__NAME_H_DEFAULT,
-  CTH_IMPOSSIBILITY__OP_TYPE,
-  CTH_IMPOSSIBILITY__VARIABLE_TYPE,
-  CTH_IMPOSSIBILITY__TOKENISER_STATE_NAME
+  CTH_IMPOSSIBILITY__PARSE_OPTION             = 0,
+  CTH_IMPOSSIBILITY__NAME_H_DEFAULT           = 1,
+  CTH_IMPOSSIBILITY__OP_TYPE                  = 2,
+  CTH_IMPOSSIBILITY__VARIABLE_TYPE            = 3,
+  CTH_IMPOSSIBILITY__TOKENISER_STATE_NAME     = 4,
+  CTH_IMPOSSIBILITY__ASSIGNMENT_S0            = 5,
+  CTH_IMPOSSIBILITY__MISSING_SRC              = 6,
 };
 
 // lovely way of handling errors, isn't it?
@@ -30,6 +35,8 @@ typedef enum{
   CTH_ERROR__IMPOSSIBILITY,
 
   CTH_ERROR__AST_TOO_FEW_OPERANDS,
+
+  CTH_ERROR__ASSIGNMENT_RVALUE,
 
   CTH_ERROR__TOKENISER_UNKNOWN_TOKEN,
   CTH_ERROR__TOKENISER_ADJACENT_OPERANDS,
@@ -48,6 +55,7 @@ typedef enum{
   CTH_ERROR__VALUE_FORMAT_UNIMPLEMENTED,
   CTH_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE,
 
+  CTH_ERROR__TYPEIS_SECOND_ARG,
   CTH_ERROR__TYPE_INCOMPATIBLE_OP,
   CTH_ERROR__TYPE_INCOMPATIBLE_RETURN,
 
@@ -85,12 +93,15 @@ const char* const restrict cth_error_strings[] = {
 
   [CTH_ERROR__AST_TOO_FEW_OPERANDS]           = "too few operands present for op to be converted into abstract syntax tree format.\n",
 
+  [CTH_ERROR__ASSIGNMENT_RVALUE]              = "assignment to rvalue is invalid.\n",
+
   [CTH_ERROR__TOKENISER_UNKNOWN_TOKEN]        = "unknown token met during tokenisation; possibly an issue with the compiler.\n",
   [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "two operands are adjacent with no operator between them, and the former isn't a type.\n",
 
   [CTH_ERROR__INDENTATION_DEPTH_NEGATIVE]     = "scope depth is negative, due to extra '}'.\n",
   [CTH_ERROR__INDENTATION_DEPTH_TOO_HIGH]     = "at end of tokenisation, indentation depth is not 0.\n",
 
+  [CTH_ERROR__TYPEIS_SECOND_ARG]              = "in '::', second argument is not type.\n",
   [CTH_ERROR__TYPE_INCOMPATIBLE_OP]           = "in expression, type %s is incompatible with type %s.\n",
   [CTH_ERROR__TYPE_INCOMPATIBLE_RETURN]       = "expected return type %s is incompatible with type %s.\n",
 
@@ -242,6 +253,21 @@ static void cth_error_report__str(
   const size_t len_message = strlen(cth_error_strings[type]) + strlen(string);
   char* const restrict message = malloc(len_message + 1);
   sprintf(message, cth_error_strings[type], string);
+
+  const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
+  ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
+  cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+}
+
+static void cth_error_report__str_2(
+  const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
+  const cth_fposT line, const cth_fposT offset,
+  cth_error_ctxT* const restrict ctx,
+  const char* const string0, const char* const string1
+){
+  const size_t len_message = strlen(cth_error_strings[type]) + strlen(string0) + strlen(string1);
+  char* const restrict message = malloc(len_message + 1);
+  sprintf(message, cth_error_strings[type], string0, string1);
 
   const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));

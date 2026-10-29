@@ -44,8 +44,8 @@ typedef struct{
 } cth_ast__unaryT;
 
 typedef struct{
-  cth_astT* s0;
-  cth_astT* s1;
+  cth_astT* s0;                       // right argument.
+  cth_astT* s1;                       // left argument.
 } cth_ast__binaryT;
 
 typedef struct{

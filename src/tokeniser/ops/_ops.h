@@ -12,12 +12,15 @@ static void cth_tokeniser_dispatch__ast(
   const cth_tokT tok, cth_tokeniserT* const restrict tokeniser, 
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
+// this scheme isn't great, because unary operators like '--', '++' can be followed by binary operators; certain operators are _unary by themselves_.
   if(tok == CTH_TOK__IF);
   else if(tok == CTH_TOK__FOR);
   else if(tok == CTH_TOK__DEFER);
   else if(tok == CTH_TOK__DO);
   else if(tok == CTH_TOK__WHILE);
   else if(tok == CTH_TOK__SWITCH);
+  else if(tok == CTH_TOK__TYPEDEF) 
+    cth_tokeniser_op__typedef(tokeniser, path, err);
   else if(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME)
     cth_tokeniser_op__binary(tok, tokeniser, path, err);
   else
@@ -63,6 +66,8 @@ SKIP_PRIO:
   tokeniser->state &= ~CTH_TOKENISER__PREV_WAS_NAME;
   if(tok != CTH_TOK__SEMICOLON)
     vfastarr_append(tokeniser->ops, &tok, sizeof(tok));
+  else
+    cth_tokeniser_op__semicolon(tokeniser);
 
   return code + len;
 }

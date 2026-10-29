@@ -96,6 +96,8 @@ typedef enum{
   CTH_PRIORITY__LOWEST,
   CTH_PRIORITY__SEMICOLON,                                  // ';'.
   CTH_PRIORITY__COMMA,                                      // ','.
+  CTH_PRIORITY__TYPEIS,                                     // '::'.
+  CTH_PRIORITY__ASSIGNMENT,                                 // '='.
   CTH_PRIORITY__IF,                                         // 'if', ternary if.
   CTH_PRIORITY__LOGICAL_OR,                                 // '||'.
   CTH_PRIORITY__LOGICAL_XOR,                                // '^^'.
@@ -121,6 +123,8 @@ const cth_priorityT cth_priority[] ={
   [CTH_TOK__SEMICOLON]            = CTH_PRIORITY__SEMICOLON,
 
   [CTH_TOK__COMMA]                = CTH_PRIORITY__COMMA,
+  [CTH_TOK__TYPEIS]               = CTH_PRIORITY__TYPEIS,          
+  [CTH_TOK__ASSIGNMENT]           = CTH_PRIORITY__ASSIGNMENT,
 
   [CTH_TOK__IF]                   = CTH_PRIORITY__IF,
   [CTH_TOK__QUESTION]             = CTH_PRIORITY__IF,

@@ -22,7 +22,7 @@ static void cth_name_ctx_init(cth_name_ctxT* const restrict name){
   name->names = vfastarr_init(sizeof(*name->names));
   name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
 
-  for(size_t i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i++)
+  for(size_t i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i += 2)
     vfastbst_str_put(&name->names[0], cth_type__strings[i], cth_type__strlen[i], i);
 
   name->values = VFASTBST_STR_INIT;
@@ -32,10 +32,10 @@ static void cth_name_ctx_init(cth_name_ctxT* const restrict name){
 static bool cth_name_ctx_destroy(cth_name_ctxT* const restrict name, const bool freectx){
   const size_t ctxdepth = vfastarr_elcnt(name->names, sizeof(*name->names));
   for(size_t i = 0; i < ctxdepth; i++)
-    vfastbst_str_destroy(&name->names[i], false);
+    vfastbst_str_destroy(&name->names[i]);
 
   vfastarr_destroy(name->names);
-  vfastbst_str_destroy(&name->values, false);
+  vfastbst_str_destroy(&name->values);
   if(freectx) free(name);
 
   return ctxdepth == 1;
@@ -50,7 +50,7 @@ static bool cth_name_depth_dec(cth_name_ctxT* const restrict name){
   const size_t elcnt = vfastarr_elcnt(name, sizeof(*name));
   if(!elcnt) return false;
 
-  vfastbst_str_destroy(&name->names[elcnt-1], false);
+  vfastbst_str_destroy(&name->names[elcnt-1]);
   vfastarr_pop(name->names, NULL, sizeof(*name->names));
   return true;
 }
@@ -69,7 +69,7 @@ static cth_nameT cth_name_add(
   vfastbst_str_nodeT** restrict curr_node = NULL;
   for(size_t i = 0; i < c_scopes; i++){
     curr_node = vfastbst_str_put_half(&name->names[i], key, s_key);
-    if(*curr_node) 
+    if(*curr_node)
       return (*curr_node)->obj;
   }
 

@@ -14,13 +14,16 @@ static cth_variableT* cth_op__add(const cth_astT* const restrict node, cth_varia
 
   cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
                 *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
-
-  if(v0->type != v1->type){
-    cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, v0->type, v1->type);
-// TODO: return error valu.
+  if(!v0 || !v1){
+    cth_error_report__u32(CTH_ERROR__IMPOSSIBILITY, CTH_ERROR__COMPILER, path, node->line, node->offset, err, CTH_IMPOSSIBILITY__MISSING_SRC);
     return NULL;
   }
 
+  if(v0->type != v1->type){
+    cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, v0->type, v1->type);
+    return NULL;
+  }
+  
   void* const raw = malloc(cth_type__sizeof(v0));
   switch(v0->type){
     case CTH_TYPE__I8:  

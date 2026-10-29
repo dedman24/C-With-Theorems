@@ -16,30 +16,31 @@
 
 // types defined when initialising value ctx.
 enum{
-  CTH_TYPE_MIN = 1,                       // all predefined CTH types are in the interval [CTH_TYPE_MIN, CTH_TYPE_MAX).
-  CTH_TYPE__CHAR = 1,                     // starts from 1 or otherwise encounters issues.
-  CTH_TYPE__TYPE,
-  CTH_TYPE__STRING,
-  CTH_TYPE__BOOLEAN,
+// all must be odd.
+  CTH_TYPE_MIN        = 1,                  // all predefined CTH types are in the interval [CTH_TYPE_MIN, CTH_TYPE_MAX).
+  CTH_TYPE__CHAR      = 1,                  // starts from 1 or otherwise encounters issues.
+  CTH_TYPE__TYPE      = 3,
+  CTH_TYPE__STRING    = 5,
+  CTH_TYPE__BOOLEAN   = 7,
 
-  CTH_TYPE__U8,
-  CTH_TYPE__U16,
-  CTH_TYPE__U32,
-  CTH_TYPE__U64,
+  CTH_TYPE__U8        = 9,
+  CTH_TYPE__U16       = 11,
+  CTH_TYPE__U32       = 13,
+  CTH_TYPE__U64       = 15,
 
-  CTH_TYPE__I8,
-  CTH_TYPE__I16,
-  CTH_TYPE__I32,
-  CTH_TYPE__I64,
+  CTH_TYPE__I8        = 17,
+  CTH_TYPE__I16       = 19,
+  CTH_TYPE__I32       = 21,
+  CTH_TYPE__I64       = 23,
 
-  CTH_TYPE__F8,
-  CTH_TYPE__F16,
-  CTH_TYPE__F32,
-  CTH_TYPE__F64,
+  CTH_TYPE__F8        = 25,
+  CTH_TYPE__F16       = 27,
+  CTH_TYPE__F32       = 29,
+  CTH_TYPE__F64       = 31,
 
-  CTH_TYPE__NONE,
+  CTH_TYPE__NONE      = 33,
 
-  CTH_TYPE_MAX,
+  CTH_TYPE_MAX        = 35,
 };
 
 // possibly avoid c-like type names?
@@ -197,7 +198,7 @@ static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx)
   ctx->correspondences = vfastrht_table_init();
   ctx->id_name = CTH_TYPE_MAX | 1;          // must be odd.
 
-  for(cth_nameT i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i++)
+  for(cth_nameT i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i += 2)
     cth_variable_add(ctx, i, NULL, 0, NULL, CTH_TYPE__TYPE, CTH_QUALIFIER__IMMUT | CTH_QUALIFIER__FREENAME);
 
   return ctx;

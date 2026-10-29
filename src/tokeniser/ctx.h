@@ -40,6 +40,11 @@ static void cth_tokeniser_init(cth_tokeniserT* const restrict tokeniser){
   tokeniser->offset = 0;
 }
 
+// tokeniser ctx always assumed to be statically allocated.
+// tokeniser ~ must not be NULL.
+// variables ~ may be NULL.
+// err ~ may be NULL.
+// path ~ may be NULL.
 static cth_outputT cth_tokeniser_destroy(
   cth_tokeniserT* const restrict tokeniser,  cth_variable_ctxT** variables,
   cth_error_ctxT* const restrict err, rcT* const restrict path
@@ -47,7 +52,7 @@ static cth_outputT cth_tokeniser_destroy(
   if(variables) *variables = tokeniser->name.variables;
   else cth_variable_ctx_destroy(tokeniser->name.variables, true);
 
-  if(!cth_name_ctx_destroy(&tokeniser->name, false))
+  if(!cth_name_ctx_destroy(&tokeniser->name, false) && err)
     cth_error_report(CTH_ERROR__INDENTATION_DEPTH_NEGATIVE, CTH_ERROR__COMPILER_DESTRUCTION, path, 0, 0, err);
   vfastarr_destroy(tokeniser->ops);
   vfastarr_destroy(tokeniser->values);

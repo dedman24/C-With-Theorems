@@ -18,11 +18,11 @@ static cth_nameT cth_vtype__hash(const char* str, const size_t len){
         [2] = 5,
         [3] = 5,
         ['u'] = 0,
-        ['i'] = 4,
-        ['8'] = 0,
-        ['1'] = 1,
-        ['3'] = 2,
-        ['6'] = 3,
+        ['i'] = 8,
+        ['8'] = 4,
+        ['1'] = 6,
+        ['3'] = 8,
+        ['6'] = 10,
     };
     if(len > 3) return 0;
 
@@ -31,9 +31,8 @@ static cth_nameT cth_vtype__hash(const char* str, const size_t len){
     };
     uint8_t hash = associated_values[len];
     for(size_t i = 0; i < sizeof(indices)/sizeof(*indices); i++){
-        hash += str[associated_values[indices[i]] % len];
+        hash += associated_values[str[indices[i] % len]];
     }
-    hash %= 12;
     return hash;
 }
 

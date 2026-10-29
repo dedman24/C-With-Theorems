@@ -11,3 +11,12 @@ Two different type declaration methods exist:
 
 The former are handled through special syntax rules, while the latter is handled like variables are.\
 In general, cth can figure out the types of variables in declarations _when forming the ast_.
+
+## C type declarations.
+C type declarations are _very ugly_; I really hate them. they're a pain to handle.
+
+## How are types handled?
+Normal type declarations can be handled exactly as variable declarations are.\
+`typedef`s are trivial to handle as they only introduce _type aliases_ (not proper incompatible types), so we need only add an alias to whatever context we're in. Only issue with them is that they follow _C type declaration order_, which is hard to parse.\
+What then?\
+TODO: implement typedefs, proper C type order parsing, commaful C type declarations.

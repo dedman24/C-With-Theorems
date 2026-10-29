@@ -25,6 +25,12 @@ static void cth_repl__result(cth_variableT** const restrict variables){
 
   for(size_t i = 0; i < c_vars; i++){
     cth_variableT* const var = variables[i];
+    if(var == NULL){
+      fprintf(stdout, "NULL :: NULL");
+      if(i != c_vars - 1)
+        fputs(", ", stdout);
+      continue;
+    }
     switch(var->type){
       case CTH_TYPE__U8:  fprintf(stdout, "%u",  *(uint8_t*)var->internal); break;
       case CTH_TYPE__U16: fprintf(stdout, "%u",  *(uint16_t*)var->internal); break;
@@ -42,7 +48,7 @@ static void cth_repl__result(cth_variableT** const restrict variables){
       default:
         fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
     }
-    fputs(" : ", stdout);
+    fputs(" :: ", stdout);
     fputs(cth_type__strings[var->type], stdout);
 
     if(i != c_vars - 1)
@@ -54,21 +60,19 @@ static void cth_repl__result(cth_variableT** const restrict variables){
   fputc('\n', stdout);
 }
 
-static void cth_repl__line(const char* const restrict code){
+static void cth_repl__line(const char* const restrict code, cth_tokeniserT* const restrict tokeniser){
   const size_t s_code = vfastarr_size(code);
   if(!s_code) return;
 
-  cth_variable_ctxT* variables;
   cth_error_ctxT err; cth_error_ctx_init(&err);
-  cth_outputT tokenised = cth_tokenise(code, "repl", &variables, &err);
+  cth_outputT tokenised = cth_tokenise__repl(code, "repl", tokeniser, &err);
 
-  cth_variableT** const restrict output = cth_interpret(tokenised, variables, NULL, &err);
+  cth_variableT** const restrict output = cth_interpret(tokenised, tokeniser->name.variables, NULL, &err);
   cth_repl__result(output);
 
   vfastarr_destroy(output);
   cth_ast_destroy(tokenised);
   cth_error_print(&err, false);
-  cth_variable_ctx_destroy(variables, true);
 }
 
 // loop that evaluates everything coming from stdin.
@@ -80,6 +84,8 @@ static cth_outputT cth_repl(void){
     fwrite("> ", 2, 1, stdout);
     fflush(stdout);
   }
+
+  cth_tokeniserT tokeniser; cth_tokeniser_init(&tokeniser);
 
   char* restrict line = vfastarr_init(sizeof(*line));
   while(1){
@@ -96,7 +102,7 @@ static cth_outputT cth_repl(void){
     }
     else if(c == ';'){          // execute REPLed code, empty line.
       line = vfastarr_append(line, "\0", 1);
-      cth_repl__line(line);
+      cth_repl__line(line, &tokeniser);
       vfastarr_empty(line);
     }
   }
@@ -111,6 +117,8 @@ static cth_outputT cth_repl(void){
     cth_repl__line(line);
   }
 */
+  cth_astT* const restrict program = cth_tokeniser_destroy(&tokeniser, NULL, NULL, NULL);
+  cth_ast_destroy(program);
   vfastarr_destroy(line);
   return NULL;
 }

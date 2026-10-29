@@ -8,7 +8,7 @@ static cth_astT* cth_tokeniser_op__get_node(cth_tokeniserT* const restrict token
   if(!vfastarr_pop(tokeniser->values, &id_src, sizeof(id_src))){
     const size_t top = vfastarr_elcnt(tokeniser->program->data.program.program, sizeof(cth_astT*));
     tokeniser->program->data.program.program = vfastarr_extend(tokeniser->program->data.program.program, 1, sizeof(cth_astT*));
-    cth_ast_init(&tokeniser->program->data.program.program[top], 0, tokeniser->line, tokeniser->offset, CTH_AST__ID);
+    cth_ast_init(&tokeniser->program->data.program.program[top], CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
   // reports that there aren't enough operands for this.
     cth_error_report(CTH_ERROR__AST_TOO_FEW_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return NULL;

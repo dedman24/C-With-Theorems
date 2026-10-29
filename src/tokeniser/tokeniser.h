@@ -98,16 +98,27 @@ static cth_outputT cth_tokenise(
   rcT* const restrict rc_path = rc_make(path);
   cth_tokeniserT tokeniser; cth_tokeniser_init(&tokeniser);
 
-// such descriptive names, clearly indicative of a cnile...
-// C's only missing a defer{} statement (that doesn't require #include "stddefer.h" or some bs like that) & it'd be my favourite language.
-// really it's missing only a handful of features to make it top1, but adding them would break backwards compat...
-// one should make their own C standard that breaks backwards compat somewhat at the expense of a better experience.
-//  or just use zig... but it isn't stable yet & I want my stuff to compile for the next thousand years.
-// myC would have all features zig does, basically native C interop (not 100% backwards compatibility though) & more.
-// I wouldn't like it if it didn't have dependent types, though I'd barely use them.
   cth_tokenise__single(code, &tokeniser, rc_path, err);
   cth_outputT tokenised = cth_tokeniser_destroy(&tokeniser, variables, err, rc_path);
   rc_disown(rc_path);
+// result of tokenisation.
+  return tokenised;
+}
+
+// tokeniser function to use specifically with the REPL.
+// accepts explicit tokeniser ctx, doesn't destroy it.
+// invalidates tokenised still.
+static cth_outputT cth_tokenise__repl(
+  const char* restrict code, const char* const restrict path, 
+  cth_tokeniserT* const restrict tokeniser, cth_error_ctxT* const restrict err
+){
+  rcT* const restrict rc_path = rc_make(path);
+
+  cth_tokenise__single(code, tokeniser, rc_path, err);
+  rc_disown(rc_path);
+
+  cth_outputT tokenised = (cth_outputT*)tokeniser->program;
+  tokeniser->program = cth_ast_init(NULL, CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM);
 // result of tokenisation.
   return tokenised;
 }

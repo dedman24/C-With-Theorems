@@ -88,4 +88,17 @@ static const char* cth_tokeniser_op__comment_multi(
   return code;
 }
 
+static void cth_tokeniser_op__semicolon(cth_tokeniserT* const restrict tokeniser){
+  const size_t c_elem = vfastarr_elcnt(tokeniser->values, sizeof(*tokeniser->values));
+  for(size_t i = 0; i < c_elem; i++){
+    const cth_nameT name = tokeniser->values[i];
+    if(!(name & 1))
+      break;
+    tokeniser->program->data.program.program = vfastarr_extend(tokeniser->program->data.program.program, c_elem, sizeof(*tokeniser->program->data.program.program));
+    cth_astT* const restrict node = cth_ast_init(&tokeniser->program->data.program.program[i], CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
+    node->data.id = name;
+  }
+  vfastarr_remove(tokeniser->values, c_elem*sizeof(*tokeniser->values));
+}
+
 #endif

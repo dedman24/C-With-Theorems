@@ -4,7 +4,7 @@
    stuff like `signed u32` evaluates to `i32`, which is cool, although _not that useful_.
  - reworked 'internal' field of variables.
  - removed `cth_type__strings` (bug-prone, tables are also generally bad). 
- - made `sorry` become `@sorry`, added `@unresolvable` for functions that cannot be resolved (useful for modelling types). added `@` as valid regex for names.
+ - made `sorry` become `@sorry`, added `@unresolvable` for functions that cannot be resolved (useful for modelling qualifers). added `@` as valid regex for names.
  - added `cth_ast__funcallT`.
  - added `char16_t`, `char32_t`, `size_t`, `ssize_t` as default types. `unsigned ssize_t` becomes `size_t` and vice-versa.
  - started work on C qualifiers, currently only supports simple stuff like `const` and `immut`.\

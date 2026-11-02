@@ -31,11 +31,9 @@ static cth_variableT* cth_op__assignment(const cth_astT* const restrict node, ct
     return NULL;
   }
 
-  const size_t s_internal = cth_type__sizeof(v0);
-  v1->internal = malloc(s_internal);
-  memcpy(v1->internal, v0->internal, s_internal);
+  cth_variable__internal_clone(v1, v0);
 
-  if(v0->qualifier & CTH_QUALIFIER__FREEALL) cth_variable_destroy(v0);
+  if(v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
 
   return v1;
 }

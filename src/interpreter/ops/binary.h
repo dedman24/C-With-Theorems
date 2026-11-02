@@ -23,13 +23,13 @@ static cth_variableT* cth_op__add(const cth_astT* const restrict node, cth_varia
     cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, v0->type, v1->type);
     return NULL;
   }
-  
-  void* const raw = malloc(cth_type__sizeof(v0));
+
+  cth_variableT* const restrict result = cth_variable_init(NULL, 0, v0->type, cth_qualifier_op2(v0->state, v1->state) | CTH_VARSTATE__FREEALL);  
   switch(v0->type){
     case CTH_TYPE__I8:  
     case CTH_TYPE__I16:
-    case CTH_TYPE__I32: *(int32_t*)raw = *(int32_t*)v0->internal + *(int32_t*)v1->internal; break;
-    case CTH_TYPE__I64:
+    case CTH_TYPE__I32: result->internal.i32 = v0->internal.i32 + v1->internal.i32; break;
+    case CTH_TYPE__I64: result->internal.i64 = v0->internal.i64 + v1->internal.i64; break;
 
     case CTH_TYPE__U8:
     case CTH_TYPE__U16:
@@ -41,14 +41,12 @@ static cth_variableT* cth_op__add(const cth_astT* const restrict node, cth_varia
     case CTH_TYPE__F32:
     case CTH_TYPE__F64:
 
-    case CTH_TYPE__CHAR:
+    case CTH_TYPE__CHAR8:
     case CTH_TYPE__BOOLEAN:
   }
 
-  cth_variableT* const restrict result = cth_variable_init(NULL, 0, raw, v0->type, cth_qualifier_op2(v0->qualifier, v1->qualifier) | CTH_QUALIFIER__FREEALL);
-
-  if(v0->qualifier & CTH_QUALIFIER__FREEALL) cth_variable_destroy(v0);
-  if(v1->qualifier & CTH_QUALIFIER__FREEALL) cth_variable_destroy(v1);
+  if(v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
+  if(v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
 
   return result;
 }

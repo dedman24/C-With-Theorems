@@ -3,9 +3,9 @@
 
 // 'LISP with theorems' is a dependent-typed version of LISP.
 
-#include "common/err/err.h"
 #include "common/output.h"
-#include "common/variables.h"
+#include "common/err/err.h"
+#include "common/variables/variables.h"
 
 cth_outputT cth_compile(const int argc, const char* const restrict argv[]);
 

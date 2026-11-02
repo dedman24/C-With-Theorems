@@ -11,6 +11,11 @@
 #include "stdbool.h"                      // boolean types.
 #include "inttypes.h"                     // sscanf formats.
 
+// ascii codes 0x00-0x1F, which are normally not displayed, are used for special name prefixes for certain variables in cth_name_ctxT.names.
+enum{
+  CTH_NAME_PFIX__TYPE = 0
+};
+
 typedef struct{
   cth_variable_ctxT* variables;   // NOTE: remember to extract this before deleting the whole name ctx.
   vfastbst_strT* names;
@@ -23,7 +28,9 @@ static void cth_name_ctx_init(cth_name_ctxT* const restrict name){
   name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
 
   for(size_t i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i += 2)
-    vfastbst_str_put(&name->names[0], cth_type__strings[i], cth_type__strlen[i], i);
+    vfastbst_str_put(&name->names[0], cth_type__strings[i], strlen(cth_type__strings[i]), i);
+  for(size_t i = CTH_QUALIFIER_MIN; i < CTH_QUALIFIER_MAX; i += 2)
+    vfastbst_str_put(&name->names[0], cth_qualifier__strings[i], strlen(cth_qualifier__strings[i]), i);
 
   name->values = VFASTBST_STR_INIT;
 }
@@ -59,24 +66,44 @@ static size_t cth_name_depth(cth_name_ctxT* const restrict name){
   return vfastarr_elcnt(name, sizeof(*name));
 }
 
+typedef struct{
+  cth_variableT* var;
+  cth_nameT name;
+} cth_name_addS;
+
 // searches for name, creates nameID if it doesn't find any.
-static cth_nameT cth_name_add(
-  const char* const restrict key, const size_t s_key, const cth_nameT type, const cth_qualifierT qualifier,
-  cth_error_ctxT* const restrict err, cth_name_ctxT* const restrict name
-){
+static cth_name_addS cth_name_add(const char* const restrict key, const size_t s_key, cth_nameT type, const cth_variable_stateT state, cth_name_ctxT* const restrict name){
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
 
   vfastbst_str_nodeT** restrict curr_node = NULL;
   for(size_t i = 0; i < c_scopes; i++){
     curr_node = vfastbst_str_put_half(&name->names[i], key, s_key);
     if(*curr_node)
-      return (*curr_node)->obj;
+      return (cth_name_addS){ .var = cth_variable_search(name->variables, (*curr_node)->obj), .name = (*curr_node)->obj };
   }
+
+// 'signed', 'unsigned' are not actual valid types values can assume, they're aliases of 'int' & 'unsigned int' when it's relevant.
+  if(type == CTH_TYPE__SIGNED) type = CTH_TYPE__INT;
+  else if(type == CTH_TYPE__UNSIGNED) type = CTH_TYPE__UINT;
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(key, s_key, id);
-  cth_variable_add(name->variables, id, key, s_key, NULL, type, qualifier);
-  return id;
+  cth_variableT* const restrict var = cth_variable_add(name->variables, id, key, s_key, type, state);
+  return (cth_name_addS){ .var = var, .name = id };
+}
+
+// searches for name by string, returns 0 on error.
+static cth_nameT cth_name_search(const char* const restrict key, const size_t s_key, const cth_name_ctxT* const restrict name){
+    const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
+
+  vfastbst_str_nodeT** restrict curr_node = NULL;
+  for(size_t i = 0; i < c_scopes; i++){
+    const cth_nameT seek = vfastbst_str_search(&name->names[i], key, s_key);
+    if(seek)
+      return seek;
+  }
+
+  return 0;
 }
 
 // decodes binary string, returns 1 on success, 0 otherwise.
@@ -92,7 +119,7 @@ static int cth_value_decode__binary(
   return *bytes_read != 0;
 }
 
-static const void* cth_value_decode(
+static cth_variable__internalT* cth_value_decode(
   const char* restrict data, size_t s_data, size_t* const restrict s_raw, cth_nameT* const restrict type_raw,
   cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
@@ -103,7 +130,7 @@ static const void* cth_value_decode(
   *type_raw = type;
 
   int bytes_read, args_read;
-  char* restrict raw;
+  cth_variable__internalT* const restrict raw = malloc(sizeof(*raw));
   const bool negated = data[0] == '-';
 // I love C.
   enum{ HEX, DECIMAL, OCTAL, BINARY } encoding;
@@ -132,35 +159,32 @@ static const void* cth_value_decode(
       return NULL;
     case CTH_TYPE__F32:
       *s_raw = sizeof(float);
-      raw = malloc(sizeof(float));
-      args_read = sscanf(data, "%f%n", (float*)raw, &bytes_read);
+      args_read = sscanf(data, "%f%n", &raw->f32, &bytes_read);
       break;
     case CTH_TYPE__F64:
       *s_raw = sizeof(double);
-      raw = malloc(sizeof(double));
-      args_read = sscanf(data, "%lf%n", (double*)raw, &bytes_read);
+      args_read = sscanf(data, "%lf%n", &raw->f64, &bytes_read);
       break;
     case CTH_TYPE__U8:
     case CTH_TYPE__U16:
     case CTH_TYPE__U32:
     case CTH_TYPE__U64:
       *s_raw = sizeof(uint64_t);
-      raw = malloc(sizeof(uint64_t));
       switch(encoding){
         case HEX:
-          args_read = sscanf(data, "%" SCNx64 "%n", (uint64_t*)raw, &bytes_read); 
-          if(negated) *(uint64_t*)raw = -*(uint64_t*)raw;
+          args_read = sscanf(data, "%" SCNx64 "%n", &raw->u64, &bytes_read); 
+          if(negated) raw->u64 = -raw->u64;
           break;
         case DECIMAL:
-          args_read = sscanf(data, "%" SCNu64 "%n", (uint64_t*)raw, &bytes_read);
+          args_read = sscanf(data, "%" SCNu64 "%n", &raw->u64, &bytes_read);
           break;
         case OCTAL:
-          args_read = sscanf(data, "%" SCNo64 "%n", (uint64_t*)raw, &bytes_read);
-          if(negated) *(uint64_t*)raw = -*(uint64_t*)raw;
+          args_read = sscanf(data, "%" SCNo64 "%n", &raw->u64, &bytes_read);
+          if(negated) raw->u64 = -raw->u64;
           break;
         case BINARY:
-          args_read = cth_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
-          if(negated) *(uint64_t*)raw = -*(uint64_t*)raw;
+          args_read = cth_value_decode__binary(data, s_data, &raw->u64, &bytes_read);
+          if(negated) raw->u64 = -raw->u64;
           break;
       }
       break;
@@ -169,22 +193,21 @@ static const void* cth_value_decode(
     case CTH_TYPE__I32:
     case CTH_TYPE__I64:
       *s_raw = sizeof(int64_t);
-      raw = malloc(sizeof(int64_t));
       switch(encoding){
         case HEX:
-          args_read = sscanf(data, "%" SCNx64 "%n", (int64_t*)raw, &bytes_read); 
-          if(negated) *(int64_t*)raw = -*(int64_t*)raw;
+          args_read = sscanf(data, "%" SCNx64 "%n", &raw->i64, &bytes_read); 
+          if(negated) raw->i64 = -raw->i64;
           break;
         case DECIMAL:
-          args_read = sscanf(data, "%" SCNd64 "%n", (int64_t*)raw, &bytes_read);
+          args_read = sscanf(data, "%" SCNd64 "%n", &raw->i64, &bytes_read);
           break;
         case OCTAL:
-          args_read = sscanf(data, "%" SCNo64 "%n", (int64_t*)raw, &bytes_read);
-          if(negated) *(int64_t*)raw = -*(int64_t*)raw;
+          args_read = sscanf(data, "%" SCNo64 "%n", &raw->i64, &bytes_read);
+          if(negated) raw->i64 = -raw->i64;
           break;
         case BINARY:
-          args_read = cth_value_decode__binary(data, s_data, (void*)raw, &bytes_read);
-          if(negated) *(int64_t*)raw = -*(int64_t*)raw;
+          args_read = cth_value_decode__binary(data, s_data, &raw->u64, &bytes_read);
+          if(negated) raw->i64 = -raw->i64;
           break;
       }
       break;
@@ -208,17 +231,19 @@ static cth_nameT cth_value_add(
 ){
   size_t s_raw;
   cth_nameT type_raw;
-  const char* const restrict raw = cth_value_decode(data, s_data, &s_raw, &type_raw, err, path, line, offset);
+  cth_variable__internalT* const restrict raw = cth_value_decode(data, s_data, &s_raw, &type_raw, err, path, line, offset);
 
-  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
+  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, (const char*)raw, s_raw);
   if(*curr_node){
-    free((char*)raw);
+    free(raw);
     return (*curr_node)->obj;
   }
 
   const cth_nameT id = cth_variable_name(name->variables);
-  *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  cth_variable_add(name->variables, id, raw, s_raw, (void*)raw, type_raw, CTH_QUALIFIER__CONST);
+  *curr_node = vfastbst_str_node_init((char*)raw, s_raw, id);
+  cth_variableT* const restrict var = cth_variable_add(name->variables, id, (const char*)raw, s_raw, type_raw, CTH_VARSTATE__NONE);
+  var->internal = *raw;
+
   return id;
 }
 
@@ -228,17 +253,19 @@ static cth_nameT cth_char_add(
 ){
   size_t s_raw;
   char* const restrict raw = malloc(1);
-  raw[0] = cth_vtype_char(data, s_data, true, &s_raw, err, path, line, offset);
+  *raw = cth_vtype_char(data, s_data, true, &s_raw, err, path, line, offset);
 
   vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
   if(*curr_node){
-    free((char*)raw);
+    free(raw);
     return (*curr_node)->obj;
   }
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  cth_variable_add(name->variables, id, raw, s_raw, (void*)raw, CTH_TYPE__CHAR, CTH_QUALIFIER__CONST);
+  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, CTH_TYPE__CHAR8, CTH_VARSTATE__NONE);
+  var->internal.char8 = *raw;
+
   return id;
 }
 
@@ -247,17 +274,19 @@ static cth_nameT cth_string_add(
   cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
   size_t s_raw;
-  const char* const restrict raw = cth_vtype_string(data, s_data, &s_raw, err, path, line, offset);
+  char* const restrict raw = cth_vtype_string(data, s_data, &s_raw, err, path, line, offset);
 
   vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
   if(*curr_node){
-    free((char*)raw);
+    free(raw);
     return (*curr_node)->obj;
   }
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  cth_variable_add(name->variables, id, raw, s_raw, (void*)raw, CTH_TYPE__STRING, CTH_QUALIFIER__CONST);
+  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, CTH_TYPE__STRING, CTH_VARSTATE__NONE);
+  var->internal.string = raw;
+
   return id;
 }
 

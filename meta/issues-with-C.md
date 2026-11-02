@@ -31,7 +31,7 @@ C's aliasing rules are ugly, but they exist for a reason. We propose to overhaul
 ## Pointer safety.
 Normal C pointers are nullable, which in theory means that for maximum safety one should check if any function returning a ptr returns `NULL` or not. This is _cumbersome_ and rarely done in code.\
 We keep the traditional nullable pointer `*` and add a non-nullable pointer `&`, reminiscent of C++ references. `&` pointers are still pointers, though, and they behave exactly like `*`, the only difference being that `*` can encode the error value `NULL` and `&` can't. One can think of `*` as similar to `&?` (optional reference), although the two are different.\
-Code inside `.cth`, `.hth` files (when compiled with the highest level of safety) _must_ unwrap nullable pointers, now defined as `enum{ ...* some, NULL }`, with something akin to `switch ptr NULL = ..., some = ...;` or an _error is generated_. See option types if something isn't clear.
+Code inside `.cth`, `.hth` files (when compiled with the highest level of safety) _must_ unwrap nullable pointers, now defined as `enum{ ...* some, NULL }`, with something akin to `switch ptr NULL = ..., some = ...;` to unwrapping, lest an _error_ be generated. See option types if something isn't clear.
 
 ## Option types.
 To further aide error handling, we introduce the `?` option type; at its simplest, a type `qux_t?` is an enum `enum{ qux_t some, none }` that cannot be used without _it being unwrapped_ (and therefore without one checking for errors).\

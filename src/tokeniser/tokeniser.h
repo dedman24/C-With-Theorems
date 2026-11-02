@@ -118,7 +118,7 @@ static cth_outputT cth_tokenise__repl(
   rc_disown(rc_path);
 
   cth_outputT tokenised = (cth_outputT*)tokeniser->program;
-  tokeniser->program = cth_ast_init(NULL, CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM);
+  tokeniser->program = cth_ast_init(&tokeniser->program, CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM);
 // result of tokenisation.
   return tokenised;
 }

@@ -30,8 +30,8 @@ typedef struct{
 static void cth_tokeniser_init(cth_tokeniserT* const restrict tokeniser){
   tokeniser->ops = vfastarr_init(sizeof(*tokeniser->ops));
   tokeniser->values = vfastarr_init(sizeof(*tokeniser->values));
-
-  tokeniser->program = cth_ast_init(NULL, CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM);
+// sets tokeniser->program to this node.
+  cth_ast_init(&tokeniser->program, CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM);
 
   cth_name_ctx_init(&tokeniser->name);
   tokeniser->files = VFASTBST_RC_INIT;

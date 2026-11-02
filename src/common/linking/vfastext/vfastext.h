@@ -40,7 +40,7 @@ static void vfastext_resize(vfastextT* const restrict ctx, const size_t amt){
   if(ctx->capacity*2 < amt) ctx->capacity += amt;
   else ctx->capacity *= 2;
 
-  ctx->arr = realloc(ctx, ctx->capacity);
+  ctx->arr = realloc(ctx->arr, ctx->capacity);
 }
 
 void vfastext_append(vfastextT* const restrict ctx, const void* const restrict elem, const size_t s_elem){

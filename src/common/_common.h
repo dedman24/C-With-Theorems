@@ -9,7 +9,8 @@
 #include "err/err.h"
 #include "fileops.h"
 #include "err/warn.h"
-#include "variables.h"
+#include "variables/variables.h"
+
 // later provided at link time.
 #include "linking/vfastarr.h"
 #include "linking/vfastqueue.h"

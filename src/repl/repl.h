@@ -32,18 +32,18 @@ static void cth_repl__result(cth_variableT** const restrict variables){
       continue;
     }
     switch(var->type){
-      case CTH_TYPE__U8:  fprintf(stdout, "%u",  *(uint8_t*)var->internal); break;
-      case CTH_TYPE__U16: fprintf(stdout, "%u",  *(uint16_t*)var->internal); break;
-      case CTH_TYPE__U32: fprintf(stdout, "%u",  *(uint32_t*)var->internal); break;
-      case CTH_TYPE__U64: fprintf(stdout, "%lu", *(uint64_t*)var->internal); break;
+      case CTH_TYPE__U8:  fprintf(stdout, "%u",  var->internal.u8); break;
+      case CTH_TYPE__U16: fprintf(stdout, "%u",  var->internal.u16); break;
+      case CTH_TYPE__U32: fprintf(stdout, "%u",  var->internal.u32); break;
+      case CTH_TYPE__U64: fprintf(stdout, "%lu", var->internal.u64); break;
 
-      case CTH_TYPE__I8:  fprintf(stdout, "%d",  *(int8_t*)var->internal); break;
-      case CTH_TYPE__I16: fprintf(stdout, "%d",  *(int16_t*)var->internal); break;
-      case CTH_TYPE__I32: fprintf(stdout, "%d",  *(int32_t*)var->internal); break;
-      case CTH_TYPE__I64: fprintf(stdout, "%ld", *(int64_t*)var->internal); break;
+      case CTH_TYPE__I8:  fprintf(stdout, "%d",  var->internal.i8); break;
+      case CTH_TYPE__I16: fprintf(stdout, "%d",  var->internal.i16); break;
+      case CTH_TYPE__I32: fprintf(stdout, "%d",  var->internal.i32); break;
+      case CTH_TYPE__I64: fprintf(stdout, "%ld", var->internal.i64); break;
 
-      case CTH_TYPE__F32: fprintf(stdout, "%f", *(float*)var->internal); break;
-      case CTH_TYPE__F64: fprintf(stdout, "%f", *(double*)var->internal); break;
+      case CTH_TYPE__F32: fprintf(stdout, "%f", var->internal.f32); break;
+      case CTH_TYPE__F64: fprintf(stdout, "%f", var->internal.f64); break;
 
       default:
         fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
@@ -54,7 +54,7 @@ static void cth_repl__result(cth_variableT** const restrict variables){
     if(i != c_vars - 1)
       fputs(", ", stdout);
 
-    if(var->qualifier & CTH_QUALIFIER__FREEALL)
+    if(var->state & CTH_VARSTATE__FREEALL)
       cth_variable_destroy(var);
   }
   fputc('\n', stdout);

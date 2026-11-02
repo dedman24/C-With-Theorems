@@ -49,6 +49,11 @@ typedef struct{
 } cth_ast__binaryT;
 
 typedef struct{
+  cth_astT* fun;                      // function to call.
+  cth_astT** args;                    // arguments to function.
+} cth_ast__funcallT;
+
+typedef struct{
   cth_astT** program;                 // vfastarr.
 } cth_ast__programT;
 
@@ -62,6 +67,7 @@ typedef enum{
   CTH_AST__SWITCH,
   CTH_AST__UNARY,
   CTH_AST__BINARY,
+  CTH_AST__FUNCALL,
   CTH_AST__PROGRAM
 } cth_ast_typeT;
 
@@ -82,6 +88,7 @@ struct cth_astS{
     cth_ast__switchT    _switch;      // switch statements.
     cth_ast__unaryT     _unary;       // unary ops.
     cth_ast__binaryT    _binary;      // binary ops.
+    cth_ast__funcallT   _funcall;     // function call.
     cth_ast__programT   program;      // all of the program.
   } data;
 };
@@ -119,6 +126,8 @@ static cth_astT* cth_ast_init(
     case CTH_AST__SWITCH:
       node->data._switch.cases = vfastarr_init(sizeof(*node->data._switch.cases));
       break;
+    case CTH_AST__FUNCALL:
+      node->data._funcall.args = vfastarr_init(sizeof(*node->data._funcall.args));
     case CTH_AST__PROGRAM:
       node->data.program.program = vfastarr_init(sizeof(*node->data.program.program));
       break;
@@ -126,6 +135,76 @@ static cth_astT* cth_ast_init(
   }
 
   return node;
+}
+
+static cth_astT* cth_ast_clone__recursive(cth_astT** const restrict reference, cth_astT* const restrict src);
+
+static cth_astT** cth_ast_clone__array(cth_astT** const restrict src){
+  if(!src) return NULL;
+
+  const size_t c_src = vfastarr_elcnt(src, sizeof(*src));
+  cth_astT** const restrict dst = vfastarr_init(c_src*sizeof(*src));
+
+  for(size_t i = 0; i < c_src; i++)
+    dst[i] = cth_ast_clone__recursive(&dst[i], src[i]);
+
+  return dst;
+}
+
+static cth_astT* cth_ast_clone__recursive(cth_astT** const restrict reference, cth_astT* const restrict src){
+  cth_astT* const restrict node = malloc(sizeof(*node));
+
+  if(reference) *reference = node;
+  node->reference = reference;
+  node->op = src->op;
+  node->line = src->line;
+  node->offset = src->offset;
+  node->type = src->type;
+
+  switch(src->type){
+    case CTH_AST__ID: node->data.id = src->data.id;
+    case CTH_AST__IF:
+      node->data._if.condition = cth_ast_clone__recursive(&node->data._if.condition, src->data._if.condition);
+      node->data._if.success = cth_ast_clone__array(src->data._if.success);
+      node->data._if.failure = cth_ast_clone__array(src->data._if.failure);
+      break;
+    case CTH_AST__FOR:
+      node->data._for.init = cth_ast_clone__recursive(&node->data._for.init, src->data._for.init);
+      node->data._for.condition = cth_ast_clone__recursive(&node->data._for.condition, src->data._for.condition);
+      node->data._for.update = cth_ast_clone__recursive(&node->data._for.update, src->data._for.update);
+      node->data._for.code = cth_ast_clone__array(src->data._for.code);
+      break;
+    case CTH_AST__DEFER:
+      node->data._defer.code = cth_ast_clone__array(src->data._defer.code);
+      break;
+    case CTH_AST__WHILE:
+      node->data._while.condition = cth_ast_clone__recursive(&node->data._while.condition, src->data._while.condition);
+      node->data._while.code = cth_ast_clone__array(src->data._while.code);
+      break;
+    case CTH_AST__SWITCH:
+      node->data._switch.cases = cth_ast_clone__array(src->data._switch.cases);
+      break;
+    case CTH_AST__UNARY:
+      node->data._unary.src = cth_ast_clone__recursive(&node->data._unary.src, src->data._unary.src);
+      break;
+    case CTH_AST__BINARY:
+      node->data._binary.s0 = cth_ast_clone__recursive(&node->data._binary.s0, src->data._binary.s0);
+      node->data._binary.s1 = cth_ast_clone__recursive(&node->data._binary.s1, src->data._binary.s1);
+      break;
+    case CTH_AST__FUNCALL:
+      node->data._funcall.fun = cth_ast_clone__recursive(&node->data._funcall.fun, src->data._funcall.fun);
+      node->data._funcall.args = cth_ast_clone__array(src->data._funcall.args);
+      break;
+    case CTH_AST__PROGRAM:
+      node->data.program.program = cth_ast_clone__array(src->data.program.program);
+      break;
+  }
+
+  return node;
+}
+
+static cth_astT* cth_ast_clone(cth_astT* const restrict src){
+  return cth_ast_clone__recursive(NULL, src);
 }
 
 static void cth_ast_destroy(cth_astT* const restrict node);
@@ -154,7 +233,7 @@ static void cth_ast_destroy(cth_astT* const restrict node){
       cth_ast_destroy(node->data._for.init);
       cth_ast_destroy(node->data._for.condition);
       cth_ast_destroy(node->data._for.update);
-      if(node->data._for.code) cth_ast_destroy(node->data._for.condition);
+      cth_ast_destroy__array(node->data._for.code);
       break;
     case CTH_AST__DEFER:
       cth_ast_destroy__array(node->data._defer.code);
@@ -172,6 +251,10 @@ static void cth_ast_destroy(cth_astT* const restrict node){
     case CTH_AST__BINARY:
       cth_ast_destroy(node->data._binary.s0);
       cth_ast_destroy(node->data._binary.s1);
+      break;
+    case CTH_AST__FUNCALL:
+      cth_ast_destroy(node->data._funcall.fun);
+      cth_ast_destroy__array(node->data._funcall.args);
       break;
     case CTH_AST__PROGRAM:
       cth_ast_destroy__array(node->data.program.program);

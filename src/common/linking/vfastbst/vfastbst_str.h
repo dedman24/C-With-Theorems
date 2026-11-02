@@ -34,6 +34,10 @@ void vfastbst_str_put(vfastbst_strT* const restrict bst, const char* const restr
 // returns ptr to where element would go (in which case *result == NULL), or to where element is if it exists within the tree.
 vfastbst_str_nodeT** vfastbst_str_put_half(vfastbst_strT* const restrict bst, const char* const restrict key, const size_t s_key);
 
+// returns 0 on error.
+vfastbst_str_objT vfastbst_str_search(const vfastbst_strT* const restrict bst, const char* const restrict key, const size_t s_key);
+
+
 #endif
 
 # ifdef VFASTBST_IMPLEMENTATION
@@ -110,6 +114,27 @@ vfastbst_str_nodeT** vfastbst_str_put_half(vfastbst_strT* const restrict bst, co
     }
     else
       return &node->leaf[ch_pick];
+  }
+}
+
+vfastbst_str_objT vfastbst_str_search(const vfastbst_strT* const restrict bst, const char* const restrict key, const size_t s_key){
+// inserts if tree is empty.
+  vfastbst_str_nodeT* restrict node = bst->node;
+  if(!node) return 0;
+
+  while(1){
+    const int r = 
+      node->s_key == s_key?
+        memcmp(node->key, key, s_key):
+        node->s_key - s_key;
+    if(!r)
+      return node->obj;
+    const size_t ch_pick = r>0;
+
+    if(node->leaf[ch_pick])
+      node = node->leaf[ch_pick];
+    else
+      return 0;
   }
 }
 

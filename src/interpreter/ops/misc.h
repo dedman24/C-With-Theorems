@@ -32,8 +32,8 @@ static cth_variableT* cth_op__typechecking(const cth_astT* const restrict node, 
   else if(vtype != v0)
     cth_error_report__str_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, vtype->name, v1->name);
 
-  if(v0->qualifier & CTH_QUALIFIER__FREEALL) cth_variable_destroy(v0);
-  if(v1->qualifier & CTH_QUALIFIER__FREEALL) cth_variable_destroy(v1);
+  if(v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
+  if(v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
 
   return NULL;
 }
@@ -56,7 +56,7 @@ static cth_variableT* cth_op__comma(const cth_astT* const restrict node, cth_var
   else if(vtype != v1)
     cth_error_report__str_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, vtype->name, v1->name);
 
-  if(v1->qualifier & CTH_QUALIFIER__FREEALL) cth_variable_destroy(v1);
+  if(v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
 
   return v0;
 }

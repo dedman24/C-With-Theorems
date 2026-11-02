@@ -4,11 +4,11 @@
 // this library handles errors.
 
 #include "../fposT.h"                   // fpos type.
-#include "../variables.h"               // types.
 #include "../linking/rc.h"              // reference-counted strings.
 #include "../ansi_colours.h"            // terminal colours.
 #include "../linking/vfastarr.h"        // array type & ops.
 #include "../../parse/version.h"        // CTH_VERSION_STR.
+#include "../variables/variables.h"     // types & qualifiers.
 
 // stdlib includes.
 #include "stdio.h"                      // puts, printf.
@@ -19,6 +19,8 @@
 // on adding impossibilities:
 //  only add them at the end.
 //  when removing impossibilities, do not alter values of old impossibilities; error codes should stay consistent across versions.
+// running out of impossibilities is impossible (XDDD) because we report them with a u32.
+// as long as we don't have more than 2**32 different impossible edge cases, never reuse old codes.
 enum{
   CTH_IMPOSSIBILITY__PARSE_OPTION             = 0,
   CTH_IMPOSSIBILITY__NAME_H_DEFAULT           = 1,
@@ -56,6 +58,7 @@ typedef enum{
   CTH_ERROR__VALUE_UNKNOWN_ESCAPE_SEQUENCE,
 
   CTH_ERROR__TYPEIS_SECOND_ARG,
+  CTH_ERROR__TYPE_UNJOINABLE,
   CTH_ERROR__TYPE_INCOMPATIBLE_OP,
   CTH_ERROR__TYPE_INCOMPATIBLE_RETURN,
 
@@ -96,17 +99,18 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__ASSIGNMENT_RVALUE]              = "assignment to rvalue is invalid.\n",
 
   [CTH_ERROR__TOKENISER_UNKNOWN_TOKEN]        = "unknown token met during tokenisation; possibly an issue with the compiler.\n",
-  [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "two operands are adjacent with no operator between them, and the former isn't a type.\n",
+  [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "identifiers are adjacent with no operator between them, and the former isn't a type nor a qualifier.\n",
 
   [CTH_ERROR__INDENTATION_DEPTH_NEGATIVE]     = "scope depth is negative, due to extra '}'.\n",
   [CTH_ERROR__INDENTATION_DEPTH_TOO_HIGH]     = "at end of tokenisation, indentation depth is not 0.\n",
 
   [CTH_ERROR__TYPEIS_SECOND_ARG]              = "in '::', second argument is not type.\n",
+  [CTH_ERROR__TYPE_UNJOINABLE]                = "type %s cannot be joined with type %s.\n",
   [CTH_ERROR__TYPE_INCOMPATIBLE_OP]           = "in expression, type %s is incompatible with type %s.\n",
   [CTH_ERROR__TYPE_INCOMPATIBLE_RETURN]       = "expected return type %s is incompatible with type %s.\n",
 
   [CTH_ERROR__INTERPRETER_AST_TYPE]           = "ast node is of type %d, while interpreter dispatched op of type %d. contact devs.\n",
-  [CTH_ERROR__INTERPRETER_DIVIDE_BY_ZERO]     = "divide-by-zero happened.\n",
+  [CTH_ERROR__INTERPRETER_DIVIDE_BY_ZERO]     = "invalid division by zero happened.\n",
   [CTH_ERROR__INTERPRETER_OP_UNIMPLEMENTED]   = "operator is unimplemented.\n",
   [CTH_ERROR__INTERPRETER_TYPE_UNSUPPORTED]   = "type '%s' does not support specified operation.\n",
   [CTH_ERROR__INTERPRETER_VARIABLE_MISSING]   = "could not find variable in variable_ctxT. contact devs.\n",

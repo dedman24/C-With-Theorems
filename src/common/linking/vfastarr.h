@@ -13,13 +13,15 @@
 size_t vfastarr_size(const void* const restrict arr);                                               // gets size of array.
 size_t vfastarr_elcnt(const void* const restrict arr, const size_t s_elem);                         // gets No. of elements within array.
 void* vfastarr_append(void* restrict arr, const void* const restrict elem, const size_t s_elem);    // appends element to array.
+void* vfastarr_append_char(void* restrict arr, const char c);                                       // appends char to array.
+void* vfastarr_append_str(void* restrict arr, const char* const restrict str);                      // appends C string to array.
 void* vfastarr_extend(void* restrict arr, const size_t c_elem, const size_t s_elem);                // extends array by cnt elements.
 void* vfastarr_clone(void* const restrict src);                                                     // clones array.
 bool vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_elem);              // pops element from end of array.
 void vfastarr_remove(void* restrict arr, const size_t s_elem);                                      // removes element from end of array.
 void vfastarr_empty(void* restrict arr);                                                            // empties array.
 void* vfastarr_init(const size_t s_elem);                                                           // initialises array.
-void* vfastarr_init_explicit(const size_t initialised, const size_t c_elem, const size_t s_elem);   // initialises array explicitly.
+void* vfastarr_init_explicit(const size_t initialised, const size_t c_elem, const size_t s_elem);   // initialises array explicitly, sets array as full.
 void vfastarr_destroy(void* const arr);                                                             // destroys array.
 
 #endif
@@ -65,6 +67,29 @@ void* vfastarr_append(void* restrict arr, const void* const restrict elem, const
   }
   memcpy((char*)arr + hdr->size, elem, s_elem);
   hdr->size += s_elem;
+  return arr;
+}
+
+void* vfastarr_append_char(void* restrict arr, const char c){
+  vfastarr_hdrT* restrict hdr = (vfastarr_hdrT*)arr - 1;
+  if(hdr->size + sizeof(c) > hdr->capacity){
+    hdr = vfastarr_resize(hdr);
+    arr = (void*)(hdr + 1);
+  }
+  ((char*)arr)[hdr->size++] = c;
+  return arr;
+}
+
+void* vfastarr_append_str(void* restrict arr, const char* const restrict str){
+  const size_t s_str = strlen(str);
+
+  vfastarr_hdrT* restrict hdr = (vfastarr_hdrT*)arr - 1;
+  if(hdr->size + s_str > hdr->capacity){
+    hdr = vfastarr_resize(hdr);
+    arr = (void*)(hdr + 1);
+  }
+  memcpy((char*)arr + hdr->size, str, s_str);
+  hdr->size += s_str;
   return arr;
 }
 
@@ -119,7 +144,7 @@ void* vfastarr_init(const size_t s_elem){
 
 void* vfastarr_init_explicit(const size_t initialised, const size_t c_elem, const size_t s_elem){
   vfastarr_hdrT* const restrict hdr = malloc(sizeof(vfastarr_hdrT) + c_elem*s_elem);
-  hdr->size = 0;
+  hdr->size = c_elem*s_elem;
   hdr->capacity = c_elem*s_elem;
   return (void*)(hdr + 1);
 }

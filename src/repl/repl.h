@@ -20,7 +20,7 @@
 // posix stuff.
 #include "unistd.h"             // isatty.
 
-static void cth_repl__result(cth_variableT** const restrict variables){
+static void cth_repl__result(cth_variableT** const restrict variables, cth_variable_ctxT* const restrict ctx){
   const size_t c_vars = vfastarr_elcnt(variables, sizeof(*variables));
 
   for(size_t i = 0; i < c_vars; i++){
@@ -31,7 +31,9 @@ static void cth_repl__result(cth_variableT** const restrict variables){
         fputs(", ", stdout);
       continue;
     }
-    switch(var->type){
+    cth_variableT* const type_var = cth_variable_search(ctx, var->type);
+    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(type_var);
+    switch(top.dispatch){
       case CTH_TYPE__U8:  fprintf(stdout, "%u",  var->internal.u8); break;
       case CTH_TYPE__U16: fprintf(stdout, "%u",  var->internal.u16); break;
       case CTH_TYPE__U32: fprintf(stdout, "%u",  var->internal.u32); break;
@@ -49,7 +51,10 @@ static void cth_repl__result(cth_variableT** const restrict variables){
         fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
     }
     fputs(" :: ", stdout);
-    fputs(cth_type__strings[var->type], stdout);
+    if(top.dispatch < CTH_TYPE_MAX)
+      fputs(cth_type__strings[top.dispatch], stdout);
+    else
+      fputs("_Unknown_t", stdout);
 
     if(i != c_vars - 1)
       fputs(", ", stdout);
@@ -68,7 +73,7 @@ static void cth_repl__line(const char* const restrict code, cth_tokeniserT* cons
   cth_outputT tokenised = cth_tokenise__repl(code, "repl", tokeniser, &err);
 
   cth_variableT** const restrict output = cth_interpret(tokenised, tokeniser->name.variables, NULL, &err);
-  cth_repl__result(output);
+  cth_repl__result(output, tokeniser->name.variables);
 
   vfastarr_destroy(output);
   cth_ast_destroy(tokenised);

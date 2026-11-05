@@ -72,6 +72,8 @@ typedef struct{
 } cth_name_addS;
 
 // searches for name, creates nameID if it doesn't find any.
+// .var == NULL if variable doesn't exist exists, otherwise equal to variableT.
+// returns .var == NULL, .name == 0 on error.
 static cth_name_addS cth_name_add(const char* const restrict key, const size_t s_key, cth_nameT type, const cth_variable_stateT state, cth_name_ctxT* const restrict name){
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
 
@@ -88,8 +90,8 @@ static cth_name_addS cth_name_add(const char* const restrict key, const size_t s
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(key, s_key, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables, id, key, s_key, type, state);
-  return (cth_name_addS){ .var = var, .name = id };
+  cth_variable_add(name->variables, id, key, s_key, type, state);
+  return (cth_name_addS){ .var = NULL, .name = id };
 }
 
 // searches for name by string, returns 0 on error.
@@ -119,6 +121,7 @@ static int cth_value_decode__binary(
   return *bytes_read != 0;
 }
 
+// returns NULL on error, reports proper error when this happens so that underlying function doesn't have to.
 static cth_variable__internalT* cth_value_decode(
   const char* restrict data, size_t s_data, size_t* const restrict s_raw, cth_nameT* const restrict type_raw,
   cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
@@ -156,6 +159,7 @@ static cth_variable__internalT* cth_value_decode(
     case CTH_TYPE__F8:
     case CTH_TYPE__F16:
       cth_error_report(CTH_ERROR__VALUE_FORMAT_UNIMPLEMENTED, CTH_ERROR__COMPILER, path, line, offset, err);
+      free(raw);
       return NULL;
     case CTH_TYPE__F32:
       *s_raw = sizeof(float);
@@ -212,9 +216,11 @@ static cth_variable__internalT* cth_value_decode(
       }
       break;
     case CTH_TYPE__NONE:      // error reported by cth_vtype.
+      free(raw);
       return NULL;
-    default:                          // should not happen, very worrying if it does.
+    default:                  // should not happen, very worrying if it does.
       cth_error_report__u32(CTH_ERROR__IMPOSSIBILITY, CTH_ERROR__COMPILER, path, line, offset, err, CTH_IMPOSSIBILITY__NAME_H_DEFAULT);
+      free(raw);
       return NULL;
   }
 
@@ -225,6 +231,7 @@ static cth_variable__internalT* cth_value_decode(
 }
 
 // searches for value, creates nameID if it doesn't find any.
+// returns 0 on error.
 static cth_nameT cth_value_add(
   const char* const restrict data, const size_t s_data, cth_name_ctxT* const restrict name,
   cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
@@ -232,6 +239,8 @@ static cth_nameT cth_value_add(
   size_t s_raw;
   cth_nameT type_raw;
   cth_variable__internalT* const restrict raw = cth_value_decode(data, s_data, &s_raw, &type_raw, err, path, line, offset);
+  if(!raw)
+    return 0;
 
   vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, (const char*)raw, s_raw);
   if(*curr_node){
@@ -241,7 +250,7 @@ static cth_nameT cth_value_add(
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init((char*)raw, s_raw, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables, id, (const char*)raw, s_raw, type_raw, CTH_VARSTATE__NONE);
+  cth_variableT* const restrict var = cth_variable_add(name->variables, id, (const char*)raw, s_raw, type_raw, CTH_VARSTATE__FREENAME | CTH_VARSTATE__IMMEDIATE);
   var->internal = *raw;
 
   return id;
@@ -263,7 +272,7 @@ static cth_nameT cth_char_add(
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, CTH_TYPE__CHAR8, CTH_VARSTATE__NONE);
+  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, CTH_TYPE__CHAR8, CTH_VARSTATE__IMMEDIATE);
   var->internal.char8 = *raw;
 
   return id;
@@ -284,7 +293,7 @@ static cth_nameT cth_string_add(
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, CTH_TYPE__STRING, CTH_VARSTATE__NONE);
+  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, CTH_TYPE__STRING, CTH_VARSTATE__IMMEDIATE);
   var->internal.string = raw;
 
   return id;

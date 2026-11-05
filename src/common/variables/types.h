@@ -173,10 +173,10 @@ static void cth_type__internal_destroy(cth_type__internalT* const restrict t){
 static cth_astT* cth_type__ast_init(cth_variableT* const restrict qualified, const cth_nameT qualifier){
   cth_astT* const restrict type = qualified->internal.type->tree;
 // sets qualified->internal.type->tree to funcall.
-  cth_astT* const restrict funcall = cth_ast_init(&qualified->internal.type->tree, CTH_TOK__FUNCALL, 0, 0, CTH_AST__FUNCALL);
+  cth_astT* const restrict funcall = cth_ast_init__weak(&qualified->internal.type->tree, CTH_TOK__FUNCALL, 0, 0, CTH_AST__FUNCALL);
 // sets funcall->data._funcall.fun to this node.
-  cth_ast_init(&funcall->data._funcall.fun, CTH_TOK__NAME, 0, 0, CTH_AST__ID);
-  funcall->data._funcall.fun->data.id = qualifier;
+  cth_astT* const restrict fun = cth_ast_init(&funcall->data._funcall.fun, CTH_TOK__NAME, 0, 0, CTH_AST__ID);
+  fun->data.id = qualifier;
   funcall->data._funcall.args = vfastarr_init_explicit(1, 1, sizeof(*funcall->data._funcall.args));
   funcall->data._funcall.args[0] = type;
   type->reference = &funcall->data._funcall.args[0];

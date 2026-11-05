@@ -38,7 +38,7 @@ C With Theorems is _exactly that_: ~~another C clone~~ a C with all the things I
 or a combination of the above, and that's enough of a reason for me to not use it.\
 Not that you shouldn't use a language just because I said so, but those are languages I _don't like using_ that are often purported as successors to C. No, I won't use Haskell/ML/rust or whatever because they don't _feel like C_: save for rust they don't give one nearly as much control over the low-level machine as C does. btfo XDDD.
 
-NOTE: I particularly dislike how basically all modern functional languages heavy runtimes; I'd use them if they didn't. No functional language currently is fast enough for one to write a full OS kernel in it, which is a project I'd like to try some day.
+NOTE: I particularly dislike how basically all modern functional languages have heavy runtimes; I'd use them if they didn't. No functional language currently is fast enough for one to write a full OS kernel in it, which is a project I'd like to try some day.
 
 ## Disclaimer
 'C With Theorems' is a _hobbyist project_ I started to learn more about compilers, that I work on whenever I have time. I may make it seem something really cool and professionally developed in `meta/`, but it really _isn't_. It may _never even be finished_, so please get your hopes up.

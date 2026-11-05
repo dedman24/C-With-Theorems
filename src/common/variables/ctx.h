@@ -17,10 +17,12 @@ typedef struct{
 } cth_type__internalT;
 
 typedef enum: uint8_t{
-  CTH_VARSTATE__NONE     = 0,
-  CTH_VARSTATE__FREENAME = 1<<0,
-  CTH_VARSTATE__FREEALL  = 1<<1,
-  CTH_VARSTATE__RVALUE   = 1<<2,
+  CTH_VARSTATE__NONE      = 0,
+  CTH_VARSTATE__FREENAME  = 1<<0,
+  CTH_VARSTATE__FREEALL   = 1<<1,
+  CTH_VARSTATE__RVALUE    = 1<<2,
+  CTH_VARSTATE__ASSIGNED  = 1<<3,
+  CTH_VARSTATE__IMMEDIATE = 1<<4,
 } cth_variable_stateT;
 
 typedef union{

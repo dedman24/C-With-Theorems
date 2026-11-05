@@ -8,6 +8,7 @@
 #include "../ansi_colours.h"            // terminal colours.
 #include "../linking/vfastarr.h"        // array type & ops.
 #include "../../parse/version.h"        // CTH_VERSION_STR.
+#include "../../interpreter/ast.h"      // abstract syntax tree stuff.
 #include "../variables/variables.h"     // types & qualifiers.
 
 // stdlib includes.
@@ -29,6 +30,8 @@ enum{
   CTH_IMPOSSIBILITY__TOKENISER_STATE_NAME     = 4,
   CTH_IMPOSSIBILITY__ASSIGNMENT_S0            = 5,
   CTH_IMPOSSIBILITY__MISSING_SRC              = 6,
+  CTH_IMPOSSIBILITY__TYPECHECK_TOP_LVL        = 7,
+  CTH_IMPOSSIBILITY__TYPECHECK_TOP_LVL2       = 8,
 };
 
 // lovely way of handling errors, isn't it?
@@ -38,7 +41,9 @@ typedef enum{
 
   CTH_ERROR__AST_TOO_FEW_OPERANDS,
 
+  CTH_ERROR__ASSIGNMENT_CONST,
   CTH_ERROR__ASSIGNMENT_RVALUE,
+  CTH_ERROR__ASSIGNMENT_IMMEDIATE,
 
   CTH_ERROR__TOKENISER_UNKNOWN_TOKEN,
   CTH_ERROR__TOKENISER_ADJACENT_OPERANDS,
@@ -96,7 +101,9 @@ const char* const restrict cth_error_strings[] = {
 
   [CTH_ERROR__AST_TOO_FEW_OPERANDS]           = "too few operands present for op to be converted into abstract syntax tree format.\n",
 
+  [CTH_ERROR__ASSIGNMENT_CONST]               = "assignment to value qualified with '%s' is invalid.\n",
   [CTH_ERROR__ASSIGNMENT_RVALUE]              = "assignment to rvalue is invalid.\n",
+  [CTH_ERROR__ASSIGNMENT_IMMEDIATE]           = "assignment to immediate is invalid.\n",
 
   [CTH_ERROR__TOKENISER_UNKNOWN_TOKEN]        = "unknown token met during tokenisation; possibly an issue with the compiler.\n",
   [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "identifiers are adjacent with no operator between them, and the former isn't a type nor a qualifier.\n",
@@ -282,11 +289,19 @@ static void cth_error_report__type(
   const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
   const cth_fposT line, const cth_fposT offset,
   cth_error_ctxT* const restrict ctx,
-  const cth_nameT type_data
+  cth_variable_ctxT* const restrict variables,
+  const cth_nameT id_type
 ){
-  const size_t len_message = strlen(cth_error_strings[type]) + strlen(cth_type__strings[type_data]);
+  const cth_variableT* const var_type = cth_variable_search(variables, id_type);
+  const cth_astT* const ast_type = var_type->internal.type->tree;
+
+  size_t s_type_data;
+  char* const restrict type_data = cth_type_str_construct(ast_type, variables, &s_type_data);
+
+  const size_t len_message = strlen(cth_error_strings[type]) + s_type_data;
   char* const restrict message = malloc(len_message + 1);
-  sprintf(message, cth_error_strings[type], cth_type__strings[type_data]);
+  sprintf(message, cth_error_strings[type], type_data);
+  vfastarr_destroy(type_data);
 
   const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
@@ -297,11 +312,37 @@ static void cth_error_report__type_2(
   const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
   const cth_fposT line, const cth_fposT offset,
   cth_error_ctxT* const restrict ctx,
+  cth_variable_ctxT* const restrict variables,
   const cth_nameT t0, const cth_nameT t1
 ){
-  const size_t len_message = strlen(cth_error_strings[type]) + strlen(cth_type__strings[t0]) + strlen(cth_type__strings[t1]);
+  const cth_variableT* const var_t0 = cth_variable_search(variables, t0),
+                     * const var_t1 = cth_variable_search(variables, t1);
+  const cth_astT* const ast_t0 = var_t0->internal.type->tree,
+                * const ast_t1 = var_t1->internal.type->tree;
+
+  size_t s_t0_data, s_t1_data;
+  char* const restrict t0_data = cth_type_str_construct(ast_t0, variables, &s_t0_data),
+      * const restrict t1_data = cth_type_str_construct(ast_t1, variables, &s_t1_data);
+
+  const size_t len_message = strlen(cth_error_strings[type]) + s_t0_data + s_t1_data;
   char* const restrict message = malloc(len_message + 1);
-  sprintf(message, cth_error_strings[type], cth_type__strings[t0], cth_type__strings[t1]);
+  sprintf(message, cth_error_strings[type], t0_data, t1_data);
+  vfastarr_destroy(t0_data); vfastarr_destroy(t1_data);
+
+  const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
+  ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
+  cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+}
+
+static void cth_error_report__qualif(
+  const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
+  const cth_fposT line, const cth_fposT offset,
+  cth_error_ctxT* const restrict ctx,
+  const cth_nameT qualif_data
+){
+  const size_t len_message = strlen(cth_error_strings[type]) + strlen(cth_qualifier__strings[qualif_data]);
+  char* const restrict message = malloc(len_message + 1);
+  sprintf(message, cth_error_strings[type], cth_qualifier__strings[qualif_data]);
 
   const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
   ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));

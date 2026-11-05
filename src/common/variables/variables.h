@@ -151,8 +151,12 @@ static cth_variableT* cth_variable_init(
 static void cth_variable_destroy(cth_variableT* const restrict real){
   if(real->state & CTH_VARSTATE__FREENAME) free((void*)real->name);
   switch(real->type){
-    case CTH_TYPE__TYPE: cth_type__internal_destroy(real->internal.type); break;
-    case CTH_TYPE__STRING: free(real->internal.string); break;
+    case CTH_TYPE__TYPE:
+      cth_type__internal_destroy(real->internal.type);
+      break;
+    case CTH_TYPE__STRING:
+      free(real->internal.string);
+      break;
     default: break;
   }
   free(real);
@@ -162,8 +166,12 @@ static void cth_variable_destroy__rht(vfastrht_objT* const restrict var){
   cth_variableT* const restrict real = (cth_variableT*)var;
   if(real->state & CTH_VARSTATE__FREENAME) free((void*)real->name);
   switch(real->type){
-    case CTH_TYPE__TYPE: cth_type__internal_destroy(real->internal.type); break;
-    case CTH_TYPE__STRING: free(real->internal.string); break;
+    case CTH_TYPE__TYPE: 
+      cth_type__internal_destroy(real->internal.type);
+      break;
+    case CTH_TYPE__STRING:
+      free(real->internal.string);
+      break;
     default: break;
   }
   free(real);
@@ -231,5 +239,37 @@ static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx)
 
   return ctx;
 }
+
+// returns NULL-terminated string holding fully qualified type name.
+// has to be destroyed with vfastarr.
+static char* cth_type_str_construct(const cth_astT* type, cth_variable_ctxT* const restrict variables, size_t* s_type_name){
+  char* type_name = vfastarr_init(sizeof(char));
+
+  while(1){
+    switch(type->type){
+      case CTH_AST__ID:
+        if(type->data.id < CTH_TYPE_MAX)
+          vfastarr_append_str(type_name, cth_type__strings[type->data.id]);
+        else{                       // variable is defined from other variable, so we have to use that name.
+          cth_variableT* const restrict v = cth_variable_search(variables, type->data.id);
+          vfastarr_append(type_name, v->name, v->s_name);
+        }
+        *s_type_name = vfastarr_size(type_name);
+        vfastarr_append_char(type_name, '\0');
+        return type_name;
+      case CTH_AST__FUNCALL:
+        cth_astT* const restrict fun = type->data._funcall.fun;
+      // NOTE: supports unary qualifiers like *, immut, const but not binary ones like arrays (or even function types TwT).
+      // upgrade code for when the type comes to add those.
+        vfastarr_append_str(type_name, cth_qualifier__strings[fun->data.id]);
+        vfastarr_append_char(type_name, ' ');
+        type = type->data._funcall.args[0];
+        break;
+      default:      // should be impossible to arrive here, but I CBA to report an error, so we force a segfault :PPP.
+        *(volatile uint8_t*)NULL = 67;
+        break;
+    }
+  }
+};
 
 #endif

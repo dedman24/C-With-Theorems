@@ -1,21 +1,17 @@
-### Changelog 2026/11/2.
- - added support for C types like `short`, `short int`, `int` and so on, through 'type joining'.\
-   while I'd like for `signed` to be a qualifier like `const` is, for it to be handled in the same manner, it's a type in C and it has to be handled like other multi-word types.\
-   stuff like `signed u32` evaluates to `i32`, which is cool, although _not that useful_.
- - reworked 'internal' field of variables.
- - removed `cth_type__strings` (bug-prone, tables are also generally bad). 
- - made `sorry` become `@sorry`, added `@unresolvable` for functions that cannot be resolved (useful for modelling qualifers). added `@` as valid regex for names.
- - added `cth_ast__funcallT`.
- - added `char16_t`, `char32_t`, `size_t`, `ssize_t` as default types. `unsigned ssize_t` becomes `size_t` and vice-versa.
- - started work on C qualifiers, currently only supports simple stuff like `const` and `immut`.\
-   types are now trees, and qualifiers functions on types. this also allows for user-defined qualifiers.
- - types initialised as tree nodes; qualifiers don't really need this.
+### Changelog 2026/11/05.
+ - fixed wording in README.md.
+ - fixed issue with how qualifier is handled, in that _it didn't work_ and _it broke C multiword types_.
+ - fixed memory leaks.
+ - added proper error reporting for types.
+ - added proper type compatibility.
+ - added `const`, `immut` detection in assignment.
+ - added proper errors when a variable is used _undefined_ or _unassigned_.
+ - something like `1 = 2;` used to assign the value `2` to the literal `1`; now errors out instead. 
 
 > `BEGIN snca;`
 
-I want to finish cth. It's all I can thinka bovt, when I wake up or when I turn on my pc.\
-It nags the back of my mind, which is crazy because I don't even work on it that hard; I am a lazy person at my core, I don't work as hard as I _could_.\
-I must work harder. Time lost is never made up for.
+cth is shaping up to be something neat. I quite like it.\
+LORD help me. I'm still not coding as much as I would've liked to.
 
 > `END snca;`
 

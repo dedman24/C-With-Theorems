@@ -4,6 +4,7 @@
 // arithmetic cth ops.
 
 #include "../ctx.h"                     // ast, ctx stuff.
+#include "typecheck.h"                  // typechecking ops.
 #include "../../common/_common.h"       // variableT & more.
 
 static cth_variableT* cth_op__add(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err){
@@ -19,13 +20,14 @@ static cth_variableT* cth_op__add(const cth_astT* const restrict node, cth_varia
     return NULL;
   }
 
-  if(v0->type != v1->type){
-    cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, v0->type, v1->type);
+  cth_nameT dispatch;
+  if(!cth_typecheck_compatible((cth_nameT[]){v0->type, v1->type}, 2, &dispatch, variables)){
+    cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, variables, v0->type, v1->type);
     return NULL;
   }
 
-  cth_variableT* const restrict result = cth_variable_init(NULL, 0, v0->type, cth_qualifier_op2(v0->state, v1->state) | CTH_VARSTATE__FREEALL);  
-  switch(v0->type){
+  cth_variableT* const restrict result = cth_variable_init(NULL, 0, dispatch, cth_qualifier_op2(v0->state, v1->state) | CTH_VARSTATE__FREEALL);  
+  switch(dispatch){
     case CTH_TYPE__I8:  
     case CTH_TYPE__I16:
     case CTH_TYPE__I32: result->internal.i32 = v0->internal.i32 + v1->internal.i32; break;

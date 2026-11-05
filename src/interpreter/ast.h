@@ -93,9 +93,9 @@ struct cth_astS{
   } data;
 };
 
-// node->data initialised by _whoever receives it_, although some minor work done here.
-// automatically sets *reference to node when not NULL.
-static cth_astT* cth_ast_init(
+// initialises abstract syntax tree normally.
+// does not touch internals.
+static cth_astT* cth_ast_init__weak(
   cth_astT** const restrict reference, 
   const cth_tokT op, const cth_fposT line, const cth_fposT offset,
   const cth_ast_typeT type
@@ -108,6 +108,18 @@ static cth_astT* cth_ast_init(
   node->line = line;
   node->offset = offset;
   node->type = type;
+
+  return node;
+}
+
+// node->data initialised by _whoever receives it_, although some minor work done here.
+// automatically sets *reference to node when not NULL.
+static cth_astT* cth_ast_init(
+  cth_astT** const restrict reference, 
+  const cth_tokT op, const cth_fposT line, const cth_fposT offset,
+  const cth_ast_typeT type
+){
+  cth_astT* const restrict node = cth_ast_init__weak(reference, op, line, offset, type);
 
   switch(type){
     case CTH_AST__IF:
@@ -128,6 +140,7 @@ static cth_astT* cth_ast_init(
       break;
     case CTH_AST__FUNCALL:
       node->data._funcall.args = vfastarr_init(sizeof(*node->data._funcall.args));
+      break;
     case CTH_AST__PROGRAM:
       node->data.program.program = vfastarr_init(sizeof(*node->data.program.program));
       break;
@@ -162,7 +175,9 @@ static cth_astT* cth_ast_clone__recursive(cth_astT** const restrict reference, c
   node->type = src->type;
 
   switch(src->type){
-    case CTH_AST__ID: node->data.id = src->data.id;
+    case CTH_AST__ID:
+      node->data.id = src->data.id;
+      break;
     case CTH_AST__IF:
       node->data._if.condition = cth_ast_clone__recursive(&node->data._if.condition, src->data._if.condition);
       node->data._if.success = cth_ast_clone__array(src->data._if.success);

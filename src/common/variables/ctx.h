@@ -1,9 +1,10 @@
 #ifndef CTH_COMMON_VARIABLES_CTX_H_INCLUDED
 #define CTH_COMMON_VARIABLES_CTX_H_INCLUDED
 
-#include "../tok.h"                 // nameT & frens.
-#include "../linking/vfastarr.h"    // vfastarr stuff.
-#include "../../interpreter/ast.h"  // abstract syntax tree.
+#include "../tok.h"                         // nameT & frens.
+#include "../linking/vfastarr.h"            // vfastarr stuff.
+#include "../../interpreter/ast.h"          // abstract syntax tree.
+#include "../linking/vfastrht/vfastrht.h"   // vfastrhtT type & functions.
 
 // stdlib includes.
 #include "uchar.h"                // wide char types.
@@ -61,6 +62,8 @@ typedef union{
   long double ld;
 
   bool boolean;
+  uintptr_t ptr;
+
   cth_type__internalT* type;
 } cth_variable__internalT;                // internal representation/actual contents of variable.
 
@@ -71,5 +74,16 @@ typedef struct{
   cth_nameT type;                         // value type.
   cth_variable_stateT state;              // internal state of variable.
 } cth_variableT;
+
+typedef struct{
+  vfastrhtT* correspondences;
+  cth_nameT id_name;
+} cth_variable_ctxT;
+
+static cth_variableT* cth_variable_add(
+  cth_variable_ctxT* const restrict ctx,
+  const cth_nameT id, const char* const restrict name, const size_t s_name,
+  const cth_nameT type, const cth_variable_stateT state
+);
 
 #endif

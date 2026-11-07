@@ -16,8 +16,8 @@ The following mutually exclusive options can be used:
 If none of these options are explicited, all code is type-checked & compiled.
 
 ## Syntax.
-Syntax is very simple, made to be visually unique & easy to read.\
-**Functions** are written as `r_t foo(s_t src);` (C-style) or as `fn foo(s_t src) -> r_t` (cth-style, _differences do exist_ mainly regarding safety and aliasing rules; check out `meta/`). If multiple return types are specified, they are separated by commas.\
+C With Theorems' syntax is very simple, as it's just C's syntax.\
+**Functions** are written as `r_t foo(s_t src);`. If multiple return types are specified, they are separated by commas.\
 **Theorems** are written similarly, as `theorem foo(s_t src) -> condition;`. They can be thought of as functions taking some arguments & returning an object representing what the theorem proves. Check out `examples/naturals.cth` to see how one can prove addition over natural numbers is commutative in cth.\
 I tried to give cth similar expressiveness as other dependent-typed theorem provers like Coq or Lean. I consider it successful in this regard, acthough more work is needed to ensure it can prove _all kinds of theorems_.
 

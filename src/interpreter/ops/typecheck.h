@@ -95,9 +95,7 @@ struct cth_typecheck_top_lvl_getS{
 };
 
 // gets top-level type of type `type`.
-static struct cth_typecheck_top_lvl_getS cth_typecheck_top_lvl_get(cth_variableT* const restrict type){
-  cth_astT* ast_type = type->internal.type->tree;
-
+static struct cth_typecheck_top_lvl_getS cth_typecheck_top_lvl_get(cth_astT* ast_type){
   while(1){
     switch(ast_type->type){
       case CTH_AST__ID:
@@ -105,9 +103,9 @@ static struct cth_typecheck_top_lvl_getS cth_typecheck_top_lvl_get(cth_variableT
       case CTH_AST__FUNCALL:
         cth_astT* fun = ast_type->data._funcall.fun;
         switch(fun->data.id){
-          // case CTH_QUALIFIER__PTR:
-          // case CTH_QUALIFIER__REF:
-          //  return (struct cth_typecheck_top_lvl_getS){ .ast = ast_type->data._funcall.args[0], .dispatch = fun->data.id };
+           case CTH_QUALIFIER__PTR:
+           case CTH_QUALIFIER__REF:
+            return (struct cth_typecheck_top_lvl_getS){ .ast = ast_type->data._funcall.args[0], .dispatch = fun->data.id };
           default: break;
         }
         ast_type = ast_type->data._funcall.args[0];
@@ -119,11 +117,36 @@ static struct cth_typecheck_top_lvl_getS cth_typecheck_top_lvl_get(cth_variableT
   }
 }
 
-static bool cth_typecheck_compatible(const cth_nameT types[], const size_t c_types, cth_nameT* const restrict dispatch, cth_variable_ctxT* const restrict variables){
+static bool cth_typecheck_compatible__ptr(
+  const cth_nameT dispatch0, cth_astT* const ast0, const cth_nameT dispatch1, cth_astT* const ast1, const cth_tokT op
+){
+  switch(op){
+    case CTH_TOK__PLUS:
+      return cth_type__isint(dispatch1);
+    case CTH_TOK__ASSIGNMENT:
+    // NULL support.
+      if(dispatch0 == CTH_TYPE__NULLPTR)
+        return true;
+      if(dispatch1 != dispatch0)
+        return false;
+      const struct cth_typecheck_top_lvl_getS top0 = cth_typecheck_top_lvl_get(ast0), top1 =  cth_typecheck_top_lvl_get(ast1);
+      return top0.dispatch == top1.dispatch;
+    default:
+      return false;
+  }
+}
+
+// op ~ operation under which typechecking is being performed.
+//   important because, for example, `+` is compatible only on ptr-integer, but assignment is compatible only on ptr-ptr.
+//   certain ops are never valid on pointers.
+static bool cth_typecheck_compatible(
+  const cth_nameT types[], const size_t c_types, const cth_tokT op,
+  cth_nameT* const restrict dispatch, cth_variable_ctxT* const restrict variables
+){
   if(c_types == 0) return false;              // 0 types is invalid, possibly an error.
   cth_variableT* const t0 = cth_variable_search(variables, types[0]);
   if(!t0 || t0->type != CTH_TYPE__TYPE) return false;
-  const struct cth_typecheck_top_lvl_getS t0_top = cth_typecheck_top_lvl_get(t0);
+  const struct cth_typecheck_top_lvl_getS t0_top = cth_typecheck_top_lvl_get(t0->internal.type->tree);
 
   if(dispatch)
     *dispatch = t0_top.dispatch;
@@ -132,11 +155,11 @@ static bool cth_typecheck_compatible(const cth_nameT types[], const size_t c_typ
     cth_variableT* const t = cth_variable_search(variables, types[i]);
     if(!t || t->type != CTH_TYPE__TYPE) return false;
 
-    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(t);
+    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(t->internal.type->tree);
     switch(top.dispatch){
-    //  case CTH_QUALIFIER__PTR:
-    //  case CTH_QUALIFIER__REF:
-    //    idk some ptr-specific function.
+      case CTH_QUALIFIER__PTR:
+      case CTH_QUALIFIER__REF:
+        return cth_typecheck_compatible__ptr(t0_top.dispatch, t0_top.ast, top.dispatch, top.ast, op);
       default:                            // all other types compare by value.
         if(top.dispatch != t0_top.dispatch) return false;
     }

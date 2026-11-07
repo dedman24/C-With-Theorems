@@ -16,6 +16,7 @@
 
 // stdlib includes.
 #include "stdio.h"              // fgetc, stdin, stderr.
+#include "inttypes.h"           // integer type output.
 
 // posix stuff.
 #include "unistd.h"             // isatty.
@@ -32,7 +33,7 @@ static void cth_repl__result(cth_variableT** const restrict variables, cth_varia
       continue;
     }
     cth_variableT* const type_var = cth_variable_search(ctx, var->type);
-    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(type_var);
+    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(type_var->internal.type->tree);
     switch(top.dispatch){
       case CTH_TYPE__U8:  fprintf(stdout, "%u",  var->internal.u8); break;
       case CTH_TYPE__U16: fprintf(stdout, "%u",  var->internal.u16); break;
@@ -47,14 +48,31 @@ static void cth_repl__result(cth_variableT** const restrict variables, cth_varia
       case CTH_TYPE__F32: fprintf(stdout, "%f", var->internal.f32); break;
       case CTH_TYPE__F64: fprintf(stdout, "%f", var->internal.f64); break;
 
+      case CTH_TYPE__BOOLEAN:
+        if(var->internal.boolean)
+          fputs(cth_variable_name__true, stdout);
+        else
+          fputs(cth_variable_name__false, stdout);
+        break;
+      
+      case CTH_QUALIFIER__PTR:
+      case CTH_QUALIFIER__REF:
+        if(var->internal.ptr)
+          fprintf(stdout, "%" PRIuPTR, var->internal.ptr);
+        else
+          fputs("NULL", stdout);
+        break;
+
       default:
         fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
     }
     fputs(" :: ", stdout);
-    if(top.dispatch < CTH_TYPE_MAX)
-      fputs(cth_type__strings[top.dispatch], stdout);
-    else
-      fputs("_Unknown_t", stdout);
+    {
+      size_t s_type_name;
+      char* const restrict type_name = cth_type_str_construct(type_var->internal.type->tree, ctx, &s_type_name);
+      printf("%.*s", (int)s_type_name, type_name);
+      vfastarr_destroy(type_name);
+    }
 
     if(i != c_vars - 1)
       fputs(", ", stdout);

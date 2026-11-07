@@ -2,6 +2,7 @@
 #define CTH_TOKENISER_OPS_NAMES_H_INCLUDED
 
 #include "../ctx.h"
+#include "qualifs.h"
 
 // stdlib includes.
 #include "alloca.h"
@@ -14,47 +15,6 @@ static cth_nameT cth_tokeniser_op__name_join(
   if(combined == CTH_TYPE__NONE)
     cth_error_report__type_2(CTH_ERROR__TYPE_UNJOINABLE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err, tokeniser->name.variables, type, name);
   return combined;
-}
-
-static cth_nameT cth_tokeniser_op__qualifier(
-  cth_tokeniserT* const restrict tokeniser, const cth_nameT qualifier, const cth_nameT type, cth_variableT* const restrict type_var,
-  rcT* const restrict path, cth_error_ctxT* const restrict err
-){
-// algorithm:
-//  construct type name.
-//  search for type ~ return if it exists.
-//  clone type variable.
-//  modify tree by adding fcall to our qualifier.
-//  return new type name.
-
-// structure of type name:
-// CTH_NAME_PFIX__TYPE underlying_type_nameT " " "space-separated qualifiers".
-  const size_t s_qualifier = strlen(cth_qualifier__strings[qualifier]);
-
-  size_t s_type_name = 1 + sizeof(cth_nameT) + type_var->s_name + 1 + s_qualifier;
-  char* const restrict type_name = malloc(s_type_name);
-  type_name[0] = CTH_NAME_PFIX__TYPE;
-  *(cth_nameT*)(type_name + 1) = type;
-  memcpy(type_name + 1 + sizeof(cth_nameT), type_var->name, type_var->s_name);
-  type_name[1 + sizeof(cth_nameT) + type_var->s_name] = ' ';
-  memcpy(type_name + 1 + sizeof(cth_nameT) + type_var->s_name + 1, cth_qualifier__strings[qualifier], s_qualifier);
-
-  const cth_nameT seek = cth_name_search(type_name, s_type_name, &tokeniser->name);
-  if(seek) return seek;
-
-  const cth_nameT id_qualified = cth_variable_name(tokeniser->name.variables);
-  cth_variableT* const restrict qualified = cth_variable_add(
-    tokeniser->name.variables,
-    id_qualified,
-    type_name, s_type_name,
-    type_var->type,
-    type_var->state
-  );
-
-  qualified->internal.type = cth_type__internal_clone(type_var->internal.type);
-  cth_type__ast_init(qualified, qualifier);
-
-  return id_qualified;
 }
 
 static const char* cth_tokeniser_op__name(

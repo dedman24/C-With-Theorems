@@ -6,6 +6,7 @@
 #include "misc.h"
 #include "arity.h"
 #include "names.h"
+#include "qualifs.h"
 
 // generates AST node holding 'tok'.
 static void cth_tokeniser_dispatch__ast(
@@ -50,6 +51,9 @@ static const char* cth_tokeniser_dispatch(
   }
 
   const size_t cnt_top = vfastarr_elcnt(tokeniser->ops, sizeof(*tokeniser->ops));
+
+  if(cth_tokeniser__operand_qualifs(tok, tokeniser, path, err))
+    return code+len;
 
   if(cnt_top){
     cth_tokT top = tokeniser->ops[cnt_top - 1];

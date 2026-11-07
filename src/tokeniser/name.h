@@ -27,6 +27,10 @@ static void cth_name_ctx_init(cth_name_ctxT* const restrict name){
   name->names = vfastarr_init(sizeof(*name->names));
   name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
 
+  vfastbst_str_put(&name->names[0], cth_variable_name__NULL,  strlen(cth_variable_name__NULL),  CTH_NAME__NULL);
+  vfastbst_str_put(&name->names[0], cth_variable_name__true,  strlen(cth_variable_name__true),  CTH_NAME__TRUE);
+  vfastbst_str_put(&name->names[0], cth_variable_name__false, strlen(cth_variable_name__false), CTH_NAME__FALSE);
+
   for(size_t i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i += 2)
     vfastbst_str_put(&name->names[0], cth_type__strings[i], strlen(cth_type__strings[i]), i);
   for(size_t i = CTH_QUALIFIER_MIN; i < CTH_QUALIFIER_MAX; i += 2)

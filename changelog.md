@@ -1,17 +1,17 @@
-### Changelog 2026/11/05.
- - fixed wording in README.md.
- - fixed issue with how qualifier is handled, in that _it didn't work_ and _it broke C multiword types_.
- - fixed memory leaks.
- - added proper error reporting for types.
- - added proper type compatibility.
- - added `const`, `immut` detection in assignment.
- - added proper errors when a variable is used _undefined_ or _unassigned_.
- - something like `1 = 2;` used to assign the value `2` to the literal `1`; now errors out instead. 
+### Changelog 2026/11/07.
+ - `true`, `false` as immediates of type `bool` with repl output support.
+ - `constexpr`, currently does nothing.
+ - removed cth-style function declarations.
+ - pointer, reference qualifiers & arithmetic.
+ - `NULL` as keyword compatible with all other pointers.
 
 > `BEGIN snca;`
 
-cth is shaping up to be something neat. I quite like it.\
-LORD help me. I'm still not coding as much as I would've liked to.
+I HAVE TO WORK HARDERFUCKKKKKKKK!!!!\
+I vvill trvst me (ev&doe I never do).
+
+it's pretty cool how something like `i32* const` is actually handled correctly rofl.\
+I wish I knew how to properly structure the compiler as to not make huge errors later on. LORD help me.
 
 > `END snca;`
 
@@ -22,12 +22,11 @@ LORD help me. I'm still not coding as much as I would've liked to.
  - no leading 0 making values octal.
 
 ### Things to add (in no particular order):
- - typedefs.
- - pointers.
  - arrays.
- - `true`, `false` as literals.
+ - support for multiple definitions, like `int x = 1, y = 2;` handled the same way it is in C, perhaps add as special case in interpreter.
+ - better type printing (possibly recursive).
+ - typedefs.
  - structs, unions, enums.
- - better differentiation between rvalues & lvalues using variable state.
  - working include stuff with `include` operator.
  - operator overrides.
  - more ops (arithmetic & non).

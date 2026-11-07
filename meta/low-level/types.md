@@ -42,6 +42,25 @@ The following happens:
  - compatibilities between types exist on the basis of _contents_; if the contents of 2 types are _not exactly the same_ they are incompatible.\
    like values, type names are created ad-hoc & stored in scope specifiers.
 
+For tokens like `*` to be detected as qualifiers at tokenisation, we need to have that _such types cannot be the result of an expression_, even if said expression can be evaluated at compile-time. Something like:
+> `(if(true) int else bool)* x = ...;`
+
+is invalid because types must be known when tokenising. Can we avoid this limitation? Unless we mark the type of the result of ast entries at tokenisation, not really. We want to keep tokenisation independent from type-checking, so there's that.\
+What if we wanted to allow for expressions in definitions of variables of type `type` of the form:
+> `type X = (if(true) int else bool)*;`
+
+This can be implemented using the explicit `type ptr(constexpr type);` and `type ref(constexpr type);` functions that take a type and return the equivalent , as:
+> `type X = ptr(if(true) int else bool);`
+
+but I quite dislike how this looks. Work on this more.\
+Currently, pointers & references are implemented as a special case within operands. We call a dedicated function that:
+ - checks if the current datum is `*` or `&`, and
+ - checks that the previous datum is a name of type `type`.
+
+If both conditions are met, the type becomes a pointer to said type.
+
+`NULL` as a value is handled with a special type, `nullptr_t`, that only holds `NULL` as a value. This type is compatible with any other in assignment & in other arithmetic ops.
+
 ## On enums.
 These are handled by defining relevant constants.
 We support tagged unions through the `enum` keyword uhh uhh idk how but someway trust :PPPP.

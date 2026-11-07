@@ -48,20 +48,30 @@ enum{
   CTH_TYPE__DOUBLE        = 57,
   CTH_TYPE__LONG_DOUBLE   = 59,
 
-  CTH_TYPE__SIGNED        = 61,
-  CTH_TYPE__UNSIGNED      = 63,
+  CTH_TYPE__SSIZE         = 61,
+  CTH_TYPE__SIZE          = 63,
 
-  CTH_TYPE__BOOLEAN       = 65,
-  CTH_TYPE__TYPE          = 67,
-  CTH_TYPE__QUALIFIER     = 69,
+  CTH_TYPE__SIGNED        = 65,
+  CTH_TYPE__UNSIGNED      = 67,
 
-  CTH_TYPE__SSIZE         = 71,
-  CTH_TYPE__SIZE          = 73,
+  CTH_TYPE__BOOLEAN       = 69,
+  CTH_TYPE__TYPE          = 71,
+  CTH_TYPE__QUALIFIER     = 73,
+  CTH_TYPE__NULLPTR       = 75,
 
-  CTH_TYPE__NONE          = 75,
+  CTH_TYPE__NONE          = 77,
 
-  CTH_TYPE_MAX            = 77,
+  CTH_TYPE_MAX            = 79,
 };
+
+// 'bool' considered integer type for C compatibility.
+static bool cth_type__isint(const cth_nameT type){
+  return
+    type >= CTH_TYPE__CHAR8 && type <= CTH_TYPE__CHAR32 ||
+    type >= CTH_TYPE__U8    && type <= CTH_TYPE__I64    ||
+    type >= CTH_TYPE__CHAR  && type <= CTH_TYPE__BOOLEAN;
+    
+}
 
 // possibly avoid c-like type names?
 const char* const restrict cth_type__strings[] = {
@@ -100,15 +110,16 @@ const char* const restrict cth_type__strings[] = {
   [CTH_TYPE__DOUBLE]        = "double",
   [CTH_TYPE__LONG_DOUBLE]   = "long double",
 
+  [CTH_TYPE__SSIZE]         = "ssize_t",
+  [CTH_TYPE__SIZE]          = "size_t",
+
   [CTH_TYPE__SIGNED]        = "signed",
   [CTH_TYPE__UNSIGNED]      = "unsigned",
 
   [CTH_TYPE__BOOLEAN]       = "bool",
   [CTH_TYPE__TYPE]          = "type",
   [CTH_TYPE__QUALIFIER]     = "_Qualifier_t",               // for internal use only.
-
-  [CTH_TYPE__SSIZE]         = "ssize_t",
-  [CTH_TYPE__SIZE]          = "size_t",
+  [CTH_TYPE__NULLPTR]       = "nullptr_t",                  // idk why someone would use it, bring more in line with C's nullptr_t type l8r on.
 
   [CTH_TYPE__NONE]          = "ERROR",
 };
@@ -119,14 +130,21 @@ enum{
 
   CTH_QUALIFIER__CONST      = CTH_QUALIFIER_MIN,
   CTH_QUALIFIER__IMMUT      = CTH_QUALIFIER__CONST + 2,
+  CTH_QUALIFIER__CONSTEXPR  = CTH_QUALIFIER__IMMUT + 2,
 
-  CTH_QUALIFIER_MAX         = CTH_QUALIFIER__IMMUT + 2,
+  CTH_QUALIFIER__PTR        = CTH_QUALIFIER__CONSTEXPR + 2,
+  CTH_QUALIFIER__REF        = CTH_QUALIFIER__PTR + 2,
+
+  CTH_QUALIFIER_MAX         = CTH_QUALIFIER__REF + 2,
 };
 
-// only user-defined types are _Qualifier_t-typed.
+// only predefined types are _Qualifier_t-typed.
 const char* const restrict cth_qualifier__strings[] = {
   [CTH_QUALIFIER__CONST]            = "const",
   [CTH_QUALIFIER__IMMUT]            = "immut",
+  [CTH_QUALIFIER__CONSTEXPR]        = "constexpr",
+  [CTH_QUALIFIER__PTR]              = "*",
+  [CTH_QUALIFIER__REF]              = "&"
 };
 
 static cth_type__internalT* cth_type__internal_init(){

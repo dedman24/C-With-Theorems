@@ -18,6 +18,7 @@ void* vfastarr_append_str(void* restrict arr, const char* const restrict str);  
 void* vfastarr_extend(void* restrict arr, const size_t c_elem, const size_t s_elem);                // extends array by cnt elements.
 void* vfastarr_clone(void* const restrict src);                                                     // clones array.
 bool vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_elem);              // pops element from end of array.
+bool vfastarr_top(void* restrict arr, void* const restrict elem, const size_t s_elem);              // pops element from end of array.
 void vfastarr_remove(void* restrict arr, const size_t s_elem);                                      // removes element from end of array.
 void vfastarr_empty(void* restrict arr);                                                            // empties array.
 void* vfastarr_init(const size_t s_elem);                                                           // initialises array.
@@ -120,6 +121,17 @@ bool vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_
   }
   hdr->size -= s_elem;
   memcpy(elem, (char*)arr + hdr->size, s_elem);
+  return true;
+}
+
+bool vfastarr_top(void* restrict arr, void* const restrict elem, const size_t s_elem){
+  vfastarr_hdrT* const hdr = (vfastarr_hdrT*)arr - 1;
+
+  if(hdr->size < s_elem){
+    memset(elem, 0, s_elem);
+    return false;
+  }
+  memcpy(elem, (char*)arr + hdr->size - s_elem, s_elem);
   return true;
 }
 

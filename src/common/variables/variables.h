@@ -5,9 +5,9 @@
 
 #include "ctx.h"                            // important data types.
 #include "types.h"                          // type handling.
+#include "basics.h"                         // basic operations.
 #include "../tok.h"                         // cth__representation_tokT.
 #include "../linking/vfastarr.h"            // vfastarr functions.
-#include "../linking/vfastrht/vfastrht.h"   // vfastrhtT type & functions.
 
 #include "../../interpreter/ast.h"          // abstract syntax tree, for type handling. allows arbitrarily complex propositions as types.
 
@@ -193,11 +193,6 @@ static void cth_variable__internal_clone(cth_variableT* const restrict dst, cth_
   }  
 }
 
-typedef struct{
-  vfastrhtT* correspondences;
-  cth_nameT id_name;
-} cth_variable_ctxT;
-
 static cth_nameT cth_variable_name(cth_variable_ctxT* restrict ctx){
   return ctx->id_name += 2;
 }
@@ -207,6 +202,7 @@ static void cth_variable_ctx_destroy(cth_variable_ctxT* const restrict ctx, cons
   if(freectx) free(ctx);
 }
 
+// does not initialise 'internal' field.
 static cth_variableT* cth_variable_add(
   cth_variable_ctxT* const restrict ctx,
   const cth_nameT id, const char* const restrict name, const size_t s_name,
@@ -226,7 +222,8 @@ static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx)
   if(!ctx) ctx = malloc(sizeof(*ctx));
 
   ctx->correspondences = vfastrht_table_init();
-  ctx->id_name = CTH_QUALIFIER_MAX | 1;          // must be odd.
+  ctx->id_name = CTH_NAME__ID_START;
+  cth_variable_ctx_init__basic(ctx);
 
   for(cth_nameT i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i += 2){
   // HAS to initialise `internal` field with AST node.
@@ -236,7 +233,6 @@ static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx)
   }
   for(cth_nameT i = CTH_QUALIFIER_MIN; i < CTH_QUALIFIER_MAX; i += 2)
     cth_variable_add(ctx, i, NULL, 0, CTH_TYPE__QUALIFIER, CTH_VARSTATE__FREENAME);
-
   return ctx;
 }
 

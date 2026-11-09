@@ -102,6 +102,8 @@ static void cth_tokeniser_op__semicolon(cth_tokeniserT* const restrict tokeniser
     node->data.id = name;
   }
   vfastarr_remove(tokeniser->values, c_elem*sizeof(*tokeniser->values));
+// all persistent tokeniser state is cleared.
+  tokeniser->state = 0;
 }
 
 #endif

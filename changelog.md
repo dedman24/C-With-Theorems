@@ -1,17 +1,18 @@
-### Changelog 2026/11/07.
- - `true`, `false` as immediates of type `bool` with repl output support.
- - `constexpr`, currently does nothing.
- - removed cth-style function declarations.
- - pointer, reference qualifiers & arithmetic.
- - `NULL` as keyword compatible with all other pointers.
+### Changelog 2026/11/whatever.
+ - support for printing values of type `type`.
+ - something like `i32 immut* immut` caused a bunch of errors for some reason; now fixed.
+ - improper construction of type names would occasionally cause use-after-free errors, now works properly.
+
+
+### Pending changes.
+ - something like `i32* x = NULL;` didn't work, now does.
+ - support for multiple definitions, like `int x = 1, y = 2;` handled the same way it is in C.
+ - arrays.
+ - typedefs.
 
 > `BEGIN snca;`
 
-I HAVE TO WORK HARDERFUCKKKKKKKK!!!!\
-I vvill trvst me (ev&doe I never do).
-
-it's pretty cool how something like `i32* const` is actually handled correctly rofl.\
-I wish I knew how to properly structure the compiler as to not make huge errors later on. LORD help me.
+Broke some stuff, but it'll work again son.
 
 > `END snca;`
 
@@ -22,14 +23,12 @@ I wish I knew how to properly structure the compiler as to not make huge errors 
  - no leading 0 making values octal.
 
 ### Things to add (in no particular order):
- - arrays.
- - support for multiple definitions, like `int x = 1, y = 2;` handled the same way it is in C, perhaps add as special case in interpreter.
- - better type printing (possibly recursive).
- - typedefs.
+ - `void`, `void*` types.
  - structs, unions, enums.
+ - function types, function calls.
  - working include stuff with `include` operator.
- - operator overrides.
  - more ops (arithmetic & non).
  - '&&', '||', '^^' short-circuiting & not executing other stuff when it gets evaluated (within arbitrary expressions).
  - support for '++', '--' pre and post increment
  - looping constructs.
+ - operator overrides.

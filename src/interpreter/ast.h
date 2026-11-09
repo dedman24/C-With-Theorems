@@ -156,7 +156,7 @@ static cth_astT** cth_ast_clone__array(cth_astT** const restrict src){
   if(!src) return NULL;
 
   const size_t c_src = vfastarr_elcnt(src, sizeof(*src));
-  cth_astT** const restrict dst = vfastarr_init(c_src*sizeof(*src));
+  cth_astT** const restrict dst = vfastarr_init_explicit(c_src, c_src, sizeof(*src));
 
   for(size_t i = 0; i < c_src; i++)
     dst[i] = cth_ast_clone__recursive(&dst[i], src[i]);

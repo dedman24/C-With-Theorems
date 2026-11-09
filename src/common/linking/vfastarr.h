@@ -157,7 +157,7 @@ void* vfastarr_init(const size_t s_elem){
 void* vfastarr_init_explicit(const size_t initialised, const size_t c_elem, const size_t s_elem){
   vfastarr_hdrT* const restrict hdr = malloc(sizeof(vfastarr_hdrT) + c_elem*s_elem);
   hdr->size = c_elem*s_elem;
-  hdr->capacity = c_elem*s_elem;
+  hdr->capacity = initialised*s_elem;
   return (void*)(hdr + 1);
 }
 

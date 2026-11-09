@@ -25,12 +25,6 @@ static cth_variableT* cth_op__comma(const cth_astT* const restrict node, cth_var
     return NULL;
   }
   cth_variableT* const vtype = cth_variable_search(variables, v0->type);
-
-  if(v1->type != CTH_TYPE__TYPE)
-    cth_error_report(CTH_ERROR__TYPEIS_SECOND_ARG, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
-  else if(vtype != v1)
-    cth_error_report__str_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, vtype->name, v1->name);
-
   if(v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
 
   return v0;

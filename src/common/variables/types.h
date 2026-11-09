@@ -138,6 +138,10 @@ enum{
   CTH_QUALIFIER_MAX         = CTH_QUALIFIER__REF + 2,
 };
 
+static bool cth_qualifier__isdecl(const cth_nameT qualif){
+  return qualif >= CTH_QUALIFIER__CONST && qualif <= CTH_QUALIFIER__CONSTEXPR;
+}
+
 // only predefined types are _Qualifier_t-typed.
 const char* const restrict cth_qualifier__strings[] = {
   [CTH_QUALIFIER__CONST]            = "const",
@@ -188,6 +192,7 @@ static void cth_type__internal_destroy(cth_type__internalT* const restrict t){
   free(t);
 }
 
+// adds funcall to type ast.
 static cth_astT* cth_type__ast_init(cth_variableT* const restrict qualified, const cth_nameT qualifier){
   cth_astT* const restrict type = qualified->internal.type->tree;
 // sets qualified->internal.type->tree to funcall.

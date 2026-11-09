@@ -3,6 +3,7 @@
 
 #include "../ctx.h"
 
+// combines type & qualifier to produce new qualified type name.
 static cth_nameT cth_tokeniser_op__qualifier(
   cth_tokeniserT* const restrict tokeniser, const cth_nameT qualifier, const cth_nameT type, cth_variableT* const restrict type_var,
   rcT* const restrict path, cth_error_ctxT* const restrict err
@@ -13,6 +14,7 @@ static cth_nameT cth_tokeniser_op__qualifier(
 //  clone type variable.
 //  modify tree by adding fcall to our qualifier.
 //  return new type name.
+// throughout this we possibly update `tokeniser->d_state.type` accordingly.
 
 // structure of type name:
 // CTH_NAME_PFIX__TYPE underlying_type_nameT " " "space-separated qualifiers".
@@ -27,7 +29,8 @@ static cth_nameT cth_tokeniser_op__qualifier(
   memcpy(type_name + 1 + sizeof(cth_nameT) + type_var->s_name + 1, cth_qualifier__strings[qualifier], s_qualifier);
 
   const cth_nameT seek = cth_name_search(type_name, s_type_name, &tokeniser->name);
-  if(seek) return seek;
+  if(seek)
+    return seek;
 
   const cth_nameT id_qualified = cth_variable_name(tokeniser->name.variables);
   cth_variableT* const restrict qualified = cth_variable_add(
@@ -44,6 +47,7 @@ static cth_nameT cth_tokeniser_op__qualifier(
   return id_qualified;
 }
 
+// tries to qualify using those qualifiers that specify a different type.
 static bool cth_tokeniser__operand_qualifs(
   const cth_tokT tok, cth_tokeniserT* const restrict tokeniser,
   rcT* const restrict path, cth_error_ctxT* const restrict err
@@ -56,9 +60,9 @@ static bool cth_tokeniser__operand_qualifs(
     return false;
   const size_t arr_top = elcnt-1;
 
-  const cth_nameT name_prev = tokeniser->values[arr_top];
-  cth_variableT* const restrict var_prev = cth_variable_search(tokeniser->name.variables, name_prev);
-  if(var_prev->type != CTH_TYPE__TYPE)
+  const cth_nameT name_top = tokeniser->values[arr_top];
+  cth_variableT* const restrict var_top = cth_variable_search(tokeniser->name.variables, name_top);
+  if(var_top->type != CTH_TYPE__TYPE)     // only valid on types.
     return false;
 
   const cth_nameT qualifier = 
@@ -66,7 +70,7 @@ static bool cth_tokeniser__operand_qualifs(
     tok == CTH_TOK__AMPERSAND? CTH_QUALIFIER__REF:
                                0;
 
-  tokeniser->values[arr_top] = cth_tokeniser_op__qualifier(tokeniser, qualifier, name_prev, var_prev, path, err);
+  tokeniser->values[arr_top] = cth_tokeniser_op__qualifier(tokeniser, qualifier, name_top, var_top, path, err);
   return true;
 }
 

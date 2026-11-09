@@ -45,8 +45,11 @@ typedef enum{
   CTH_ERROR__ASSIGNMENT_RVALUE,
   CTH_ERROR__ASSIGNMENT_IMMEDIATE,
 
+  CTH_ERROR__DECLARATION_REDEFINITION,
+
   CTH_ERROR__TOKENISER_UNKNOWN_TOKEN,
   CTH_ERROR__TOKENISER_ADJACENT_OPERANDS,
+  CTH_ERROR__TOKENISER_DOUBLE_QUALIFIERS,
 
   CTH_ERROR__INDENTATION_DEPTH_NEGATIVE,
   CTH_ERROR__INDENTATION_DEPTH_TOO_HIGH,
@@ -105,8 +108,11 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__ASSIGNMENT_RVALUE]              = "assignment to rvalue is invalid.\n",
   [CTH_ERROR__ASSIGNMENT_IMMEDIATE]           = "assignment to immediate is invalid.\n",
 
+  [CTH_ERROR__DECLARATION_REDEFINITION]       = "in declaration, variable is redefined.\n",
+
   [CTH_ERROR__TOKENISER_UNKNOWN_TOKEN]        = "unknown token met during tokenisation; possibly an issue with the compiler.\n",
   [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "identifiers are adjacent with no operator between them, and the former isn't a type nor a qualifier.\n",
+  [CTH_ERROR__TOKENISER_DOUBLE_QUALIFIERS]    = "double qualifiers are present. very smart, but very dangeros hohoho. I am losing it.\n",
 
   [CTH_ERROR__INDENTATION_DEPTH_NEGATIVE]     = "scope depth is negative, due to extra '}'.\n",
   [CTH_ERROR__INDENTATION_DEPTH_TOO_HIGH]     = "at end of tokenisation, indentation depth is not 0.\n",

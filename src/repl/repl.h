@@ -54,7 +54,13 @@ static void cth_repl__result(cth_variableT** const restrict variables, cth_varia
         else
           fputs(cth_variable_name__false, stdout);
         break;
-      
+      case CTH_TYPE__TYPE:
+        size_t s_str_type;
+        char* const restrict str_type = cth_type_str_construct(var->internal.type->tree, ctx, &s_str_type);
+
+        fputs(str_type, stdout);
+        vfastarr_destroy(str_type);
+        break;
       case CTH_QUALIFIER__PTR:
       case CTH_QUALIFIER__REF:
         if(var->internal.ptr)
@@ -62,7 +68,6 @@ static void cth_repl__result(cth_variableT** const restrict variables, cth_varia
         else
           fputs("NULL", stdout);
         break;
-
       default:
         fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
     }
@@ -80,7 +85,7 @@ static void cth_repl__result(cth_variableT** const restrict variables, cth_varia
     if(var->state & CTH_VARSTATE__FREEALL)
       cth_variable_destroy(var);
   }
-  fputc('\n', stdout);
+  if(c_vars) fputc('\n', stdout);
 }
 
 static void cth_repl__line(const char* const restrict code, cth_tokeniserT* const restrict tokeniser){

@@ -245,20 +245,20 @@ static char* cth_type_str_construct(const cth_astT* type, cth_variable_ctxT* con
     switch(type->type){
       case CTH_AST__ID:
         if(type->data.id < CTH_TYPE_MAX)
-          vfastarr_append_str(type_name, cth_type__strings[type->data.id]);
+          type_name = vfastarr_append_str(type_name, cth_type__strings[type->data.id]);
         else{                       // variable is defined from other variable, so we have to use that name.
           cth_variableT* const restrict v = cth_variable_search(variables, type->data.id);
-          vfastarr_append(type_name, v->name, v->s_name);
+          type_name = vfastarr_append(type_name, v->name, v->s_name);
         }
         *s_type_name = vfastarr_size(type_name);
-        vfastarr_append_char(type_name, '\0');
+        type_name = vfastarr_append_char(type_name, '\0');
         return type_name;
       case CTH_AST__FUNCALL:
         cth_astT* const restrict fun = type->data._funcall.fun;
       // NOTE: supports unary qualifiers like *, immut, const but not binary ones like arrays (or even function types TwT).
       // upgrade code for when the type comes to add those.
-        vfastarr_append_str(type_name, cth_qualifier__strings[fun->data.id]);
-        vfastarr_append_char(type_name, ' ');
+        type_name = vfastarr_append_str(type_name, cth_qualifier__strings[fun->data.id]);
+        type_name = vfastarr_append_char(type_name, ' ');
         type = type->data._funcall.args[0];
         break;
       default:      // should be impossible to arrive here, but I CBA to report an error, so we force a segfault :PPP.

@@ -50,12 +50,18 @@ typedef struct{
 
 typedef struct{
   cth_astT* fun;                      // function to call.
-  cth_astT** args;                    // arguments to function.
+  cth_astT** args;                    // vfastarr, arguments to function.
 } cth_ast__funcallT;
 
 typedef struct{
   cth_astT** program;                 // vfastarr.
 } cth_ast__programT;
+
+typedef struct{
+  cth_astT* type;
+  cth_astT** expr;                    // vfastarr, expression variables should evaluate to.
+  cth_nameT* vars;                    // vfastarr, variable IDs themselves.
+} cth_ast__declarationT;
 
 // one for each possible representation an AST node takes.
 typedef enum{
@@ -68,7 +74,8 @@ typedef enum{
   CTH_AST__UNARY,
   CTH_AST__BINARY,
   CTH_AST__FUNCALL,
-  CTH_AST__PROGRAM
+  CTH_AST__PROGRAM,
+  CTH_AST__DECLARATION
 } cth_ast_typeT;
 
 struct cth_astS{
@@ -80,16 +87,17 @@ struct cth_astS{
 // tagged unions in C would also reduce how much one has to write -_-...
   cth_ast_typeT type;
   union{
-    cth_nameT           id;           // CTH_TOK__NAME, CTH_TOK__VALUE, CTH_TOK__CHAR, CTH_TOK__STRING.
-    cth_ast__ifT        _if;          // if statements, ternary if.
-    cth_ast__forT       _for;         // for statements.
-    cth_ast__deferT     _defer;       // defer blocks.
-    cth_ast__whileT     _while;       // while statements.
-    cth_ast__switchT    _switch;      // switch statements.
-    cth_ast__unaryT     _unary;       // unary ops.
-    cth_ast__binaryT    _binary;      // binary ops.
-    cth_ast__funcallT   _funcall;     // function call.
-    cth_ast__programT   program;      // all of the program.
+    cth_nameT             id;           // CTH_TOK__NAME, CTH_TOK__VALUE, CTH_TOK__CHAR, CTH_TOK__STRING.
+    cth_ast__ifT          _if;          // if statements, ternary if.
+    cth_ast__forT         _for;         // for statements.
+    cth_ast__deferT       _defer;       // defer blocks.
+    cth_ast__whileT       _while;       // while statements.
+    cth_ast__switchT      _switch;      // switch statements.
+    cth_ast__unaryT       _unary;       // unary ops.
+    cth_ast__binaryT      _binary;      // binary ops.
+    cth_ast__funcallT     _funcall;     // function call.
+    cth_ast__programT     program;      // all of the program.
+    cth_ast__declarationT _declaration; // variable declarations.
   } data;
 };
 
@@ -144,6 +152,10 @@ static cth_astT* cth_ast_init(
     case CTH_AST__PROGRAM:
       node->data.program.program = vfastarr_init(sizeof(*node->data.program.program));
       break;
+    case CTH_AST__DECLARATION:
+      node->data._declaration.expr = vfastarr_init(sizeof(*node->data._declaration.expr));
+      node->data._declaration.vars = vfastarr_init(sizeof(*node->data._declaration.vars));
+      break;
     default: break;
   }
 
@@ -179,39 +191,44 @@ static cth_astT* cth_ast_clone__recursive(cth_astT** const restrict reference, c
       node->data.id = src->data.id;
       break;
     case CTH_AST__IF:
-      node->data._if.condition = cth_ast_clone__recursive(&node->data._if.condition, src->data._if.condition);
+      cth_ast_clone__recursive(&node->data._if.condition, src->data._if.condition);
       node->data._if.success = cth_ast_clone__array(src->data._if.success);
       node->data._if.failure = cth_ast_clone__array(src->data._if.failure);
       break;
     case CTH_AST__FOR:
-      node->data._for.init = cth_ast_clone__recursive(&node->data._for.init, src->data._for.init);
-      node->data._for.condition = cth_ast_clone__recursive(&node->data._for.condition, src->data._for.condition);
-      node->data._for.update = cth_ast_clone__recursive(&node->data._for.update, src->data._for.update);
+      cth_ast_clone__recursive(&node->data._for.init, src->data._for.init);
+      cth_ast_clone__recursive(&node->data._for.condition, src->data._for.condition);
+      cth_ast_clone__recursive(&node->data._for.update, src->data._for.update);
       node->data._for.code = cth_ast_clone__array(src->data._for.code);
       break;
     case CTH_AST__DEFER:
       node->data._defer.code = cth_ast_clone__array(src->data._defer.code);
       break;
     case CTH_AST__WHILE:
-      node->data._while.condition = cth_ast_clone__recursive(&node->data._while.condition, src->data._while.condition);
+      cth_ast_clone__recursive(&node->data._while.condition, src->data._while.condition);
       node->data._while.code = cth_ast_clone__array(src->data._while.code);
       break;
     case CTH_AST__SWITCH:
       node->data._switch.cases = cth_ast_clone__array(src->data._switch.cases);
       break;
     case CTH_AST__UNARY:
-      node->data._unary.src = cth_ast_clone__recursive(&node->data._unary.src, src->data._unary.src);
+      cth_ast_clone__recursive(&node->data._unary.src, src->data._unary.src);
       break;
     case CTH_AST__BINARY:
-      node->data._binary.s0 = cth_ast_clone__recursive(&node->data._binary.s0, src->data._binary.s0);
-      node->data._binary.s1 = cth_ast_clone__recursive(&node->data._binary.s1, src->data._binary.s1);
+      cth_ast_clone__recursive(&node->data._binary.s0, src->data._binary.s0);
+      cth_ast_clone__recursive(&node->data._binary.s1, src->data._binary.s1);
       break;
     case CTH_AST__FUNCALL:
-      node->data._funcall.fun = cth_ast_clone__recursive(&node->data._funcall.fun, src->data._funcall.fun);
+      cth_ast_clone__recursive(&node->data._funcall.fun, src->data._funcall.fun);
       node->data._funcall.args = cth_ast_clone__array(src->data._funcall.args);
       break;
     case CTH_AST__PROGRAM:
       node->data.program.program = cth_ast_clone__array(src->data.program.program);
+      break;
+    case CTH_AST__DECLARATION: 
+      cth_ast_clone__recursive(&node->data._declaration.type, src->data._declaration.type);
+      node->data._declaration.expr = cth_ast_clone__array(src->data._declaration.expr);
+      node->data._declaration.vars = vfastarr_clone(src->data._declaration.vars);
       break;
   }
 
@@ -273,6 +290,11 @@ static void cth_ast_destroy(cth_astT* const restrict node){
       break;
     case CTH_AST__PROGRAM:
       cth_ast_destroy__array(node->data.program.program);
+      break;
+    case CTH_AST__DECLARATION:
+      cth_ast_destroy(node->data._declaration.type);
+      cth_ast_destroy__array(node->data._declaration.expr);
+      vfastarr_destroy(node->data._declaration.vars);
       break;
   }
   free(node);

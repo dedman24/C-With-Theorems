@@ -1,12 +1,13 @@
-### Changelog 2026/11/whatever.
- - support for printing values of type `type`.
- - something like `i32 immut* immut` caused a bunch of errors for some reason; now fixed.
- - improper construction of type names would occasionally cause use-after-free errors, now works properly.
+### Changelog 2026/11/10.
+ - added support for `unsigned long long` and `unsigned long int`, which didn't work before.
+ - added `cth_error_report__typevar_2`, `cth_error_report__string_size`.
+ - made `string` field in `cth_variable__internalT` of type `rcT`, modified `cth_variable__internal_clone` to make it work with it..
+ - added lots of declaration-specific errors.
+ - reworked declarations, now supports multiple definitions.
 
-
-### Pending changes.
- - something like `i32* x = NULL;` didn't work, now does.
- - support for multiple definitions, like `int x = 1, y = 2;` handled the same way it is in C.
+### pending changes.
+ - rework how ops are tokenised, so that stuff stays `value` stack-only until semicolon.
+ - testing declarations.
  - arrays.
  - typedefs.
 
@@ -21,6 +22,7 @@ Broke some stuff, but it'll work again son.
  - path stuff in repl doesn't work, for most errors no path is printed.
  - hex, octal, binary values do not work.
  - no leading 0 making values octal.
+ - something like `const char *x, *y` is currently not supported; perhaps generalise declarations.
 
 ### Things to add (in no particular order):
  - `void`, `void*` types.
@@ -29,6 +31,8 @@ Broke some stuff, but it'll work again son.
  - working include stuff with `include` operator.
  - more ops (arithmetic & non).
  - '&&', '||', '^^' short-circuiting & not executing other stuff when it gets evaluated (within arbitrary expressions).
- - support for '++', '--' pre and post increment
+ - support for '++', '--' pre and post increment.
+ - support for `op=` operators (like `+=`) with them being handled as syntax sugar.
  - looping constructs.
  - operator overrides.
+ - `./cth "code"` and `./cth repl "code"` interpreting whatever is in the quotes.

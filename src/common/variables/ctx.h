@@ -2,6 +2,7 @@
 #define CTH_COMMON_VARIABLES_CTX_H_INCLUDED
 
 #include "../tok.h"                         // nameT & frens.
+#include "../linking/rc.h"                  // reference-counted strings.
 #include "../linking/vfastarr.h"            // vfastarr stuff.
 #include "../../interpreter/ast.h"          // abstract syntax tree.
 #include "../linking/vfastrht/vfastrht.h"   // vfastrhtT type & functions.
@@ -30,7 +31,7 @@ typedef union{
   char char8;
   char16_t char16;
   char32_t char32;
-  char* string;
+  rcT* string;
 
   int8_t i8;
   int16_t i16;

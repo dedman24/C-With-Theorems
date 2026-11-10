@@ -24,6 +24,7 @@ typedef struct{
     CTH_TOKENISER__PREV_WAS_NAME  = (1<<0),
     CTH_TOKENISER__FOR            = (1<<1),
     CTH_TOKENISER__WHILE          = (1<<2),
+    CTH_TOKENISER__DECLARATION    = (1<<3)
   } state;
 // data in state.
   struct{

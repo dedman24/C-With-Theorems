@@ -298,7 +298,7 @@ static cth_nameT cth_string_add(
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
   cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, CTH_TYPE__STRING, CTH_VARSTATE__IMMEDIATE);
-  var->internal.string = raw;
+  var->internal.string = rc_make(raw);
 
   return id;
 }

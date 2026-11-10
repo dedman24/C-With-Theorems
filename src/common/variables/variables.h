@@ -7,6 +7,7 @@
 #include "types.h"                          // type handling.
 #include "basics.h"                         // basic operations.
 #include "../tok.h"                         // cth__representation_tokT.
+#include "../linking/rc.h"                  // reference-counted strings.
 #include "../linking/vfastarr.h"            // vfastarr functions.
 
 #include "../../interpreter/ast.h"          // abstract syntax tree, for type handling. allows arbitrarily complex propositions as types.
@@ -70,7 +71,7 @@ static size_t cth_type__sizeof(cth_variableT* const restrict variable){
     [CTH_TYPE__SIZE]          = sizeof(size_t),
   };
 
-  if(variable->type == CTH_TYPE__STRING) return strlen(variable->internal.string);
+  if(variable->type == CTH_TYPE__STRING) return strlen(variable->internal.string->str);
   return sizes[variable->type];
 }
 
@@ -87,6 +88,12 @@ static cth_nameT cth_type__combine(const cth_nameT t0, const cth_nameT t1){
         case CTH_TYPE__INT:    return CTH_TYPE__LONG;           // long int == long.
         case CTH_TYPE__LONG:   return CTH_TYPE__LONG_LONG;      // long long != long.
         case CTH_TYPE__DOUBLE: return CTH_TYPE__LONG_DOUBLE;    // long double != long.
+        default: return CTH_TYPE__NONE;
+      }
+    case CTH_TYPE__ULONG:
+      switch(t1){
+        case CTH_TYPE__INT:    return CTH_TYPE__ULONG;          // unsigned long int == unsigned long.
+        case CTH_TYPE__LONG:   return CTH_TYPE__ULONG_LONG;     // unsigned long long != unsigned long.
         default: return CTH_TYPE__NONE;
       }
     case CTH_TYPE__LONG_LONG:
@@ -155,7 +162,7 @@ static void cth_variable_destroy(cth_variableT* const restrict real){
       cth_type__internal_destroy(real->internal.type);
       break;
     case CTH_TYPE__STRING:
-      free(real->internal.string);
+      rc_disown(real->internal.string);
       break;
     default: break;
   }
@@ -183,9 +190,7 @@ static void cth_variable__internal_clone(cth_variableT* const restrict dst, cth_
       dst->internal.type = cth_type__internal_acquire(src->internal.type);
       break;
     case CTH_TYPE__STRING:
-      const size_t s_str = strlen(src->internal.string) + 1;
-      dst->internal.string = malloc(s_str);
-      memcpy(dst->internal.string, src->internal.string, s_str);
+      dst->internal.string = rc_own(src->internal.string);
       break;
     default:
       dst->internal = src->internal;

@@ -29,10 +29,7 @@ static cth_variableT* cth_op__add(const cth_astT* const restrict node, cth_varia
 
   cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
                 *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
-  if(!v0 || !v1){
-    cth_error_report__u32(CTH_ERROR__IMPOSSIBILITY, CTH_ERROR__COMPILER, path, node->line, node->offset, err, CTH_IMPOSSIBILITY__MISSING_SRC);
-    return NULL;
-  }
+  if(!v0 || !v1) return NULL;
 
   cth_nameT dispatch;
   if(!cth_typecheck_compatible((cth_nameT[]){v0->type, v1->type}, 2, node->op, &dispatch, variables)){

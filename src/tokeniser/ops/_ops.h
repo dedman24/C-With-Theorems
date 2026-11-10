@@ -66,7 +66,7 @@ static const char* cth_tokeniser_dispatch(
       
       if(tok == CTH_TOK__SEMICOLON) 
           cth_tokeniser_op__semicolon(tokeniser);
-      else
+      else if(tok != CTH_TOK__DECLARATION)
         tokeniser->ops = vfastarr_append(tokeniser->ops, &tok, sizeof(tok));
       break;
   }

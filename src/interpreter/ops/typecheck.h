@@ -16,10 +16,7 @@ static cth_variableT* cth_op__typechecking(const cth_astT* const restrict node, 
   }
   cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
                 *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
-  if(!v0 || !v1){
-    cth_error_report__u32(CTH_ERROR__IMPOSSIBILITY, CTH_ERROR__COMPILER, path, node->line, node->offset, err, CTH_IMPOSSIBILITY__MISSING_SRC);
-    return NULL;
-  }
+  if(!v0 || !v1) return NULL;
   cth_variableT* const vtype = cth_variable_search(variables, v1->type);
 
   if(v0->type != CTH_TYPE__TYPE)
@@ -153,6 +150,38 @@ static bool cth_typecheck_compatible(
 
   for(size_t i = 1; i < c_types; i++){
     cth_variableT* const t = cth_variable_search(variables, types[i]);
+    if(!t || t->type != CTH_TYPE__TYPE) return false;
+
+    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(t->internal.type->tree);
+    switch(top.dispatch){
+      case CTH_QUALIFIER__PTR:
+      case CTH_QUALIFIER__REF:
+        return cth_typecheck_compatible__ptr(t0_top.dispatch, t0_top.ast, top.dispatch, top.ast, op);
+      default:                            // all other types compare by value.
+        if(top.dispatch != t0_top.dispatch) return false;
+    }
+  }
+
+  return true;
+}
+
+// op ~ operation under which typechecking is being performed.
+//   important because, for example, `+` is compatible only on ptr-integer, but assignment is compatible only on ptr-ptr.
+//   certain ops are never valid on pointers.
+static bool cth_typecheck_compatible__vars(
+  cth_variableT* types[], const size_t c_types, const cth_tokT op,
+  cth_nameT* const restrict dispatch, cth_variable_ctxT* const restrict variables
+){
+  if(c_types == 0) return false;              // 0 types is invalid, possibly an error.
+  cth_variableT* const t0 = types[0];
+  if(!t0 || t0->type != CTH_TYPE__TYPE) return false;
+  const struct cth_typecheck_top_lvl_getS t0_top = cth_typecheck_top_lvl_get(t0->internal.type->tree);
+
+  if(dispatch)
+    *dispatch = t0_top.dispatch;
+
+  for(size_t i = 1; i < c_types; i++){
+    cth_variableT* const t = types[i];
     if(!t || t->type != CTH_TYPE__TYPE) return false;
 
     const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(t->internal.type->tree);

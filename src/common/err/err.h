@@ -45,7 +45,13 @@ typedef enum{
   CTH_ERROR__ASSIGNMENT_RVALUE,
   CTH_ERROR__ASSIGNMENT_IMMEDIATE,
 
+  CTH_ERROR__DECLARATION_WRONG,
+  CTH_ERROR__DECLARATION_RECURSIVE,
+  CTH_ERROR__DECLARATION_EXPECTED_ID,
+  CTH_ERROR__DECLARATION_EXPECTED_EQ,
   CTH_ERROR__DECLARATION_REDEFINITION,
+  CTH_ERROR__DECLARATION_INVALID_TYPE,
+  CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE,
 
   CTH_ERROR__TOKENISER_UNKNOWN_TOKEN,
   CTH_ERROR__TOKENISER_ADJACENT_OPERANDS,
@@ -108,7 +114,13 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__ASSIGNMENT_RVALUE]              = "assignment to rvalue is invalid.\n",
   [CTH_ERROR__ASSIGNMENT_IMMEDIATE]           = "assignment to immediate is invalid.\n",
 
-  [CTH_ERROR__DECLARATION_REDEFINITION]       = "in declaration, variable is redefined.\n",
+  [CTH_ERROR__DECLARATION_WRONG]              = "declaration is not the first thing on this line.\n",
+  [CTH_ERROR__DECLARATION_RECURSIVE]          = "declaration inside declaration is invalid.\n",
+  [CTH_ERROR__DECLARATION_EXPECTED_ID]        = "in declaration, expected identifier.\n",
+  [CTH_ERROR__DECLARATION_EXPECTED_EQ]        = "in declaration, expected '=' symbol.\n",
+  [CTH_ERROR__DECLARATION_REDEFINITION]       = "in declaration, variable '%.*s' is redefined.\n",
+  [CTH_ERROR__DECLARATION_INVALID_TYPE]       = "in declaration, first argument expected to be of type 'type', while instead of type '%s'.\n",
+  [CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE]  = "in declaration, expected type is '%s', while effective type is '%s'.\n",
 
   [CTH_ERROR__TOKENISER_UNKNOWN_TOKEN]        = "unknown token met during tokenisation; possibly an issue with the compiler.\n",
   [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "identifiers are adjacent with no operator between them, and the former isn't a type nor a qualifier.\n",
@@ -276,6 +288,21 @@ static void cth_error_report__str(
   cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
 }
 
+static void cth_error_report__str_size(
+  const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
+  const cth_fposT line, const cth_fposT offset,
+  cth_error_ctxT* const restrict ctx,
+  const char* const restrict string, const size_t s_string
+){
+  const size_t len_message = strlen(cth_error_strings[type]) + s_string;
+  char* const restrict message = malloc(len_message + 1);
+  sprintf(message, cth_error_strings[type], s_string, string);
+
+  const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
+  ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
+  cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+}
+
 static void cth_error_report__str_2(
   const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
   const cth_fposT line, const cth_fposT offset,
@@ -323,6 +350,30 @@ static void cth_error_report__type_2(
 ){
   const cth_variableT* const var_t0 = cth_variable_search(variables, t0),
                      * const var_t1 = cth_variable_search(variables, t1);
+  const cth_astT* const ast_t0 = var_t0->internal.type->tree,
+                * const ast_t1 = var_t1->internal.type->tree;
+
+  size_t s_t0_data, s_t1_data;
+  char* const restrict t0_data = cth_type_str_construct(ast_t0, variables, &s_t0_data),
+      * const restrict t1_data = cth_type_str_construct(ast_t1, variables, &s_t1_data);
+
+  const size_t len_message = strlen(cth_error_strings[type]) + s_t0_data + s_t1_data;
+  char* const restrict message = malloc(len_message + 1);
+  sprintf(message, cth_error_strings[type], t0_data, t1_data);
+  vfastarr_destroy(t0_data); vfastarr_destroy(t1_data);
+
+  const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
+  ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
+  cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
+}
+
+static void cth_error_report__typevar_2(
+  const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
+  const cth_fposT line, const cth_fposT offset,
+  cth_error_ctxT* const restrict ctx,
+  cth_variable_ctxT* const restrict variables,
+  const cth_variableT* const var_t0, const cth_variableT* const var_t1
+){
   const cth_astT* const ast_t0 = var_t0->internal.type->tree,
                 * const ast_t1 = var_t1->internal.type->tree;
 

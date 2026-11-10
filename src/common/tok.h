@@ -79,6 +79,8 @@ typedef enum{
   CTH_TOK__UNRESOLVABLE = 72,
   CTH_TOK__NONE = 100,
 
+  CTH_TOK__DECLARATION,
+  
   CTH_TOK__NAME,
   CTH_TOK__VALUE,
   CTH_TOK__CHAR,
@@ -94,8 +96,9 @@ cth_tokT cth_tok(const char* const restrict str, size_t* const restrict len);
 
 // NOTE: how do we handle certain C ops having different associativity directions (L->R vs R->L)?
 typedef enum{
-  CTH_PRIORITY__LOWEST,
+  CTH_PRIORITY__LOWEST,                                     //
   CTH_PRIORITY__SEMICOLON,                                  // ';'.
+  CTH_PRIORITY__DECLARATION,                                // variable declarations.
   CTH_PRIORITY__COMMA,                                      // ','.
   CTH_PRIORITY__TYPEIS,                                     // '::'.
   CTH_PRIORITY__ASSIGNMENT,                                 // '='.
@@ -122,6 +125,7 @@ extern const uint8_t isunary[];
 
 const cth_priorityT cth_priority[] ={
   [CTH_TOK__SEMICOLON]            = CTH_PRIORITY__SEMICOLON,
+  [CTH_TOK__DECLARATION]          = CTH_PRIORITY__DECLARATION,
 
   [CTH_TOK__COMMA]                = CTH_PRIORITY__COMMA,
   [CTH_TOK__TYPEIS]               = CTH_PRIORITY__TYPEIS,          

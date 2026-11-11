@@ -59,12 +59,7 @@ static const char* cth_tokeniser_op__declaration(
 // diagram:
 //  NAME --CTH_TOK__NAME-> ASSIGN --CTH_TOK__ASSIGNMENT-> EXPR --CTH_TOK__SEMICOLON-> QUIT
 //   ^------------------- CTH_TOK__COMMA -------------------|
-  enum{
-    NAME,
-    ASSIGN,
-    EXPR,
-    QUIT
-  } state;
+  enum{ NAME, ASSIGN, EXPR } state;
 // clears PREV_WAS_NAME bit, sets DECLARATION bit.
   tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__DECLARATION;
 // parse everything until comma
@@ -108,10 +103,23 @@ static const char* cth_tokeniser_op__declaration(
       code += len;
     }
     else if(state == EXPR){
-// TODO: fix this.
       if(tok == CTH_TOK__SEMICOLON){ code += len; break; }
-      if(tok == CTH_TOK__COMMA){ code += len; state = NAME; }
-      else code = cth_tokeniser_dispatch(code, tok, len, tokeniser, path, err);
+      if(tok == CTH_TOK__COMMA){ code += len; state = NAME; continue; }
+
+      code = cth_tokeniser_dispatch(code, tok, len, tokeniser, path, err);
+      cth_nameT id; vfastarr_pop(tokeniser->values, &id, sizeof(id));
+      
+      const size_t pos_top = vfastarr_elcnt(decl->data._declaration.expr, sizeof(*decl->data._declaration.expr));
+      cth_astT* expr;
+      if(id & 1){
+        expr = cth_ast_init(NULL, CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
+        expr->data.id = id;
+      }
+      else
+        expr = (cth_astT*)id;
+
+      vfastarr_append(decl->data._declaration.expr, &expr, sizeof(*decl->data._declaration.expr));
+      expr->reference = &decl->data._declaration.expr[pos_top];
     }
   } while(1);
 

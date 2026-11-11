@@ -1,13 +1,8 @@
 ### Changelog 2026/11/10.
- - added support for `unsigned long long` and `unsigned long int`, which didn't work before.
- - added `cth_error_report__typevar_2`, `cth_error_report__string_size`.
- - made `string` field in `cth_variable__internalT` of type `rcT`, modified `cth_variable__internal_clone` to make it work with it..
- - added lots of declaration-specific errors.
- - reworked declarations, now supports multiple definitions.
+ - rework how ops are tokenised, so that stuff stays `value` stack-only until semicolon.
 
 ### pending changes.
- - rework how ops are tokenised, so that stuff stays `value` stack-only until semicolon.
- - testing declarations.
+ - tested declarations, now they work.
  - arrays.
  - typedefs.
 

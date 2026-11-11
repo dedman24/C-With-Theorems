@@ -90,16 +90,21 @@ static const char* cth_tokeniser_op__comment_multi(
 
 // appends whatever value still present to program.
 static void cth_tokeniser_op__semicolon(cth_tokeniserT* const restrict tokeniser){
-  size_t program_pos = vfastarr_elcnt(tokeniser->program->data.program.program, sizeof(*tokeniser->program->data.program.program));
-
+  const size_t start_program = vfastarr_elcnt(tokeniser->program->data.program.program, sizeof(*tokeniser->program->data.program.program));
   const size_t c_elem = vfastarr_elcnt(tokeniser->values, sizeof(*tokeniser->values));
+  tokeniser->program->data.program.program = vfastarr_extend(tokeniser->program->data.program.program, c_elem, sizeof(*tokeniser->program->data.program.program));
+
   for(size_t i = 0; i < c_elem; i++){
     const cth_nameT name = tokeniser->values[i];
-    if(!(name & 1))
-      break;
-    tokeniser->program->data.program.program = vfastarr_extend(tokeniser->program->data.program.program, 1, sizeof(*tokeniser->program->data.program.program));
-    cth_astT* const restrict node = cth_ast_init(&tokeniser->program->data.program.program[program_pos++], CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
-    node->data.id = name;
+    if(name & 1){
+      cth_astT* const restrict node = cth_ast_init(&tokeniser->program->data.program.program[start_program + i], CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
+      node->data.id = name;
+    }
+    else{
+      cth_astT* const restrict node = (cth_astT*)name;
+      tokeniser->program->data.program.program[start_program + i] = node;
+      node->reference = &tokeniser->program->data.program.program[start_program + i];
+    }
   }
   vfastarr_remove(tokeniser->values, c_elem*sizeof(*tokeniser->values));
 // all persistent tokeniser state is cleared.

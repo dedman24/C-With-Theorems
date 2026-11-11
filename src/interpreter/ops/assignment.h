@@ -28,7 +28,6 @@ static cth_variableT* cth_op__assignment(const cth_astT* const restrict node, ct
     cth_error_report(CTH_ERROR__ASSIGNMENT_IMMEDIATE, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
     return NULL;
   }
-
   if(!cth_typecheck_compatible((cth_nameT[]){v0->type, v1->type}, 2, node->op, NULL, variables)){
     cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, variables, v0->type, v1->type);
     return NULL;

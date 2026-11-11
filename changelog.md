@@ -1,7 +1,10 @@
-### Changelog 2026/11/10.
- - rework how ops are tokenised, so that stuff stays `value` stack-only until semicolon.
+### Changelog 2026/11/11.
+ - handling binary/unary ops was wrong, now fixed.
+ - ast entries no more have reference stuff (very bug-prone, also unused).
+ - declarations _almost_ work, little is missing.
 
 ### pending changes.
+ - made variables store `cth_variableT*` for the type instead of `cth_nameT`.
  - tested declarations, now they work.
  - arrays.
  - typedefs.

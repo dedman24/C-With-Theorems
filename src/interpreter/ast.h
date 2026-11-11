@@ -79,8 +79,6 @@ typedef enum{
 } cth_ast_typeT;
 
 struct cth_astS{
-  cth_astT** reference;                       // ast entry pointing to this.
-
   cth_tokT op;
   cth_fposT line;
   cth_fposT offset;
@@ -104,14 +102,11 @@ struct cth_astS{
 // initialises abstract syntax tree normally.
 // does not touch internals.
 static cth_astT* cth_ast_init__weak(
-  cth_astT** const restrict reference, 
   const cth_tokT op, const cth_fposT line, const cth_fposT offset,
   const cth_ast_typeT type
 ){
   cth_astT* const restrict node = calloc(1, sizeof(*node));
 
-  if(reference) *reference = node;
-  node->reference = reference;
   node->op = op;
   node->line = line;
   node->offset = offset;
@@ -123,11 +118,10 @@ static cth_astT* cth_ast_init__weak(
 // node->data initialised by _whoever receives it_, although some minor work done here.
 // automatically sets *reference to node when not NULL.
 static cth_astT* cth_ast_init(
-  cth_astT** const restrict reference, 
   const cth_tokT op, const cth_fposT line, const cth_fposT offset,
   const cth_ast_typeT type
 ){
-  cth_astT* const restrict node = cth_ast_init__weak(reference, op, line, offset, type);
+  cth_astT* const restrict node = cth_ast_init__weak(op, line, offset, type);
 
   switch(type){
     case CTH_AST__IF:
@@ -162,7 +156,7 @@ static cth_astT* cth_ast_init(
   return node;
 }
 
-static cth_astT* cth_ast_clone__recursive(cth_astT** const restrict reference, cth_astT* const restrict src);
+static cth_astT* cth_ast_clone__recursive(cth_astT* const restrict src);
 
 static cth_astT** cth_ast_clone__array(cth_astT** const restrict src){
   if(!src) return NULL;
@@ -171,16 +165,14 @@ static cth_astT** cth_ast_clone__array(cth_astT** const restrict src){
   cth_astT** const restrict dst = vfastarr_init_explicit(c_src, c_src, sizeof(*src));
 
   for(size_t i = 0; i < c_src; i++)
-    dst[i] = cth_ast_clone__recursive(&dst[i], src[i]);
+    dst[i] = cth_ast_clone__recursive(src[i]);
 
   return dst;
 }
 
-static cth_astT* cth_ast_clone__recursive(cth_astT** const restrict reference, cth_astT* const restrict src){
+static cth_astT* cth_ast_clone__recursive(cth_astT* const restrict src){
   cth_astT* const restrict node = malloc(sizeof(*node));
 
-  if(reference) *reference = node;
-  node->reference = reference;
   node->op = src->op;
   node->line = src->line;
   node->offset = src->offset;
@@ -191,42 +183,42 @@ static cth_astT* cth_ast_clone__recursive(cth_astT** const restrict reference, c
       node->data.id = src->data.id;
       break;
     case CTH_AST__IF:
-      cth_ast_clone__recursive(&node->data._if.condition, src->data._if.condition);
+      node->data._if.condition = cth_ast_clone__recursive(src->data._if.condition);
       node->data._if.success = cth_ast_clone__array(src->data._if.success);
       node->data._if.failure = cth_ast_clone__array(src->data._if.failure);
       break;
     case CTH_AST__FOR:
-      cth_ast_clone__recursive(&node->data._for.init, src->data._for.init);
-      cth_ast_clone__recursive(&node->data._for.condition, src->data._for.condition);
-      cth_ast_clone__recursive(&node->data._for.update, src->data._for.update);
+      node->data._for.init = cth_ast_clone__recursive(src->data._for.init);
+      node->data._for.condition = cth_ast_clone__recursive(src->data._for.condition);
+      node->data._for.update = cth_ast_clone__recursive(src->data._for.update);
       node->data._for.code = cth_ast_clone__array(src->data._for.code);
       break;
     case CTH_AST__DEFER:
       node->data._defer.code = cth_ast_clone__array(src->data._defer.code);
       break;
     case CTH_AST__WHILE:
-      cth_ast_clone__recursive(&node->data._while.condition, src->data._while.condition);
+      node->data._while.condition = cth_ast_clone__recursive(src->data._while.condition);
       node->data._while.code = cth_ast_clone__array(src->data._while.code);
       break;
     case CTH_AST__SWITCH:
       node->data._switch.cases = cth_ast_clone__array(src->data._switch.cases);
       break;
     case CTH_AST__UNARY:
-      cth_ast_clone__recursive(&node->data._unary.src, src->data._unary.src);
+      node->data._unary.src = cth_ast_clone__recursive(src->data._unary.src);
       break;
     case CTH_AST__BINARY:
-      cth_ast_clone__recursive(&node->data._binary.s0, src->data._binary.s0);
-      cth_ast_clone__recursive(&node->data._binary.s1, src->data._binary.s1);
+      node->data._binary.s0 = cth_ast_clone__recursive(src->data._binary.s0);
+      node->data._binary.s1 = cth_ast_clone__recursive(src->data._binary.s1);
       break;
     case CTH_AST__FUNCALL:
-      cth_ast_clone__recursive(&node->data._funcall.fun, src->data._funcall.fun);
+      node->data._funcall.fun = cth_ast_clone__recursive(src->data._funcall.fun);
       node->data._funcall.args = cth_ast_clone__array(src->data._funcall.args);
       break;
     case CTH_AST__PROGRAM:
       node->data.program.program = cth_ast_clone__array(src->data.program.program);
       break;
     case CTH_AST__DECLARATION: 
-      cth_ast_clone__recursive(&node->data._declaration.type, src->data._declaration.type);
+      node->data._declaration.type = cth_ast_clone__recursive(src->data._declaration.type);
       node->data._declaration.expr = cth_ast_clone__array(src->data._declaration.expr);
       node->data._declaration.vars = vfastarr_clone(src->data._declaration.vars);
       break;
@@ -236,7 +228,7 @@ static cth_astT* cth_ast_clone__recursive(cth_astT** const restrict reference, c
 }
 
 static cth_astT* cth_ast_clone(cth_astT* const restrict src){
-  return cth_ast_clone__recursive(NULL, src);
+  return cth_ast_clone__recursive(src);
 }
 
 static void cth_ast_destroy(cth_astT* const restrict node);

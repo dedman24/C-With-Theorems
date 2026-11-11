@@ -3,9 +3,10 @@
 
 // all cth ops.
 
-#include "assignment.h"
+#include "decl.h"
 #include "misc.h"
 #include "binary.h"
+#include "assignment.h"
 
 typedef cth_variableT* (*cth_ast__functionT)(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err);
 

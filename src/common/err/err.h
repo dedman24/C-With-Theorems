@@ -53,6 +53,7 @@ typedef enum{
   CTH_ERROR__DECLARATION_INVALID_TYPE,
   CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE,
 
+  CTH_ERROR__TOKENISER_INVALID_UNARY,
   CTH_ERROR__TOKENISER_UNKNOWN_TOKEN,
   CTH_ERROR__TOKENISER_ADJACENT_OPERANDS,
   CTH_ERROR__TOKENISER_DOUBLE_QUALIFIERS,
@@ -122,6 +123,7 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__DECLARATION_INVALID_TYPE]       = "in declaration, first argument expected to be of type 'type', while instead of type '%s'.\n",
   [CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE]  = "in declaration, expected type is '%s', while effective type is '%s'.\n",
 
+  [CTH_ERROR__TOKENISER_INVALID_UNARY]        = "token used as if it were unary, but no unary op associated with it.\n",
   [CTH_ERROR__TOKENISER_UNKNOWN_TOKEN]        = "unknown token met during tokenisation; possibly an issue with the compiler.\n",
   [CTH_ERROR__TOKENISER_ADJACENT_OPERANDS]    = "identifiers are adjacent with no operator between them, and the former isn't a type nor a qualifier.\n",
   [CTH_ERROR__TOKENISER_DOUBLE_QUALIFIERS]    = "double qualifiers are present. very smart, but very dangeros hohoho. I am losing it.\n",

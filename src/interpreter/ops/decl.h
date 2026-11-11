@@ -8,7 +8,7 @@
 #include "../../common/_common.h"       // variableT & more.
 
 static cth_variableT* cth_op__declaration(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err){
-  if(node->type != CTH_AST__BINARY){
+  if(node->type != CTH_AST__DECLARATION){
     cth_error_report__u32_2(CTH_ERROR__INTERPRETER_AST_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, node->type, CTH_AST__BINARY);
     return NULL;
   }
@@ -32,14 +32,14 @@ static cth_variableT* cth_op__declaration(const cth_astT* const restrict node, c
         return NULL;
       }
     }
-
+// guaranteed to exist.
     cth_variableT* const declared = cth_variable_search(variables, node->data._declaration.vars[i]);
     if(declared->type != CTH_TYPE__NONE){
       cth_error_report__str_size(CTH_ERROR__DECLARATION_REDEFINITION, CTH_ERROR__COMPILER, path, node->line, node->offset, err, declared->name, declared->s_name);
       return NULL;
     }
 
-    declared->type = 0;             // TODO: make this work!
+    declared->type = 0;             // TODO: make this work! we somehow need the type ID TwT...
     if(node->data._declaration.expr[i]){
       cth_variable__internal_clone(declared, result);
       if(result->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(result);

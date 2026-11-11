@@ -18,7 +18,7 @@ static cth_nameT cth_tokeniser_op__name_join(
   return combined;
 }
 
-static cth_nameT cth_tokeniser_op__name(
+static const char* cth_tokeniser_op__name(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
@@ -29,47 +29,47 @@ static cth_nameT cth_tokeniser_op__name(
       cth_error_report(CTH_ERROR__VALUE_UNDEFINED, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     else
       tokeniser->values = vfastarr_append(tokeniser->values, &id, sizeof(id));
-    return id;
+    return code + len;
   }
+
+  const cth_nameT name = cth_name_search(code, len, &tokeniser->name);
+// if spec.var == NULL, variable didn't exist previously. name is in spec.name.
+  if(!name)
+    return cth_tokeniser_op__declaration(tokeniser, code, path, err);
+  cth_variableT* const var = cth_variable_search(tokeniser->name.variables, name);
 
   cth_nameT id_prev; vfastarr_pop(tokeniser->values, &id_prev, sizeof(id_prev));
   cth_variableT* const var_prev = cth_variable_search(tokeniser->name.variables, id_prev);
   if(var_prev->type != CTH_TYPE__TYPE && var_prev->type != CTH_TYPE__QUALIFIER){
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
-    return 0;
+    return code + len;
   }
 
-  cth_name_addS spec = cth_name_add(code, len, id_prev, CTH_VARSTATE__NONE, &tokeniser->name);
-// if spec.var == NULL, variable didn't exist previously. name is in spec.name.
-  if(!spec.var){       // declaration.
-    cth_tokeniser_op__declaration(tokeniser, code, path, err);
-    return 0;
-  }
   if(tokeniser->state & CTH_TOKENISER__DECLARATION){
     cth_error_report(CTH_ERROR__DECLARATION_REDEFINITION, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
-    return 0;
+    return code + len;
   }
 // prev & ours are both types; we try joining.
-  if(var_prev->type == CTH_TYPE__TYPE && spec.var->type == CTH_TYPE__TYPE){
-    const cth_nameT joined = cth_tokeniser_op__name_join(tokeniser, spec.name, id_prev, path, err);
+  if(var_prev->type == CTH_TYPE__TYPE && var->type == CTH_TYPE__TYPE){
+    const cth_nameT joined = cth_tokeniser_op__name_join(tokeniser, name, id_prev, path, err);
     tokeniser->values = vfastarr_append(tokeniser->values, &joined, sizeof(joined));
-    return joined;
+    return code + len;
   }
   if(
-    var_prev->type == CTH_TYPE__QUALIFIER && spec.var->type == CTH_TYPE__TYPE ||
-    var_prev->type == CTH_TYPE__TYPE && spec.var->type == CTH_TYPE__QUALIFIER
+    var_prev->type == CTH_TYPE__QUALIFIER && var->type == CTH_TYPE__TYPE ||
+    var_prev->type == CTH_TYPE__TYPE && var->type == CTH_TYPE__QUALIFIER
   ){
     const bool first_isqualif = var_prev->type == CTH_TYPE__QUALIFIER;
-    const cth_nameT name_qual = first_isqualif? id_prev: spec.name;
-    const cth_nameT name_type = first_isqualif? spec.name: id_prev;
-    cth_variableT* const tvar = first_isqualif? spec.var: var_prev;
+    const cth_nameT name_qual = first_isqualif? id_prev: name;
+    const cth_nameT name_type = first_isqualif? name: id_prev;
+    cth_variableT* const tvar = first_isqualif? var: var_prev;
     const cth_nameT qualified = cth_tokeniser_op__qualifier(tokeniser, name_qual, name_type, tvar, path, err);
     tokeniser->values = vfastarr_append(tokeniser->values, &qualified, sizeof(qualified));
-    return qualified;
+    return code + len;
   }
   else{
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
-    return 0;
+    return code + len;
   }
 }
 

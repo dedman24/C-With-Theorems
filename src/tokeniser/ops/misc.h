@@ -97,13 +97,13 @@ static void cth_tokeniser_op__semicolon(cth_tokeniserT* const restrict tokeniser
   for(size_t i = 0; i < c_elem; i++){
     const cth_nameT name = tokeniser->values[i];
     if(name & 1){
-      cth_astT* const restrict node = cth_ast_init(&tokeniser->program->data.program.program[start_program + i], CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
+      cth_astT* const restrict node = cth_ast_init(CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
+      tokeniser->program->data.program.program[start_program + i] = node;
       node->data.id = name;
     }
     else{
       cth_astT* const restrict node = (cth_astT*)name;
       tokeniser->program->data.program.program[start_program + i] = node;
-      node->reference = &tokeniser->program->data.program.program[start_program + i];
     }
   }
   vfastarr_remove(tokeniser->values, c_elem*sizeof(*tokeniser->values));

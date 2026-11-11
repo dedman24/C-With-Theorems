@@ -22,16 +22,23 @@ static void cth_tokeniser_dispatch__ast(
   else if(tok == CTH_TOK__SWITCH);
   else if(tok == CTH_TOK__TYPEDEF) 
     cth_tokeniser_op__typedef(tokeniser, path, err);
-  else if(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME)
-    cth_tokeniser_op__binary(tok, tokeniser, path, err);
-  else
+  else if(tok > CTH_TOK__UNARY_START && tok < CTH_TOK__UNARY_END)
     cth_tokeniser_op__unary(tok, tokeniser, path, err);
+  else
+    cth_tokeniser_op__binary(tok, tokeniser, path, err);
 }
 
 static const char* cth_tokeniser_dispatch(
-  const char* restrict code, const cth_tokT tok, const size_t len, cth_tokeniserT* const restrict tokeniser, 
+  const char* restrict code, cth_tokT tok, const size_t len, cth_tokeniserT* const restrict tokeniser, 
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
+  if(!(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME) && tok < CTH_TOK__NONE && tok != CTH_TOK__SEMICOLON){
+    tok = cth_tokeniser_unary_tok(tok);
+    if(tok == CTH_TOK__NONE){
+      cth_error_report(CTH_ERROR__TOKENISER_INVALID_UNARY, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+      return code + len;
+    }
+  }
 // special cases to be handled on their own.
   switch(tok){
     case CTH_TOK__OPENED_SINGLE_LINE_COMMENT: return cth_tokeniser_op__comment_single(tokeniser, code, len, path, err);
@@ -43,7 +50,7 @@ static const char* cth_tokeniser_dispatch(
     case CTH_TOK__STRING: cth_tokeniser_op__string(tokeniser, code, len, path, err); break;
     case CTH_TOK__VALUE: cth_tokeniser_op__value(tokeniser, code, len, path, err); break;
     case CTH_TOK__CHAR: cth_tokeniser_op__char(tokeniser, code, len, path, err); break;
-    case CTH_TOK__NAME: cth_tokeniser_op__name(tokeniser, code, len, path, err); break;
+    case CTH_TOK__NAME: return cth_tokeniser_op__name(tokeniser, code, len, path, err);
     case CTH_TOK__NONE:
       cth_error_report(CTH_ERROR__TOKENISER_UNKNOWN_TOKEN, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
       return code + len;

@@ -8,7 +8,11 @@
 
 > `BEGIN snca;`
 
-Broke some stuff, but it'll work again son.
+declarations finally work! tbh I don't know why I didn't think of making them their own statement/ast node type, would've saved a lot of time.\
+you can never win.
+
+currently I want to add all 'basic' stuff, get it working and _only then_ worry about making the language _more like C_.\
+I want to get a product out first; stuff like declarations can be reworked & fixed l8r. 
 
 > `END snca;`
 
@@ -17,7 +21,7 @@ Broke some stuff, but it'll work again son.
  - path stuff in repl doesn't work, for most errors no path is printed.
  - hex, octal, binary values do not work.
  - no leading 0 making values octal.
- - something like `const char *x, *y` is currently not supported; perhaps generalise declarations.
+ - something like `const char *x, *y` is currently not supported; make declarations more like C ones.
 
 ### Things to add (in no particular order):
  - `void`, `void*` types.

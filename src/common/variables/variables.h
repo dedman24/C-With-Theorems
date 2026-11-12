@@ -23,58 +23,6 @@ static cth_variable_stateT cth_qualifier_op2(const cth_variable_stateT q0, const
   return q0 & q1;
 }
 
-// returns 0 on invalid queries.
-static size_t cth_type__sizeof(cth_variableT* const restrict variable){
-  const size_t sizes[] = {
-    [CTH_TYPE__CHAR8]         = sizeof(char),
-    [CTH_TYPE__CHAR16]        = sizeof(char16_t),
-    [CTH_TYPE__CHAR32]        = sizeof(char32_t),
-
-    [CTH_TYPE__U8]            = 1,
-    [CTH_TYPE__U16]           = 2,
-    [CTH_TYPE__U32]           = 4,
-    [CTH_TYPE__U64]           = 8,
-
-    [CTH_TYPE__I8]            = 1,
-    [CTH_TYPE__I16]           = 2,
-    [CTH_TYPE__I32]           = 4,
-    [CTH_TYPE__I64]           = 8,
-
-    [CTH_TYPE__F8]            = 1,
-    [CTH_TYPE__F16]           = 2,
-    [CTH_TYPE__F32]           = 4,
-    [CTH_TYPE__F64]           = 8,
-
-    [CTH_TYPE__CHAR]          = sizeof(char),
-    [CTH_TYPE__SCHAR]         = sizeof(signed char),
-    [CTH_TYPE__UCHAR]         = sizeof(unsigned char),
-    [CTH_TYPE__SHORT]         = sizeof(short),
-    [CTH_TYPE__USHORT]        = sizeof(unsigned short),
-    [CTH_TYPE__INT]           = sizeof(int),
-    [CTH_TYPE__UINT]          = sizeof(unsigned int),
-    [CTH_TYPE__LONG]          = sizeof(long),
-    [CTH_TYPE__ULONG]         = sizeof(unsigned long),
-    [CTH_TYPE__LONG_LONG]     = sizeof(long long),
-    [CTH_TYPE__ULONG_LONG]    = sizeof(unsigned long long),
-    [CTH_TYPE__FLOAT]         = sizeof(float),
-    [CTH_TYPE__DOUBLE]        = sizeof(double),
-    [CTH_TYPE__LONG_DOUBLE]   = sizeof(long double),
-
-    [CTH_TYPE__SIGNED]        = sizeof(signed),
-    [CTH_TYPE__UNSIGNED]      = sizeof(unsigned),
-
-    [CTH_TYPE__BOOLEAN]       = sizeof(bool),
-    [CTH_TYPE__TYPE]          = 0,
-    [CTH_TYPE__QUALIFIER]     = 0,
-    
-    [CTH_TYPE__SSIZE]         = sizeof(ssize_t),
-    [CTH_TYPE__SIZE]          = sizeof(size_t),
-  };
-
-  if(variable->type == CTH_TYPE__STRING) return strlen(variable->internal.string->str);
-  return sizes[variable->type];
-}
-
 // tries to combine C types.
 // very ugly, but nothing else can be done.
 static cth_nameT cth_type__combine(const cth_nameT t0, const cth_nameT t1){
@@ -143,7 +91,7 @@ static cth_nameT cth_type__combine(const cth_nameT t0, const cth_nameT t1){
 // does not initialise 'internal' field.
 static cth_variableT* cth_variable_init(
   const char* const restrict name, const size_t s_name,
-  const cth_nameT type, const cth_variable_stateT qualifier
+  cth_variableT* const type, const cth_variable_stateT qualifier
 ){
   cth_variableT* const restrict var = malloc(sizeof(*var));
 
@@ -157,45 +105,30 @@ static cth_variableT* cth_variable_init(
 
 static void cth_variable_destroy(cth_variableT* const restrict real){
   if(real->state & CTH_VARSTATE__FREENAME) free((void*)real->name);
-  switch(real->type){
-    case CTH_TYPE__TYPE:
-      cth_type__internal_destroy(real->internal.type);
-      break;
-    case CTH_TYPE__STRING:
-      rc_disown(real->internal.string);
-      break;
-    default: break;
-  }
+  if(real->type == cth_typevar(CTH_TYPE__TYPE))
+    cth_type__internal_destroy(real->internal.type);
+  else if(real->type == cth_typevar(CTH_TYPE__STRING))
+    rc_disown(real->internal.string);
   free(real);
 }
 
 static void cth_variable_destroy__rht(vfastrht_objT* const restrict var){
   cth_variableT* const restrict real = (cth_variableT*)var;
   if(real->state & CTH_VARSTATE__FREENAME) free((void*)real->name);
-  switch(real->type){
-    case CTH_TYPE__TYPE: 
-      cth_type__internal_destroy(real->internal.type);
-      break;
-    case CTH_TYPE__STRING:
-      free(real->internal.string);
-      break;
-    default: break;
-  }
+  if(real->type == cth_typevar(CTH_TYPE__TYPE))
+    cth_type__internal_destroy(real->internal.type);
+  else if(real->type == cth_typevar(CTH_TYPE__STRING))
+    rc_disown(real->internal.string);
   free(real);
 }
 
 static void cth_variable__internal_clone(cth_variableT* const restrict dst, cth_variableT* const restrict src){
-  switch(dst->type){
-    case CTH_TYPE__TYPE:
-      dst->internal.type = cth_type__internal_acquire(src->internal.type);
-      break;
-    case CTH_TYPE__STRING:
-      dst->internal.string = rc_own(src->internal.string);
-      break;
-    default:
-      dst->internal = src->internal;
-      break;
-  }  
+  if(dst->type == cth_typevar(CTH_TYPE__TYPE))
+    dst->internal.type = cth_type__internal_acquire(src->internal.type);
+  else if(dst->type == cth_typevar(CTH_TYPE__STRING))
+    dst->internal.string = rc_own(src->internal.string);
+  else
+    dst->internal = src->internal;
 }
 
 static cth_nameT cth_variable_name(cth_variable_ctxT* restrict ctx){
@@ -211,7 +144,7 @@ static void cth_variable_ctx_destroy(cth_variable_ctxT* const restrict ctx, cons
 static cth_variableT* cth_variable_add(
   cth_variable_ctxT* const restrict ctx,
   const cth_nameT id, const char* const restrict name, const size_t s_name,
-  const cth_nameT type, const cth_variable_stateT state
+  cth_variableT* const type, const cth_variable_stateT state
 ){
   cth_variableT* const restrict var = cth_variable_init(name, s_name, type, state);
   vfastrht_put(ctx->correspondences, id, var);
@@ -222,22 +155,30 @@ static cth_variableT* cth_variable_search(cth_variable_ctxT* const restrict ctx,
   return vfastrht_search_elem(ctx->correspondences, id);
 }
 
+static void cth_variable_ctx_init__type(cth_variable_ctxT* restrict ctx){
+  cth_variableT* const restrict type = cth_variable_add(ctx, CTH_TYPE__TYPE, NULL, 0, NULL, CTH_VARSTATE__NONE);
+  type->type = type;
+  type->internal.type = cth_type__internal_init__id(CTH_TYPE__TYPE);
+  cth_type__var_arr[CTH_TYPE__TYPE/2] = type;
+
+  for(size_t i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i+=2){
+    if(i == CTH_TYPE__TYPE) continue;
+    cth_type__var_arr[i/2] = cth_variable_add(ctx, i, NULL, 0, type, CTH_VARSTATE__NONE);
+    cth_type__var_arr[i/2]->internal.type = cth_type__internal_init__id(i);
+  }
+}
+
 // TODO: add initialising all kinds of stuff here.
 static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx){
   if(!ctx) ctx = malloc(sizeof(*ctx));
 
   ctx->correspondences = vfastrht_table_init();
   ctx->id_name = CTH_NAME__ID_START;
+// order is important; ctx_init__type MUST be ahead of any other init function.
+  cth_variable_ctx_init__type(ctx);
   cth_variable_ctx_init__basic(ctx);
-
-  for(cth_nameT i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i += 2){
-  // HAS to initialise `internal` field with AST node.
-    cth_variableT* const restrict type = cth_variable_add(ctx, i, NULL, 0, CTH_TYPE__TYPE, CTH_VARSTATE__FREENAME);
-    type->internal.type = cth_type__internal_init__id(i);
-
-  }
   for(cth_nameT i = CTH_QUALIFIER_MIN; i < CTH_QUALIFIER_MAX; i += 2)
-    cth_variable_add(ctx, i, NULL, 0, CTH_TYPE__QUALIFIER, CTH_VARSTATE__FREENAME);
+    cth_variable_add(ctx, i, NULL, 0, cth_typevar(CTH_TYPE__QUALIFIER), CTH_VARSTATE__FREENAME);
   return ctx;
 }
 

@@ -15,31 +15,34 @@ static cth_variableT* cth_op__declaration(const cth_astT* const restrict node, c
 
   cth_variableT* const type = cth_interpret(node->data._declaration.type, variables, path, err);
   if(!type) return NULL;
-  if(type->type != CTH_TYPE__TYPE){
+  if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, type->type)){
     cth_error_report__type(CTH_ERROR__DECLARATION_INVALID_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, variables, type->type);
     return NULL;
   }
 
   const size_t c_decl = vfastarr_elcnt(node->data._declaration.vars, sizeof(*node->data._declaration.vars));
   for(size_t i = 0; i < c_decl; i++){
-    cth_variableT *result, *t_result;
+    cth_variableT* result;
     if(node->data._declaration.expr[i]){
       result = cth_interpret(node->data._declaration.expr[i], variables, path, err);
-      t_result = cth_variable_search(variables, result->type);
 
-      if(!cth_typecheck_compatible__vars((cth_variableT*[]){type, t_result}, 2, CTH_TOK__ASSIGNMENT, NULL, variables)){
-        cth_error_report__typevar_2(CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, variables, type, t_result);
+      if(!cth_typecheck_compatible(
+        (const cth_variableT*[]){result->type, type}, 2,        // order of this array is important.
+        CTH_TOK__ASSIGNMENT, NULL,
+        variables
+      )){
+        cth_error_report__type_2(CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, variables, type, result->type);
         return NULL;
       }
     }
 // guaranteed to exist.
     cth_variableT* const declared = cth_variable_search(variables, node->data._declaration.vars[i]);
-    if(declared->type != CTH_TYPE__NONE){
+    if(!cth_typecheck_top_lvl_is(CTH_TYPE__NONE, declared->type)){
       cth_error_report__str_size(CTH_ERROR__DECLARATION_REDEFINITION, CTH_ERROR__COMPILER, path, node->line, node->offset, err, declared->name, declared->s_name);
       return NULL;
     }
 
-    declared->type = 0;             // TODO: make this work! we somehow need the type ID TwT...
+    declared->type = type;                    // whole reason for why I switched away from nameT to variableT in variableT.type field.
     if(node->data._declaration.expr[i]){
       cth_variable__internal_clone(declared, result);
       if(result->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(result);

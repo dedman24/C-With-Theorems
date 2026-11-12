@@ -4,31 +4,11 @@
 #include "../ctx.h"                 // cth_astT.
 #include "../../common/_common.h"   // variableT, errors.
 
+// this file concerns all that type-checking must consider in cth.
+
 // a top-level qualifier is...
 // I have an idea, IDK how to describe it.
 // basically all above *, [] & similar.
-
-// performs cth type checking.
-static cth_variableT* cth_op__typechecking(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err){
-  if(node->type != CTH_AST__BINARY){
-    cth_error_report__u32_2(CTH_ERROR__INTERPRETER_AST_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, node->type, CTH_AST__BINARY);
-    return NULL;
-  }
-  cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
-                *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
-  if(!v0 || !v1) return NULL;
-  cth_variableT* const vtype = cth_variable_search(variables, v1->type);
-
-  if(v0->type != CTH_TYPE__TYPE)
-    cth_error_report(CTH_ERROR__TYPEIS_SECOND_ARG, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
-  else if(vtype != v0)
-    cth_error_report__str_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, vtype->name, v1->name);
-
-  if(v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
-  if(v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
-
-  return NULL;
-}
 
 // returns first qualif that is in top lvl, 0 otherwise.
 static cth_nameT cth_typecheck_top_lvl(
@@ -114,6 +94,30 @@ static struct cth_typecheck_top_lvl_getS cth_typecheck_top_lvl_get(cth_astT* ast
   }
 }
 
+static bool cth_typecheck_top_lvl_is(const cth_nameT type, const cth_variableT* const var_type){
+  cth_astT* ast_type = var_type->internal.type->tree;
+
+  while(1){
+    switch(ast_type->type){
+      case CTH_AST__ID:
+        return ast_type->data.id == type;
+      case CTH_AST__FUNCALL:
+        cth_astT* fun = ast_type->data._funcall.fun;
+        switch(fun->data.id){
+           case CTH_QUALIFIER__PTR:
+           case CTH_QUALIFIER__REF:
+            return fun->data.id == type;
+          default: break;
+        }
+        ast_type = ast_type->data._funcall.args[0];
+        break;
+      default:
+        *(volatile char*)NULL = 67;
+        break;
+    }
+  }
+}
+
 static bool cth_typecheck_compatible__ptr(
   const cth_nameT dispatch0, cth_astT* const ast0, const cth_nameT dispatch1, cth_astT* const ast1, const cth_tokT op
 ){
@@ -137,23 +141,22 @@ static bool cth_typecheck_compatible__ptr(
 //   important because, for example, `+` is compatible only on ptr-integer, but assignment is compatible only on ptr-ptr.
 //   certain ops are never valid on pointers.
 static bool cth_typecheck_compatible(
-  const cth_nameT types[], const size_t c_types, const cth_tokT op,
+  const cth_variableT* const types[], const size_t c_types, const cth_tokT op,
   cth_nameT* const restrict dispatch, cth_variable_ctxT* const restrict variables
 ){
   if(c_types == 0) return false;              // 0 types is invalid, possibly an error.
-  cth_variableT* const t0 = cth_variable_search(variables, types[0]);
-  if(!t0 || t0->type != CTH_TYPE__TYPE) return false;
-  const struct cth_typecheck_top_lvl_getS t0_top = cth_typecheck_top_lvl_get(t0->internal.type->tree);
+  if(!types[0] || !cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, types[0]->type)) return false;
+  const struct cth_typecheck_top_lvl_getS t0_top = cth_typecheck_top_lvl_get(types[0]->internal.type->tree);
 
   if(dispatch)
     *dispatch = t0_top.dispatch;
 
   for(size_t i = 1; i < c_types; i++){
-    cth_variableT* const t = cth_variable_search(variables, types[i]);
-    if(!t || t->type != CTH_TYPE__TYPE) return false;
+    if(!types[i] || !cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, types[i]->type)) return false;
 
-    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(t->internal.type->tree);
+    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(types[i]->internal.type->tree);
     switch(top.dispatch){
+      case CTH_TYPE__NULLPTR:
       case CTH_QUALIFIER__PTR:
       case CTH_QUALIFIER__REF:
         return cth_typecheck_compatible__ptr(t0_top.dispatch, t0_top.ast, top.dispatch, top.ast, op);
@@ -165,36 +168,35 @@ static bool cth_typecheck_compatible(
   return true;
 }
 
-// op ~ operation under which typechecking is being performed.
-//   important because, for example, `+` is compatible only on ptr-integer, but assignment is compatible only on ptr-ptr.
-//   certain ops are never valid on pointers.
-static bool cth_typecheck_compatible__vars(
-  cth_variableT* types[], const size_t c_types, const cth_tokT op,
-  cth_nameT* const restrict dispatch, cth_variable_ctxT* const restrict variables
-){
-  if(c_types == 0) return false;              // 0 types is invalid, possibly an error.
-  cth_variableT* const t0 = types[0];
-  if(!t0 || t0->type != CTH_TYPE__TYPE) return false;
-  const struct cth_typecheck_top_lvl_getS t0_top = cth_typecheck_top_lvl_get(t0->internal.type->tree);
-
-  if(dispatch)
-    *dispatch = t0_top.dispatch;
-
-  for(size_t i = 1; i < c_types; i++){
-    cth_variableT* const t = types[i];
-    if(!t || t->type != CTH_TYPE__TYPE) return false;
-
-    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(t->internal.type->tree);
-    switch(top.dispatch){
-      case CTH_QUALIFIER__PTR:
-      case CTH_QUALIFIER__REF:
-        return cth_typecheck_compatible__ptr(t0_top.dispatch, t0_top.ast, top.dispatch, top.ast, op);
-      default:                            // all other types compare by value.
-        if(top.dispatch != t0_top.dispatch) return false;
-    }
-  }
-
-  return true;
+// two types are equal when their contents are.
+static bool cth_typecheck_equal(const cth_variableT* const t0, const cth_variableT* const t1){
+// simple optimisation by checking that pointers are equal.
+// if they are, they _must_ be pointing to the same thing.
+  if(t0 == t1) return true;
+  if(t0->internal.type == t1->internal.type) return true;
+  return cth_ast_equal(t0->internal.type->tree, t1->internal.type->tree);
 }
+
+// performs cth type checking.
+static cth_variableT* cth_op__typechecking(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err){
+  if(node->type != CTH_AST__BINARY){
+    cth_error_report__u32_2(CTH_ERROR__INTERPRETER_AST_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, node->type, CTH_AST__BINARY);
+    return NULL;
+  }
+  cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
+                *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
+  if(!v0 || !v1) return NULL;
+
+  if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, v0->type))
+    cth_error_report(CTH_ERROR__TYPEIS_SECOND_ARG, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
+  else if(v0->type != v1)
+    cth_error_report__str_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, v0->name, v1->name);
+
+  if(v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
+  if(v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
+
+  return NULL;
+}
+
 
 #endif

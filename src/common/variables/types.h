@@ -124,6 +124,14 @@ const char* const restrict cth_type__strings[] = {
   [CTH_TYPE__NONE]          = "ERROR",
 };
 
+// NEVER TOUCH THIS!!!
+cth_variableT* cth_type__var_arr[CTH_TYPE_MAX/2];
+
+static cth_variableT* cth_typevar(const cth_nameT name){
+  if(name >= CTH_TYPE_MAX) return NULL;
+  return cth_type__var_arr[name/2];
+}
+
 // technically supports user-defined qualifiers, but those are an abstract idea anyways.
 enum{
   CTH_QUALIFIER_MIN         = CTH_TYPE_MAX,

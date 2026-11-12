@@ -72,7 +72,7 @@ static size_t cth_name_depth(cth_name_ctxT* const restrict name){
 
 // searches for name, creates nameT if it doesn't find any.
 // returns 0 if it already exists.
-static cth_nameT cth_name_add(const char* const restrict key, const size_t s_key, cth_nameT type, const cth_variable_stateT state, cth_name_ctxT* const restrict name){
+static cth_nameT cth_name_add(const char* const restrict key, const size_t s_key, const cth_nameT type, const cth_variable_stateT state, cth_name_ctxT* const restrict name){
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
 
   vfastbst_str_nodeT** restrict curr_node = NULL;
@@ -83,12 +83,14 @@ static cth_nameT cth_name_add(const char* const restrict key, const size_t s_key
   }
 
 // 'signed', 'unsigned' are not actual valid types values can assume, they're aliases of 'int' & 'unsigned int' when it's relevant.
-  if(type == CTH_TYPE__SIGNED) type = CTH_TYPE__INT;
-  else if(type == CTH_TYPE__UNSIGNED) type = CTH_TYPE__UINT;
+  cth_variableT* const typevar = 
+    type == CTH_TYPE__SIGNED?   cth_typevar(CTH_TYPE__INT):
+    type == CTH_TYPE__UNSIGNED? cth_typevar(CTH_TYPE__UINT):
+    cth_variable_search(name->variables, type);
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(key, s_key, id);
-  cth_variable_add(name->variables, id, key, s_key, type, state);
+  cth_variable_add(name->variables, id, key, s_key, typevar, state);
   return id;
 }
 
@@ -248,7 +250,11 @@ static cth_nameT cth_value_add(
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init((char*)raw, s_raw, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables, id, (const char*)raw, s_raw, type_raw, CTH_VARSTATE__FREENAME | CTH_VARSTATE__IMMEDIATE);
+  cth_variableT* const restrict var = cth_variable_add(name->variables,
+    id,
+    (const char*)raw, s_raw, cth_typevar(type_raw),                 // typevar is safe to be used here because value_decode is guaranteed to return a normal integer type.
+    CTH_VARSTATE__FREENAME | CTH_VARSTATE__IMMEDIATE
+  );
   var->internal = *raw;
 
   return id;
@@ -270,7 +276,7 @@ static cth_nameT cth_char_add(
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, CTH_TYPE__CHAR8, CTH_VARSTATE__IMMEDIATE);
+  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, cth_typevar(CTH_TYPE__CHAR8), CTH_VARSTATE__IMMEDIATE);
   var->internal.char8 = *raw;
 
   return id;
@@ -291,7 +297,7 @@ static cth_nameT cth_string_add(
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, CTH_TYPE__STRING, CTH_VARSTATE__IMMEDIATE);
+  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, cth_typevar(CTH_TYPE__STRING), CTH_VARSTATE__IMMEDIATE);
   var->internal.string = rc_make(raw);
 
   return id;

@@ -11,7 +11,6 @@ static void* cth_interpret(const cth_astT* const restrict node, cth_variable_ctx
   switch(node->type){
     case CTH_AST__PROGRAM:
       const size_t countof_program = vfastarr_elcnt(node->data.program.program, sizeof(*node->data.program.program));
-      printf("countof_program %lu\n", countof_program);
     // temporary measure: a program's output is what each line evaluates to. useful for current REPL, little else. perhaps make it return NULL.
       cth_variableT** restrict output = vfastarr_init(sizeof(*output));
       for(size_t i = 0; i < countof_program; i++){

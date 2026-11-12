@@ -2,6 +2,7 @@
 #define CTH_TOKENISER_OPS_QUALIFS_H_INCLUDED
 
 #include "../ctx.h"
+#include "../../interpreter/ops/typecheck.h"
 
 // combines type & qualifier to produce new qualified type name.
 static cth_nameT cth_tokeniser_op__qualifier(
@@ -62,7 +63,7 @@ static bool cth_tokeniser__operand_qualifs(
 
   const cth_nameT name_top = tokeniser->values[arr_top];
   cth_variableT* const restrict var_top = cth_variable_search(tokeniser->name.variables, name_top);
-  if(var_top->type != CTH_TYPE__TYPE)     // only valid on types.
+  if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_top->type))  // only valid on types.
     return false;
 
   const cth_nameT qualifier = 

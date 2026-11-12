@@ -325,9 +325,8 @@ static void cth_error_report__type(
   const cth_fposT line, const cth_fposT offset,
   cth_error_ctxT* const restrict ctx,
   cth_variable_ctxT* const restrict variables,
-  const cth_nameT id_type
+  const cth_variableT* const var_type
 ){
-  const cth_variableT* const var_type = cth_variable_search(variables, id_type);
   const cth_astT* const ast_type = var_type->internal.type->tree;
 
   size_t s_type_data;
@@ -344,32 +343,6 @@ static void cth_error_report__type(
 }
 
 static void cth_error_report__type_2(
-  const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
-  const cth_fposT line, const cth_fposT offset,
-  cth_error_ctxT* const restrict ctx,
-  cth_variable_ctxT* const restrict variables,
-  const cth_nameT t0, const cth_nameT t1
-){
-  const cth_variableT* const var_t0 = cth_variable_search(variables, t0),
-                     * const var_t1 = cth_variable_search(variables, t1);
-  const cth_astT* const ast_t0 = var_t0->internal.type->tree,
-                * const ast_t1 = var_t1->internal.type->tree;
-
-  size_t s_t0_data, s_t1_data;
-  char* const restrict t0_data = cth_type_str_construct(ast_t0, variables, &s_t0_data),
-      * const restrict t1_data = cth_type_str_construct(ast_t1, variables, &s_t1_data);
-
-  const size_t len_message = strlen(cth_error_strings[type]) + s_t0_data + s_t1_data;
-  char* const restrict message = malloc(len_message + 1);
-  sprintf(message, cth_error_strings[type], t0_data, t1_data);
-  vfastarr_destroy(t0_data); vfastarr_destroy(t1_data);
-
-  const size_t idx_final = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
-  ctx->errors = vfastarr_extend(ctx->errors, 1, sizeof(*ctx->errors));
-  cth_error_init(ctx->errors + idx_final, message, category, path, line, offset);
-}
-
-static void cth_error_report__typevar_2(
   const cth_error_typeT type, const cth_error_categoryT category, rcT* const restrict path,
   const cth_fposT line, const cth_fposT offset,
   cth_error_ctxT* const restrict ctx,

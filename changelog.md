@@ -1,11 +1,8 @@
-### Changelog 2026/11/11.
- - handling binary/unary ops was wrong, now fixed.
- - ast entries no more have reference stuff (very bug-prone, also unused).
- - declarations _almost_ work, little is missing.
+### Changelog 2026/11/12.
+ - changed `type` field's type inside `variableT` from `nameT` to `variableT*`
+ - tested declarations, now they work.
 
 ### pending changes.
- - made variables store `cth_variableT*` for the type instead of `cth_nameT`.
- - tested declarations, now they work.
  - arrays.
  - typedefs.
 

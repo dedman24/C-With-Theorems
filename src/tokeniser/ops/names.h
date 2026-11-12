@@ -1,9 +1,10 @@
 #ifndef CTH_TOKENISER_OPS_NAMES_H_INCLUDED
 #define CTH_TOKENISER_OPS_NAMES_H_INCLUDED
 
-#include "decl.h"                 // declarations.
+#include "decl.h"                               // declarations.
 #include "../ctx.h"
 #include "qualifs.h"
+#include "../../interpreter/ops/typecheck.h"    // typechecking & type-related ops.
 
 // stdlib includes.
 #include "alloca.h"
@@ -14,7 +15,13 @@ static cth_nameT cth_tokeniser_op__name_join(
 ){
   const cth_nameT combined = cth_type__combine(type, name);
   if(combined == CTH_TYPE__NONE)
-    cth_error_report__type_2(CTH_ERROR__TYPE_UNJOINABLE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err, tokeniser->name.variables, type, name);
+    cth_error_report__type_2(
+      CTH_ERROR__TYPE_UNJOINABLE, CTH_ERROR__COMPILER, 
+      path, tokeniser->line, tokeniser->offset, err,
+      tokeniser->name.variables,
+      cth_variable_search(tokeniser->name.variables, type),
+      cth_variable_search(tokeniser->name.variables, name)
+    );
   return combined;
 }
 
@@ -40,7 +47,7 @@ static const char* cth_tokeniser_op__name(
 
   cth_nameT id_prev; vfastarr_pop(tokeniser->values, &id_prev, sizeof(id_prev));
   cth_variableT* const var_prev = cth_variable_search(tokeniser->name.variables, id_prev);
-  if(var_prev->type != CTH_TYPE__TYPE && var_prev->type != CTH_TYPE__QUALIFIER){
+  if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_prev->type) && !cth_typecheck_top_lvl_is(CTH_TYPE__QUALIFIER, var_prev->type)){
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + len;
   }
@@ -50,16 +57,16 @@ static const char* cth_tokeniser_op__name(
     return code + len;
   }
 // prev & ours are both types; we try joining.
-  if(var_prev->type == CTH_TYPE__TYPE && var->type == CTH_TYPE__TYPE){
+  if(cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_prev->type) && cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var->type)){
     const cth_nameT joined = cth_tokeniser_op__name_join(tokeniser, name, id_prev, path, err);
     tokeniser->values = vfastarr_append(tokeniser->values, &joined, sizeof(joined));
     return code + len;
   }
   if(
-    var_prev->type == CTH_TYPE__QUALIFIER && var->type == CTH_TYPE__TYPE ||
-    var_prev->type == CTH_TYPE__TYPE && var->type == CTH_TYPE__QUALIFIER
+    cth_typecheck_top_lvl_is(CTH_TYPE__QUALIFIER, var_prev->type) && cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var->type) ||
+    cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_prev->type) && cth_typecheck_top_lvl_is(CTH_TYPE__QUALIFIER, var->type)
   ){
-    const bool first_isqualif = var_prev->type == CTH_TYPE__QUALIFIER;
+    const bool first_isqualif = cth_typecheck_top_lvl_is(CTH_TYPE__QUALIFIER, var_prev->type);
     const cth_nameT name_qual = first_isqualif? id_prev: name;
     const cth_nameT name_type = first_isqualif? name: id_prev;
     cth_variableT* const tvar = first_isqualif? var: var_prev;

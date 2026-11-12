@@ -292,4 +292,8 @@ static void cth_ast_destroy(cth_astT* const restrict node){
   free(node);
 }
 
+static bool cth_ast_equal(const cth_astT* ast0, const cth_astT* ast1){
+  return true;
+}
+
 #endif

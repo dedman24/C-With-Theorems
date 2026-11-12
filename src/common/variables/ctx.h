@@ -20,8 +20,8 @@ typedef struct{
 
 typedef enum: uint8_t{
   CTH_VARSTATE__NONE      = 0,
-  CTH_VARSTATE__FREENAME  = 1<<0,
-  CTH_VARSTATE__FREEALL   = 1<<1,
+  CTH_VARSTATE__FREEALL   = 1<<0,
+  CTH_VARSTATE__FREENAME  = 1<<1,
   CTH_VARSTATE__RVALUE    = 1<<2,
   CTH_VARSTATE__ASSIGNED  = 1<<3,
   CTH_VARSTATE__IMMEDIATE = 1<<4,
@@ -68,11 +68,11 @@ typedef union{
   cth_type__internalT* type;
 } cth_variable__internalT;                // internal representation/actual contents of variable.
 
-typedef struct{
+typedef struct cth_variableS{
   const char* name;                       // string name of variable.
   cth_variable__internalT internal;       // internal contents of variable.
   size_t s_name;                          // length of name in bytes.
-  cth_nameT type;                         // value type.
+  struct cth_variableS* type;             // ptr to variable holding type.
   cth_variable_stateT state;              // internal state of variable.
 } cth_variableT;
 
@@ -84,7 +84,7 @@ typedef struct{
 static cth_variableT* cth_variable_add(
   cth_variable_ctxT* const restrict ctx,
   const cth_nameT id, const char* const restrict name, const size_t s_name,
-  const cth_nameT type, const cth_variable_stateT state
+  cth_variableT* const type, const cth_variable_stateT state
 );
 
 #endif

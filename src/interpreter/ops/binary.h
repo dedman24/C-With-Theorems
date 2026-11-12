@@ -8,7 +8,9 @@
 #include "../../common/_common.h"       // variableT & more.
 
 static void cth_op__add_ptr(cth_variableT* const ptr, cth_variableT* const value){
-  switch(value->type){
+  const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(value->internal.type->tree); 
+
+  switch(top.dispatch){
     case CTH_TYPE__I8:  ptr->internal.ptr += value->internal.i8;  break;
     case CTH_TYPE__I16: ptr->internal.ptr += value->internal.i16; break;
     case CTH_TYPE__I32: ptr->internal.ptr += value->internal.i32; break;
@@ -32,7 +34,7 @@ static cth_variableT* cth_op__add(const cth_astT* const restrict node, cth_varia
   if(!v0 || !v1) return NULL;
 
   cth_nameT dispatch;
-  if(!cth_typecheck_compatible((cth_nameT[]){v0->type, v1->type}, 2, node->op, &dispatch, variables)){
+  if(!cth_typecheck_compatible((const cth_variableT*[]){v0->type, v1->type}, 2, node->op, &dispatch, variables)){
     cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, variables, v0->type, v1->type);
     return NULL;
   }

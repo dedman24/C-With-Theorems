@@ -32,8 +32,7 @@ static void cth_repl__result(cth_variableT** const restrict variables, cth_varia
         fputs(", ", stdout);
       continue;
     }
-    cth_variableT* const type_var = cth_variable_search(ctx, var->type);
-    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(type_var->internal.type->tree);
+    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(var->type->internal.type->tree);
     switch(top.dispatch){
       case CTH_TYPE__U8:  fprintf(stdout, "%u",  var->internal.u8); break;
       case CTH_TYPE__U16: fprintf(stdout, "%u",  var->internal.u16); break;
@@ -74,7 +73,7 @@ static void cth_repl__result(cth_variableT** const restrict variables, cth_varia
     fputs(" :: ", stdout);
     {
       size_t s_type_name;
-      char* const restrict type_name = cth_type_str_construct(type_var->internal.type->tree, ctx, &s_type_name);
+      char* const restrict type_name = cth_type_str_construct(var->type->internal.type->tree, ctx, &s_type_name);
       printf("%.*s", (int)s_type_name, type_name);
       vfastarr_destroy(type_name);
     }

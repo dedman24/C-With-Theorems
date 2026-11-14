@@ -28,7 +28,7 @@ cth_outputT cth_compile(const int argc, const char* const restrict argv[]){
   }
 
   cth__fileT file;
-  if(options->op != CTH_OPTIONS__REPL){
+  if(options->op != CTH_OPTIONS__REPL && options->op != CTH_OPTIONS__REPL_STR){
     file = cth_load__map(options->path_src, false);
     if(!file.code){
       cth_error_report__str(CTH_ERROR__PARSE_MISSING_SOURCE_FILE, CTH_ERROR__PARSE, NULL, 0, 0, err, options->path_src);
@@ -52,6 +52,9 @@ cth_outputT cth_compile(const int argc, const char* const restrict argv[]){
       break;
     case CTH_OPTIONS__REPL:
       output = cth_repl();
+      break;
+    case CTH_OPTIONS__REPL_STR:
+      output = cth_repl_string(argv[argc-1]);
       break;
     default:
       cth_error_report__u32(CTH_ERROR__IMPOSSIBILITY, CTH_ERROR__PARSE, NULL, 0, 0, err, CTH_IMPOSSIBILITY__PARSE_OPTION);

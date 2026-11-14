@@ -15,27 +15,31 @@ const char* const restrict cth_variable_name__NULL = "NULL";
 const char* const restrict cth_variable_name__true = "true";
 const char* const restrict cth_variable_name__false = "false";
 
+cth_variableT* restrict cth_variable__NULL;
+cth_variableT* restrict cth_variable__true;
+cth_variableT* restrict cth_variable__false;
+
 static void cth_variable_ctx_init__basic(cth_variable_ctxT* const restrict ctx){
   {
-    cth_variableT* const restrict var_NULL = cth_variable_add(ctx, 
+    cth_variable__NULL = cth_variable_add(ctx, 
       CTH_NAME__NULL, cth_variable_name__NULL, strlen(cth_variable_name__NULL),
       cth_typevar(CTH_TYPE__NULLPTR), CTH_VARSTATE__IMMEDIATE
     );
-    var_NULL->internal.ptr = CTH_NULL__UNDERLYING;
+    cth_variable__NULL->internal.ptr = CTH_NULL__UNDERLYING;
   }
   {
-    cth_variableT* const restrict var_true = cth_variable_add(ctx, 
+    cth_variable__true = cth_variable_add(ctx, 
       CTH_NAME__TRUE, cth_variable_name__true, strlen(cth_variable_name__true),
       cth_typevar(CTH_TYPE__BOOLEAN), CTH_VARSTATE__IMMEDIATE
     );
-    var_true->internal.boolean = true;
+    cth_variable__true->internal.boolean = true;
   }
   {
-    cth_variableT* const restrict var_false = cth_variable_add(ctx, 
+    cth_variable__false = cth_variable_add(ctx, 
       CTH_NAME__FALSE, cth_variable_name__false, strlen(cth_variable_name__false),
       cth_typevar(CTH_TYPE__BOOLEAN), CTH_VARSTATE__IMMEDIATE
     );
-    var_false->internal.boolean = false;
+    cth_variable__false->internal.boolean = false;
   }
 }
 

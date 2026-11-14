@@ -58,7 +58,7 @@ typedef struct{
 } cth_ast__programT;
 
 typedef struct{
-  cth_astT* type;
+  cth_astT** types;                   // vfastarr, types of variables.
   cth_astT** expr;                    // vfastarr, expression variables should evaluate to.
   cth_nameT* vars;                    // vfastarr, variable IDs themselves.
 } cth_ast__declarationT;
@@ -147,6 +147,7 @@ static cth_astT* cth_ast_init(
       node->data.program.program = vfastarr_init(sizeof(*node->data.program.program));
       break;
     case CTH_AST__DECLARATION:
+      node->data._declaration.types = vfastarr_init(sizeof(*node->data._declaration.types));
       node->data._declaration.expr = vfastarr_init(sizeof(*node->data._declaration.expr));
       node->data._declaration.vars = vfastarr_init(sizeof(*node->data._declaration.vars));
       break;
@@ -218,7 +219,7 @@ static cth_astT* cth_ast_clone__recursive(cth_astT* const restrict src){
       node->data.program.program = cth_ast_clone__array(src->data.program.program);
       break;
     case CTH_AST__DECLARATION: 
-      node->data._declaration.type = cth_ast_clone__recursive(src->data._declaration.type);
+      node->data._declaration.types = cth_ast_clone__array(src->data._declaration.types);
       node->data._declaration.expr = cth_ast_clone__array(src->data._declaration.expr);
       node->data._declaration.vars = vfastarr_clone(src->data._declaration.vars);
       break;
@@ -284,7 +285,7 @@ static void cth_ast_destroy(cth_astT* const restrict node){
       cth_ast_destroy__array(node->data.program.program);
       break;
     case CTH_AST__DECLARATION:
-      cth_ast_destroy(node->data._declaration.type);
+      cth_ast_destroy__array(node->data._declaration.types);
       cth_ast_destroy__array(node->data._declaration.expr);
       vfastarr_destroy(node->data._declaration.vars);
       break;

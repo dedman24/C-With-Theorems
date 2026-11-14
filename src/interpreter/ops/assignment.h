@@ -23,7 +23,11 @@ static cth_variableT* cth_op__assignment(const cth_astT* const restrict node, ct
 
   cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
                 *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
-  if(!v0 || !v1) return NULL;
+  if(!v0 || !v1){
+    if(v0 && v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
+    if(v1 && v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
+    return NULL;
+  }
   if(v1->state & CTH_VARSTATE__IMMEDIATE){
     cth_error_report(CTH_ERROR__ASSIGNMENT_IMMEDIATE, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
     return NULL;
@@ -40,11 +44,8 @@ static cth_variableT* cth_op__assignment(const cth_astT* const restrict node, ct
     path, node->line, node->offset, err
   );
   if(conflicting){
-    if(v1->state & CTH_VARSTATE__ASSIGNED){
-      cth_error_report__qualif(CTH_ERROR__ASSIGNMENT_CONST, CTH_ERROR__COMPILER, path, node->line, node->offset, err, conflicting);
-      return NULL;
-    }
-    else v1->state |= CTH_VARSTATE__ASSIGNED;
+    cth_error_report__qualif(CTH_ERROR__ASSIGNMENT_CONST, CTH_ERROR__COMPILER, path, node->line, node->offset, err, conflicting);
+    return NULL;
   }
 
   cth_variable__internal_clone(v1, v0);

@@ -19,9 +19,8 @@ static void* cth_interpret(const cth_astT* const restrict node, cth_variable_ctx
       }
       return output;
     case CTH_AST__BINARY:
-      return cth_ast__functions[node->op](node, variables, path, err);
     case CTH_AST__UNARY:
-      return NULL;
+      return cth_ast__functions[node->op](node, variables, path, err);
     case CTH_AST__ID:
       return cth_op__name(node, variables, path, err);
     case CTH_AST__DECLARATION:

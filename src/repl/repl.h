@@ -150,4 +150,16 @@ static cth_outputT cth_repl(void){
   return NULL;
 }
 
+// REPL on string.
+static cth_outputT cth_repl_string(const char* restrict string){
+  cth_tokeniserT tokeniser; cth_tokeniser_init(&tokeniser);
+  const char* const og_str = string;
+
+  cth_repl__line(string, &tokeniser);
+
+  cth_astT* const restrict program = cth_tokeniser_destroy(&tokeniser, NULL, NULL, NULL);
+  cth_ast_destroy(program);
+  return NULL;
+}
+
 #endif

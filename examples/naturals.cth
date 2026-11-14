@@ -7,7 +7,7 @@ type_t nat_t = enum{
 
 // for normal code, C-style declaration is fine.
 // imperative-style code that wishes to use dependent typing stuff must use arrows to specify what state is updated.
-// all ptrs whose underlying data is not const are assumed to be updated; they don't have to be explicited.
+// all ptrs whose underlying data is not immut are assumed to be updated; they don't have to be explicited.
 
 // therefore:
 //      void add(nat_t a, nat_t b, nat_t* dst) -> nat_t dst;

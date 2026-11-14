@@ -31,7 +31,11 @@ static cth_variableT* cth_op__add(const cth_astT* const restrict node, cth_varia
 
   cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
                 *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
-  if(!v0 || !v1) return NULL;
+  if(!v0 || !v1){
+    if(v0 && v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
+    if(v1 && v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
+    return NULL;
+  }
 
   cth_nameT dispatch;
   if(!cth_typecheck_compatible((const cth_variableT*[]){v0->type, v1->type}, 2, node->op, &dispatch, variables)){

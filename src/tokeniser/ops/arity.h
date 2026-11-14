@@ -10,6 +10,9 @@ static cth_tokT cth_tokeniser_unary_tok(const cth_tokT op){
     case CTH_TOK__MINUS: return CTH_TOK__UNARY_MINUS;
     case CTH_TOK__STAR: return CTH_TOK__UNARY_STAR;
     case CTH_TOK__AMPERSAND: return CTH_TOK__UNARY_AMPERSAND;
+    case CTH_TOK__SIZEOF: return CTH_TOK__UNARY_SIZEOF;
+    case CTH_TOK__TYPEOF: return CTH_TOK__UNARY_TYPEOF;
+    case CTH_TOK__COUNTOF: return CTH_TOK__UNARY_COUNTOF;
     default: return CTH_TOK__NONE;
   }
 }

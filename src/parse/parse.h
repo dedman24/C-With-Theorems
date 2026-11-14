@@ -27,6 +27,7 @@ typedef enum{
     CTH_OPTIONS__VERSION = 4,       // compiler version.
 
     CTH_OPTIONS__NONE = 6,
+    CTH_OPTIONS__REPL_STR,          // special REPL version.
     CTH_OPTIONS__COMPILE,
     CTH_OPTIONS__DEFAULT = CTH_OPTIONS__COMPILE
 } cth_opT;
@@ -124,12 +125,16 @@ static cth_optionsT* cth_parse(
         if(i == argc - 1) break;
         options->path_src = argv[++i];
       }
+      else if(i != argc - 1){
+        options->op = CTH_OPTIONS__REPL_STR;
+        break;
+      }
       options->op = op;
     }
   }
 // default values.
   if(options->op == CTH_OPTIONS__NONE) options->op = CTH_OPTIONS__DEFAULT;
-  if(options->path_src == NULL && options->op != CTH_OPTIONS__REPL){ 
+  if(options->path_src == NULL && options->op != CTH_OPTIONS__REPL && options->op != CTH_OPTIONS__REPL_STR){ 
     cth_error_report(CTH_ERROR__PARSE_MISSING_SOURCE_FILE, CTH_ERROR__PARSE, NULL, 0, 0, error);
     cth_options_destroy(options, dynamically_allocated);
     return NULL;

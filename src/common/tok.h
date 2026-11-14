@@ -86,6 +86,9 @@ typedef enum{
   CTH_TOK__UNARY_MINUS,
   CTH_TOK__UNARY_STAR,
   CTH_TOK__UNARY_AMPERSAND,
+  CTH_TOK__UNARY_SIZEOF,
+  CTH_TOK__UNARY_TYPEOF,
+  CTH_TOK__UNARY_COUNTOF,
   CTH_TOK__UNARY_END,
 
   CTH_TOK__NAME,
@@ -121,6 +124,8 @@ typedef enum{
   CTH_PRIORITY__SHIFTS,                                     // '<<', '>>', '<<<', '>>>'.
   CTH_PRIORITY__SIMPLE_ARITH,                               // '+', binary '-'.
   CTH_PRIORITY__COMPLEX_ARITH,                              // '*', '/', '%'.
+  CTH_PRIORITY__2,                                          // second highest priority level.
+  CTH_PRIORITY__1,                                          // highest priority level.
   CTH_PRIORITY__HIGHEST
 } cth_priorityT;
 
@@ -168,6 +173,15 @@ const cth_priorityT cth_priority[] ={
   [CTH_TOK__STAR]                 = CTH_PRIORITY__COMPLEX_ARITH,
   [CTH_TOK__SLASH]                = CTH_PRIORITY__COMPLEX_ARITH,
   [CTH_TOK__PERCENT]              = CTH_PRIORITY__COMPLEX_ARITH,
+
+  [CTH_TOK__UNARY_PLUS]           = CTH_PRIORITY__2,
+  [CTH_TOK__UNARY_MINUS]          = CTH_PRIORITY__2,
+  [CTH_TOK__UNARY_STAR]           = CTH_PRIORITY__2,
+  [CTH_TOK__UNARY_AMPERSAND]      = CTH_PRIORITY__2,
+
+  [CTH_TOK__UNARY_SIZEOF]         = CTH_PRIORITY__2,
+  [CTH_TOK__UNARY_TYPEOF]         = CTH_PRIORITY__2,
+  [CTH_TOK__UNARY_COUNTOF]        = CTH_PRIORITY__2,
 };
 
 // hash function, generated with vfasttables version 1.1.0.

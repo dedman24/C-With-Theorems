@@ -123,9 +123,9 @@ static void cth_tokeniser_op__typedef(
   cth_tokeniserT* const restrict tokeniser,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-// typedefs are very ugly, screw them.
-// I am not as productive as I'd like to be TwT...
-  fprintf(stderr, "ERROR: typedefs not implemented yet.\n");
+// typedefs have the following structure:
+//  typedef type new-name;
+// they can be handled in the same manner declarations are.
 }
 
 #endif

@@ -10,6 +10,10 @@
 
 > `BEGIN snca;`
 
+see? I'm working hard! I want to finish cth _as soon as possible_.\
+to be fair it's like giving oneself an impossible goal. I doubt it'll ever be finished.\
+LORD help me.
+
 > `END snca;`
 
 ### Current errors:

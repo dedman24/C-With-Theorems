@@ -91,14 +91,14 @@ static cth_nameT cth_type__combine(const cth_nameT t0, const cth_nameT t1){
 // does not initialise 'internal' field.
 static cth_variableT* cth_variable_init(
   const char* const restrict name, const size_t s_name,
-  cth_variableT* const type, const cth_variable_stateT qualifier
+  cth_variableT* const type, const cth_variable_stateT state
 ){
   cth_variableT* const restrict var = malloc(sizeof(*var));
 
   var->name = name;
   var->s_name = s_name;
   var->type = type;
-  var->state = qualifier;
+  var->state = state;
 
   return var;
 }

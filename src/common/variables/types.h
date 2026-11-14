@@ -146,6 +146,10 @@ enum{
   CTH_QUALIFIER_MAX         = CTH_QUALIFIER__REF + 2,
 };
 
+static bool cth_qualifier_is__id(const cth_nameT id){
+  return id < CTH_QUALIFIER_MIN || id > CTH_QUALIFIER_MAX;
+}
+
 static bool cth_qualifier__isdecl(const cth_nameT qualif){
   return qualif >= CTH_QUALIFIER__CONST && qualif <= CTH_QUALIFIER__CONSTEXPR;
 }
@@ -184,6 +188,32 @@ static cth_type__internalT* cth_type__internal_clone(cth_type__internalT* const 
 
   dst->tree = cth_ast_clone(src->tree);
 
+  return dst;
+}
+
+// clones internal type, makes it a 'master type'.
+static cth_type__internalT* cth_type__internal_make_master(cth_type__internalT* const restrict src){
+  cth_type__internalT* const restrict dst = cth_type__internal_init();
+  dst->tree = cth_ast_clone(src->tree);
+  cth_astT *node = dst->tree, *target = NULL, *const top = dst->tree;
+
+  while(node->type != CTH_AST__ID){
+    if(
+      node->data._funcall.fun->data.id == CTH_QUALIFIER__PTR ||
+      node->data._funcall.fun->data.id == CTH_QUALIFIER__REF
+    ){
+      target = node->data._funcall.args[0];
+      break;
+    }
+    node = node->data._funcall.args[0];
+  }
+EXIT_WHILE:
+  if(target)
+    cth_ast_destroy_section(top, target);
+  else
+    target = top;
+
+  dst->tree = target;
   return dst;
 }
 

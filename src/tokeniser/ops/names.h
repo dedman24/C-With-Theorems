@@ -70,7 +70,8 @@ static const char* cth_tokeniser_op__name(
     const cth_nameT name_qual = first_isqualif? id_prev: name;
     const cth_nameT name_type = first_isqualif? name: id_prev;
     cth_variableT* const tvar = first_isqualif? var: var_prev;
-    const cth_nameT qualified = cth_tokeniser_op__qualifier(tokeniser, name_qual, name_type, tvar, path, err);
+    const struct cth_tokeniser_op__qualifierS result = cth_tokeniser_op__qualifier(tokeniser, name_qual, name_type, tvar, false, path, err);
+    const cth_nameT qualified = result.id;
     tokeniser->values = vfastarr_append(tokeniser->values, &qualified, sizeof(qualified));
     return code + len;
   }

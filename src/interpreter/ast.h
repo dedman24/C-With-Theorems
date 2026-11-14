@@ -293,6 +293,69 @@ static void cth_ast_destroy(cth_astT* const restrict node){
   free(node);
 }
 
+static void cth_ast_destroy_section(cth_astT* const node, const cth_astT* const target);
+
+// destroys cth_astT* array initialised with vfastarr.
+// may be passed NULL, still handles it.
+static void cth_ast_destroy_section__array(cth_astT** const restrict arr, const cth_astT* const target){
+  if(!arr) return;
+
+  const size_t count = vfastarr_elcnt(arr, sizeof(*arr));
+  for(size_t i = 0; i < count; i++)
+    cth_ast_destroy_section(arr[i], target);
+
+  vfastarr_destroy(arr);
+}
+
+// destroys section of AST until target node.
+static void cth_ast_destroy_section(cth_astT* const node, const cth_astT* const target){
+  if(node == target) return;
+  switch(node->type){
+    case CTH_AST__ID: break;
+    case CTH_AST__IF:
+      cth_ast_destroy_section(node->data._if.condition, target);
+      cth_ast_destroy_section__array(node->data._if.success, target);
+      cth_ast_destroy_section__array(node->data._if.failure, target);
+      break;
+    case CTH_AST__FOR:
+      cth_ast_destroy_section(node->data._for.init, target);
+      cth_ast_destroy_section(node->data._for.condition, target);
+      cth_ast_destroy_section(node->data._for.update, target);
+      cth_ast_destroy_section__array(node->data._for.code, target);
+      break;
+    case CTH_AST__DEFER:
+      cth_ast_destroy_section__array(node->data._defer.code, target);
+      break;
+    case CTH_AST__WHILE:
+      cth_ast_destroy_section(node->data._while.condition, target);
+      cth_ast_destroy_section__array(node->data._while.code, target);
+      break;
+    case CTH_AST__SWITCH:
+      cth_ast_destroy_section__array(node->data._switch.cases, target);
+      break;
+    case CTH_AST__UNARY:
+      cth_ast_destroy_section(node->data._unary.src, target);
+      break;
+    case CTH_AST__BINARY:
+      cth_ast_destroy_section(node->data._binary.s0, target);
+      cth_ast_destroy_section(node->data._binary.s1, target);
+      break;
+    case CTH_AST__FUNCALL:
+      cth_ast_destroy_section(node->data._funcall.fun, target);
+      cth_ast_destroy_section__array(node->data._funcall.args, target);
+      break;
+    case CTH_AST__PROGRAM:
+      cth_ast_destroy_section__array(node->data.program.program, target);
+      break;
+    case CTH_AST__DECLARATION:
+      cth_ast_destroy_section__array(node->data._declaration.types, target);
+      cth_ast_destroy_section__array(node->data._declaration.expr, target);
+      vfastarr_destroy(node->data._declaration.vars);
+      break;
+  }
+  free(node);
+}
+
 static bool cth_ast_equal(const cth_astT* ast0, const cth_astT* ast1){
   return true;
 }

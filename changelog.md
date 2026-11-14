@@ -1,15 +1,12 @@
-### Changelog 2026/11/14.
- - `immut`, `const`, `constexpr` values could be reassigned, not anymore.
- - `./cth repl 'code'` interprets whatever is in quotes.
- - added `typeof` unary operator.
- - `&&`, `||`, `^^` short-circuit & they do not execute other stuff when it gets evaluated (within arbitrary expressions).
- - fixed memleak with returning `NULL` without cleaning up in all binary ops.
+### Changelog 2026/11/14::2.
+ - make tokeniser add type annotations to declared variables.
+ - add declarations supporting smth like `const char* x = NULL, y = 10;`.
 
 ### pending changes.
  - arrays.
- - add typedefs.
- - make tokeniser add type annotations to declared variables.
- - add declarations supporting smth like `const char* x = NULL, y = 10;`.
+ - typedefs.
+ - compound qualifiers (like `static const`) not segfaulting.
+ - add reusing old types in `cth_tokeniser_op__declaration_master_type`.
 
 > `BEGIN snca;`
 

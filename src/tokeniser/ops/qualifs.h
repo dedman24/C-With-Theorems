@@ -4,9 +4,16 @@
 #include "../ctx.h"
 #include "../../interpreter/ops/typecheck.h"
 
+struct cth_tokeniser_op__qualifierS{
+  cth_nameT id;
+  cth_variableT* var;
+};
+
 // combines type & qualifier to produce new qualified type name.
-static cth_nameT cth_tokeniser_op__qualifier(
-  cth_tokeniserT* const restrict tokeniser, const cth_nameT qualifier, const cth_nameT type, cth_variableT* const restrict type_var,
+static struct cth_tokeniser_op__qualifierS cth_tokeniser_op__qualifier(
+  cth_tokeniserT* const restrict tokeniser, const cth_nameT qualifier,
+  const cth_nameT type, cth_variableT* const restrict type_var,
+  const bool return_var,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
 // algorithm:
@@ -30,8 +37,10 @@ static cth_nameT cth_tokeniser_op__qualifier(
   memcpy(type_name + 1 + sizeof(cth_nameT) + type_var->s_name + 1, cth_qualifier__strings[qualifier], s_qualifier);
 
   const cth_nameT seek = cth_name_search(type_name, s_type_name, &tokeniser->name);
-  if(seek)
-    return seek;
+  if(seek){
+    cth_variableT* const var_seek = return_var? cth_variable_search(tokeniser->name.variables, seek): NULL;
+    return (struct cth_tokeniser_op__qualifierS){ .id = seek, .var = var_seek };
+  }
 
   const cth_nameT id_qualified = cth_variable_name(tokeniser->name.variables);
   cth_variableT* const restrict qualified = cth_variable_add(
@@ -39,13 +48,13 @@ static cth_nameT cth_tokeniser_op__qualifier(
     id_qualified,
     type_name, s_type_name,
     type_var->type,
-    type_var->state
+    type_var->state | CTH_VARSTATE__FREENAME
   );
 
   qualified->internal.type = cth_type__internal_clone(type_var->internal.type);
   cth_type__ast_init(qualified, qualifier);
 
-  return id_qualified;
+  return (struct cth_tokeniser_op__qualifierS){ .id = id_qualified, .var = qualified };
 }
 
 // tries to qualify using those qualifiers that specify a different type.
@@ -71,7 +80,8 @@ static bool cth_tokeniser__operand_qualifs(
     tok == CTH_TOK__AMPERSAND? CTH_QUALIFIER__REF:
                                0;
 
-  tokeniser->values[arr_top] = cth_tokeniser_op__qualifier(tokeniser, qualifier, name_top, var_top, path, err);
+  const struct cth_tokeniser_op__qualifierS qualif = cth_tokeniser_op__qualifier(tokeniser, qualifier, name_top, var_top, false, path, err);
+  tokeniser->values[arr_top] = qualif.id;
   return true;
 }
 

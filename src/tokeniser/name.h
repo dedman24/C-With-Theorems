@@ -70,16 +70,21 @@ static size_t cth_name_depth(cth_name_ctxT* const restrict name){
   return vfastarr_elcnt(name, sizeof(*name));
 }
 
+struct cth_name_addS{
+  cth_nameT id;
+  cth_variableT* var;
+};
+
 // searches for name, creates nameT if it doesn't find any.
-// returns 0 if it already exists.
-static cth_nameT cth_name_add(const char* const restrict key, const size_t s_key, const cth_nameT type, const cth_variable_stateT state, cth_name_ctxT* const restrict name){
+// returns .var field set to NULL if it already exists.
+static struct cth_name_addS cth_name_add(const char* const restrict key, const size_t s_key, const cth_nameT type, const cth_variable_stateT state, cth_name_ctxT* const restrict name){
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
 
   vfastbst_str_nodeT** restrict curr_node = NULL;
   for(size_t i = 0; i < c_scopes; i++){
     curr_node = vfastbst_str_put_half(&name->names[i], key, s_key);
     if(*curr_node)
-      return 0;
+      return (struct cth_name_addS){ .id = (*curr_node)->obj, .var = NULL };
   }
 
 // 'signed', 'unsigned' are not actual valid types values can assume, they're aliases of 'int' & 'unsigned int' when it's relevant.
@@ -90,8 +95,8 @@ static cth_nameT cth_name_add(const char* const restrict key, const size_t s_key
 
   const cth_nameT id = cth_variable_name(name->variables);
   *curr_node = vfastbst_str_node_init(key, s_key, id);
-  cth_variable_add(name->variables, id, key, s_key, typevar, state);
-  return id;
+  cth_variableT* const var = cth_variable_add(name->variables, id, key, s_key, typevar, state);
+  return (struct cth_name_addS){ .id = id, .var = var };
 }
 
 // searches for name by string, returns 0 on error.

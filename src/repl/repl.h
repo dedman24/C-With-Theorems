@@ -53,6 +53,14 @@ static void cth_repl__result(cth_variableT** const restrict variables, cth_varia
         else
           fputs(cth_variable_name__false, stdout);
         break;
+      case CTH_TYPE__QUALIFIER:
+        size_t s_str_qualif;
+        char* const restrict str_qualif = cth_qualif_str_construct(NULL, var, 0, ctx, &s_str_qualif);
+        if(!str_qualif) break;
+
+        fputs(str_qualif, stdout);
+        vfastarr_destroy(str_qualif);
+        break;
       case CTH_TYPE__TYPE:
         size_t s_str_type;
         char* const restrict str_type = cth_type_str_construct(var->internal.type->tree, ctx, &s_str_type);

@@ -51,15 +51,13 @@ static const char* cth_tokeniser_op__name(
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + len;
   }
-
-  if(tokeniser->state & CTH_TOKENISER__DECLARATION){
-    cth_error_report(CTH_ERROR__DECLARATION_REDEFINITION, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
-    return code + len;
-  }
 // prev & ours are both types; we try joining.
   if(cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_prev->type) && cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var->type)){
     const cth_nameT joined = cth_tokeniser_op__name_join(tokeniser, name, id_prev, path, err);
-    tokeniser->values = vfastarr_append(tokeniser->values, &joined, sizeof(joined));
+    if(joined == CTH_TYPE__NONE)
+      cth_error_report(CTH_ERROR__TYPE_UNJOINABLE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+    else
+      tokeniser->values = vfastarr_append(tokeniser->values, &joined, sizeof(joined));
     return code + len;
   }
   if(
@@ -69,16 +67,33 @@ static const char* cth_tokeniser_op__name(
     const bool first_isqualif = cth_typecheck_top_lvl_is(CTH_TYPE__QUALIFIER, var_prev->type);
     const cth_nameT name_qual = first_isqualif? id_prev: name;
     const cth_nameT name_type = first_isqualif? name: id_prev;
-    cth_variableT* const tvar = first_isqualif? var: var_prev;
-    const struct cth_tokeniser_op__qualifierS result = cth_tokeniser_op__qualifier(tokeniser, name_qual, name_type, tvar, false, path, err);
-    const cth_nameT qualified = result.id;
-    tokeniser->values = vfastarr_append(tokeniser->values, &qualified, sizeof(qualified));
+    cth_variableT* const var_qual = first_isqualif? var_prev: var;
+    cth_variableT* const var_type = first_isqualif? var: var_prev;
+    const struct cth_tokeniser_op__qualifierS result = cth_tokeniser_op__qualifier(
+      tokeniser,
+      name_qual, var_qual,
+      name_type, var_type,
+      false, path, err
+    );
+    tokeniser->values = vfastarr_append(tokeniser->values, &result.id, sizeof(result.id));
     return code + len;
   }
-  else{
+  if(
+    cth_typecheck_top_lvl_is(CTH_TYPE__QUALIFIER, var_prev->type) &&
+    cth_typecheck_top_lvl_is(CTH_TYPE__QUALIFIER, var->type)
+  ){
+    const cth_nameT compound = cth_tokeniser_op__make_compound_qualifier(
+      tokeniser,
+      id_prev, var_prev,
+      name,
+      path, err
+    );
+    tokeniser->values = vfastarr_append(tokeniser->values, &compound, sizeof(compound));
+    return code+len;
+  }
+  if(tokeniser->state & CTH_TOKENISER__DECLARATION)                   // redefinition error handled somewhere else.
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
-    return code + len;
-  }
+  return code + len;
 }
 
 static void cth_tokeniser_op__value(

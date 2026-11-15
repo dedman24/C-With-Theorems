@@ -24,6 +24,7 @@ typedef enum: uint8_t{
   CTH_VARSTATE__FREENAME  = 1<<1,
   CTH_VARSTATE__RVALUE    = 1<<2,
   CTH_VARSTATE__IMMEDIATE = 1<<3,
+  CTH_VARSTATE__COMPOUNDQ = 1<<4,         // to support compound qualifiers.
 } cth_variable_stateT;
 
 typedef union{
@@ -65,6 +66,7 @@ typedef union{
   uintptr_t ptr;
 
   cth_type__internalT* type;
+  cth_astT* qualif;                       // only used in compound qualifiers.
 } cth_variable__internalT;                // internal representation/actual contents of variable.
 
 typedef struct cth_variableS{

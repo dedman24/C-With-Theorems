@@ -182,6 +182,58 @@ static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx)
   return ctx;
 }
 
+// returns NULL-terminated string holding qualifier name.
+// has to be destroyed with vfastarr.
+static char* cth_qualif_str_construct(void* qualif_name, const cth_variableT* const restrict qualif, const cth_nameT id_qualif, cth_variable_ctxT* const restrict variables, size_t* const restrict s_qualif_name){
+  if((qualif->state & CTH_VARSTATE__COMPOUNDQ) == 0){
+    if(!id_qualif) return NULL;
+    if(qualif_name) 
+      return vfastarr_append_str(qualif_name, cth_qualifier__strings[id_qualif]);
+    else
+      return vfastarr_clone_str(cth_qualifier__strings[id_qualif]);
+  }
+  const bool null_terminate = qualif_name == NULL;
+  if(!qualif_name)
+    qualif_name = vfastarr_init(sizeof(char));
+  cth_astT* node = qualif->internal.qualif;
+
+  while(1){
+    switch(node->type){
+      case CTH_AST__ID:
+        if(node->data.id < CTH_TYPE_MAX)
+          qualif_name = vfastarr_append_str(qualif_name, cth_qualifier__strings[node->data.id]);
+        else{                       // variable is defined from other variable, so we have to use that name.
+          cth_variableT* const restrict v = cth_variable_search(variables, node->data.id);
+          qualif_name = vfastarr_append(qualif_name, v->name, v->s_name);
+        }
+        if(null_terminate){
+          *s_qualif_name = vfastarr_size(qualif_name);
+          qualif_name = vfastarr_append_char(qualif_name, '\0');
+        }
+        return qualif_name;
+      case CTH_AST__FUNCALL:
+        cth_astT* const restrict fun = node->data._funcall.fun;
+      // NOTE: supports unary qualifiers like *, immut, const but not binary ones like arrays (or even function types TwT).
+      // upgrade code for when the type comes to add those.
+        qualif_name = vfastarr_append_str(qualif_name, cth_qualifier__strings[fun->data.id]);
+        if(!node->data._funcall.args[0]){
+          if(null_terminate){
+            *s_qualif_name = vfastarr_size(qualif_name);
+            qualif_name = vfastarr_append_char(qualif_name, '\0');
+          }
+          return qualif_name;
+        }
+        else
+          qualif_name = vfastarr_append_char(qualif_name, ' ');
+        node = node->data._funcall.args[0];
+        break;
+      default:      // should be impossible to arrive here, but I CBA to report an error, so we force a segfault :PPP.
+        *(volatile uint8_t*)NULL = 67;
+        break;
+    }
+  }
+}
+
 // returns NULL-terminated string holding fully qualified type name.
 // has to be destroyed with vfastarr.
 static char* cth_type_str_construct(const cth_astT* type, cth_variable_ctxT* const restrict variables, size_t* s_type_name){
@@ -203,7 +255,8 @@ static char* cth_type_str_construct(const cth_astT* type, cth_variable_ctxT* con
         cth_astT* const restrict fun = type->data._funcall.fun;
       // NOTE: supports unary qualifiers like *, immut, const but not binary ones like arrays (or even function types TwT).
       // upgrade code for when the type comes to add those.
-        type_name = vfastarr_append_str(type_name, cth_qualifier__strings[fun->data.id]);
+        cth_variableT* const restrict var_qualif = cth_variable_search(variables, fun->data.id);
+        type_name = cth_qualif_str_construct(type_name, var_qualif, fun->data.id, variables, NULL);
         type_name = vfastarr_append_char(type_name, ' ');
         type = type->data._funcall.args[0];
         break;
@@ -212,6 +265,6 @@ static char* cth_type_str_construct(const cth_astT* type, cth_variable_ctxT* con
         break;
     }
   }
-};
+}
 
 #endif

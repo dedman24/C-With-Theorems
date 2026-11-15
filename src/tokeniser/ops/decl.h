@@ -103,7 +103,7 @@ static const char* cth_tokeniser_op__declaration(
           cth_error_report__str_size(CTH_ERROR__DECLARATION_REDEFINITION, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err, code, len);
           return code + strcspn(code, ";");
         }
-        const struct cth_tokeniser_op__qualifierS qualif = cth_tokeniser_op__qualifier(tokeniser, added.id, id_type, var_type, true, path, err);
+        const struct cth_tokeniser_op__qualifierS qualif = cth_tokeniser_op__qualifier(tokeniser, added.id, added.var, id_type, var_type, true, path, err);
         id_type = qualif.id;
         var_type = qualif.var;
         continue;
@@ -137,7 +137,7 @@ static const char* cth_tokeniser_op__declaration(
       }
       cth_tokeniser_dispatch(NULL, CTH_TOK__DECLARATION, 0, tokeniser, path, err);
       cth_nameT id; vfastarr_pop(tokeniser->values, &id, sizeof(id));
-      
+
       const size_t pos_top = vfastarr_elcnt(decl->data._declaration.expr, sizeof(*decl->data._declaration.expr));
       cth_astT* expr;
       if(id & 1){
@@ -147,9 +147,10 @@ static const char* cth_tokeniser_op__declaration(
       else
         expr = (cth_astT*)id;
 
-      vfastarr_append(decl->data._declaration.expr, &expr, sizeof(expr));
+      decl->data._declaration.expr = vfastarr_append(decl->data._declaration.expr, &expr, sizeof(expr));
 
       if(tok == CTH_TOK__COMMA){
+        tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__DECLARATION;
         code += len;
         state = NAME;
         continue;

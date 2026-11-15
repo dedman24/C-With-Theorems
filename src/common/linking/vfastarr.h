@@ -17,6 +17,7 @@ void* vfastarr_append_char(void* restrict arr, const char c);                   
 void* vfastarr_append_str(void* restrict arr, const char* const restrict str);                      // appends C string to array.
 void* vfastarr_extend(void* restrict arr, const size_t c_elem, const size_t s_elem);                // extends array by cnt elements.
 void* vfastarr_clone(void* const restrict src);                                                     // clones array.
+void* vfastarr_clone_str(const char* const restrict str);                                           // clones C string, returns vfastarr obj holding it.
 bool vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_elem);              // pops element from end of array.
 bool vfastarr_top(void* restrict arr, void* const restrict elem, const size_t s_elem);              // pops element from end of array.
 void vfastarr_remove(void* restrict arr, const size_t s_elem);                                      // removes element from end of array.
@@ -111,6 +112,16 @@ void* vfastarr_clone(void* const restrict src){
 
   return hdr_dst;
 }
+
+void* vfastarr_clone_str(const char* const restrict str){
+  const size_t s_str = strlen(str);
+
+  char* const restrict arr = vfastarr_init_explicit(s_str + 1, s_str + 1, 1);
+  memcpy(arr, str, s_str);
+  arr[s_str] = '\0';
+  return arr;
+}
+
 
 bool vfastarr_pop(void* restrict arr, void* const restrict elem, const size_t s_elem){
   vfastarr_hdrT* const hdr = (vfastarr_hdrT*)arr - 1;

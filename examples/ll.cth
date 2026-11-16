@@ -1,0 +1,42 @@
+// we prove the correctness of a linked list implementation.
+// we prove:
+//  ll_no_loops     ~ linked list cannot have loops, meaning that it must terminate.
+//  ll_free__nonull ~ ll_free() cannot free NULL data.
+//  ll_free__nosegf ~ use-after-free errors are impossible with ll_free().
+// it's possible to screw up coding a linked list, but the data structure's simple enough where correctness can be determined at a glance.
+
+type ll_t(immut int x) = struct{
+  ll_t(x + 1)* prev;
+  u32 obj;
+};
+
+// perhaps rework.
+ll_t& ll_init(immut u32 obj){
+  ll_t* ll = malloc(sizeof *ll);
+  if(ll == NULL) @unreachable;        // malloc isn't expected to fail ever; if it does, this code has no provisions for safely quitting.
+  ll->obj = obj;
+  return ll;                          // typechecker determines at this point that ll can NEVER be NULL, and that therefore ll_t* is compatible with ll_t&.
+}
+
+// pushes data.
+ll_t&! push(ll_t(x)&! ll, immut u32 obj){
+  ll_t(x-1)& next = ll_init(obj);
+  next->prev = ll;
+  return next;
+}
+
+void free(ll_t(x)&! ll){
+  switch ll->prev
+    some(prev):
+      prev~free();
+    NULL:
+      break;
+}
+
+// this is clearly true because ll->prev is of different type than ll (former being of type ll_t(x) and latter ll_t(x+1)).
+// due to typing rules, they cannot be the same.
+// theorem-aware compilers can use this to make the resulting program more efficient.
+theorem ll_no_loops(ll_t(x)& ll) -> ll->prev != ll = @refl;
+
+theorem ll_free__nonull() -> free(NULL) => @error = @refl;
+theorem ll_free__nosegf(ll_t(x)& ll) -> free(ll).ll => @error = @refl;

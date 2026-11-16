@@ -49,7 +49,7 @@ is invalid because types must be known when tokenising. Can we avoid this limita
 What if we wanted to allow for expressions in definitions of variables of type `type` of the form:
 > `type X = (if(true) int else bool)*;`
 
-This can be implemented using the explicit `type ptr(constexpr type);` and `type ref(constexpr type);` functions that take a type and return the equivalent , as:
+This can be implemented using the explicit `type ptr(constexpr type);` and `type ref(constexpr type);` functions that take a type and return the equivalent qualified type, as:
 > `type X = ptr(if(true) int else bool);`
 
 but I quite dislike how this looks. Work on this more.\

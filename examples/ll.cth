@@ -36,7 +36,11 @@ void free(ll_t(x)&! ll){
 // this is clearly true because ll->prev is of different type than ll (former being of type ll_t(x) and latter ll_t(x+1)).
 // due to typing rules, they cannot be the same.
 // theorem-aware compilers can use this to make the resulting program more efficient.
-theorem ll_no_loops(ll_t(x)& ll) -> ll->prev != ll = @refl;
+theorem ll_no_loops(ll_t(x)& ll) -> ll->prev != ll = refl;
 
-theorem ll_free__nonull() -> free(NULL) => @error = @refl;
-theorem ll_free__nosegf(ll_t(x)& ll) -> free(ll).ll => @error = @refl;
+// @error denotes that the condition of a theorem errors out.
+// it is a special value of type _Error_t that any expression within a theorem can throw.
+// it only exists within the specification of theorems.
+
+theorem ll_free__nonull() -> (ll_t&)NULL~free() == @error = refl;
+theorem ll_free__nosegf(ll_t(x)& ll) -> free(ll).ll == @error = refl;

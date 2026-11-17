@@ -1,11 +1,13 @@
-### Changelog 2026/11/whatever.
+### Changelog 2026/11/16.
+ - added cth's vfasttables definition to `meta/resources`.
+ - added support for `op=` operators (like `+=`).
 
 ### pending changes.
  - arrays.
  - typedefs.
  - reusing old types in `cth_tokeniser_op__declaration_master_type`.
  - certain compound qualifiers (like `immut` & `const`) shoul be incompatible.
- - support for `op=` operators (like `+=`) with them being handled as syntax sugar.
+ - rework how lvalues are differentiated from rvalues for assignment; assigning to an expression _should be possible_.
 
 > `BEGIN snca;`
 

@@ -121,6 +121,19 @@ static const char* cth_tokeniser_op__declaration(
       code += len;
     }
     else if(state == ASSIGN){
+// handles early exits due to smth like `i32 x;` or `i32 x, y;`.
+      if(tok == CTH_TOK__COMMA || tok == CTH_TOK__SEMICOLON){
+        cth_astT* expr = NULL;
+        decl->data._declaration.expr = vfastarr_append(decl->data._declaration.expr, &expr, sizeof(expr));
+// 'code += len;' must not be executed on CTH_TOK__SEMICOLON due to how we handle it.
+        if(tok == CTH_TOK__SEMICOLON)
+          break;
+        code += len;
+        state = NAME;
+        continue;
+      }
+
+      code += len;
       state = EXPR;
 
       if(tok != CTH_TOK__ASSIGNMENT){
@@ -128,15 +141,16 @@ static const char* cth_tokeniser_op__declaration(
         code += strcspn(code, ";");
         break;
       }
-      code += len;
     }
     else if(state == EXPR){
       if(tok != CTH_TOK__SEMICOLON && tok != CTH_TOK__COMMA){
         code = cth_tokeniser_dispatch(code, tok, len, tokeniser, path, err);
         continue;
       }
+// NOTE: error is here!
       cth_tokeniser_dispatch(NULL, CTH_TOK__DECLARATION, 0, tokeniser, path, err);
-      cth_nameT id; vfastarr_pop(tokeniser->values, &id, sizeof(id));
+      cth_nameT id; 
+      const bool there_are_elems = vfastarr_pop(tokeniser->values, &id, sizeof(id));
 
       const size_t pos_top = vfastarr_elcnt(decl->data._declaration.expr, sizeof(*decl->data._declaration.expr));
       cth_astT* expr;

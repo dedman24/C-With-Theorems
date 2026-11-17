@@ -240,8 +240,10 @@ static void cth_ast_destroy__array(cth_astT** const restrict arr){
   if(!arr) return;
 
   const size_t count = vfastarr_elcnt(arr, sizeof(*arr));
-  for(size_t i = 0; i < count; i++)
-    cth_ast_destroy(arr[i]);
+  for(size_t i = 0; i < count; i++){
+    if(arr[i])
+      cth_ast_destroy(arr[i]);
+  }
 
   vfastarr_destroy(arr);
 }

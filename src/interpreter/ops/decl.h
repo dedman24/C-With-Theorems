@@ -39,7 +39,7 @@ static cth_variableT* cth_op__declaration(const cth_astT* const restrict node, c
 // guaranteed to exist.
 
     if(node->data._declaration.expr[i]){
-      cth_variable__internal_clone(declared, result);
+      cth_variable_clone__internal(declared, result);
       if(result && result->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(result);
     }
   }

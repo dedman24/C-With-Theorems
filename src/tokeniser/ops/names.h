@@ -135,13 +135,4 @@ static void cth_tokeniser_op__string(
   tokeniser->values = vfastarr_append(tokeniser->values, &string, sizeof(string));
 }
 
-static void cth_tokeniser_op__typedef(
-  cth_tokeniserT* const restrict tokeniser,
-  rcT* const restrict path, cth_error_ctxT* const restrict err
-){
-// typedefs have the following structure:
-//  typedef type new-name;
-// they can be handled in the same manner declarations are.
-}
-
 #endif

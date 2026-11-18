@@ -33,7 +33,7 @@ static cth_variableT* cth_op__add__internal(
     return NULL;
   }
 // MUST be v1->type in the case v1 is of type ptr.
-  cth_variableT* const restrict result = cth_variable_init(NULL, 0, v1->type, cth_qualifier_op2(v0->state, v1->state) | CTH_VARSTATE__FREEALL);  
+  cth_variableT* const restrict result = cth_variable_init(NULL, 0, v1->type, cth_varstate_op2(v0->state, v1->state) | CTH_VARSTATE__RVALUE | CTH_VARSTATE__FREEALL);  
   switch(dispatch){
     case CTH_TYPE__I8:  
     case CTH_TYPE__I16:

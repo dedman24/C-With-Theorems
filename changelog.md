@@ -1,20 +1,24 @@
-### Changelog 2026/11/17.
- - declarations without assignment used to segfault, not anymore.
+### Changelog 2026/11/19.
+ - reworked how lvalues are differentiated from rvalues for assignment, expressions now may _evaluate to lvalues_.
+ - added `cth_variable_clone`.
+ - fixed `::` typechecking operator.
+ - updated tokens list.
+ - added C-style typedefs.
 
 ### pending changes.
  - arrays.
- - typedefs.
+ - stricter type compatibility.
  - reusing old types in `cth_tokeniser_op__declaration_master_type`.
- - certain compound qualifiers (like `immut` & `const`) shoul be incompatible.
- - rework how lvalues are differentiated from rvalues for assignment, so that expressions may _evaluate to lvalues_.
+ - certain compound qualifiers (like `immut` & `const`) should be incompatible.
 
 > `BEGIN snca;`
 
-I think it'd be cool if instead of our current pipeline;
-> `tokenisation -> interpreting`
+dyer lane, we gon' hunt you down...
 
-We had an intermediate step that added type annotations and made compatibility simpler, like:
-> `tokenisation -> typchecking -> interpreting`
+I feel like anything over 3 commits/day is either larp or AI.
+
+while typedefs are interesting, we already support declarations of types with the `type` type, so that smth like `type i32_ptr = i32*;` works great.\
+`typedef` exists for _historical reasons_ (ugh a new programming language with technical debt, and it isn't even finished?!).
 
 > `END snca;`
 
@@ -26,6 +30,7 @@ We had an intermediate step that added type annotations and made compatibility s
 
 ### Things to add (in no particular order):
  - full typechecking.
+ - formalised typechecker.
  - `void`, `void*` types.
  - structs, unions, enums.
  - function types, function calls.

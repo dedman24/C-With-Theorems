@@ -52,6 +52,11 @@ typedef enum{
   CTH_ERROR__DECLARATION_INVALID_TYPE,
   CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE,
 
+  CTH_ERROR__TYPEDEF_WRONG,
+  CTH_ERROR__TYPEDEF_EXPECTED_ID,
+  CTH_ERROR__TYPEDEF_REDEFINITION,
+  CTH_ERROR__TYPEDEF_INCOMPLETE_MASTER,
+
   CTH_ERROR__TOKENISER_INVALID_UNARY,
   CTH_ERROR__TOKENISER_UNKNOWN_TOKEN,
   CTH_ERROR__TOKENISER_ADJACENT_OPERANDS,
@@ -121,6 +126,11 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__DECLARATION_REDEFINITION]       = "in declaration, variable '%.*s' is redefined.\n",
   [CTH_ERROR__DECLARATION_INVALID_TYPE]       = "in declaration, first argument expected to be of type 'type', while instead of type '%s'.\n",
   [CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE]  = "in declaration, expected type is '%s', while effective type is '%s'.\n",
+
+  [CTH_ERROR__TYPEDEF_WRONG]                  = "typedef is not the first thing on this line.\n",
+  [CTH_ERROR__TYPEDEF_EXPECTED_ID]            = "in typedef, expected identifier.\n",
+  [CTH_ERROR__TYPEDEF_REDEFINITION]           = "in declaration, variable '%.*s' is redefined.\n",
+  [CTH_ERROR__TYPEDEF_INCOMPLETE_MASTER]      = "in typedef, expected type and alias.\n",
 
   [CTH_ERROR__TOKENISER_INVALID_UNARY]        = "token used as if it were unary, but no unary op associated with it.\n",
   [CTH_ERROR__TOKENISER_UNKNOWN_TOKEN]        = "unknown token met during tokenisation; possibly an issue with the compiler.\n",
@@ -348,8 +358,8 @@ static void cth_error_report__type_2(
   cth_variable_ctxT* const restrict variables,
   const cth_variableT* const var_t0, const cth_variableT* const var_t1
 ){
-  const cth_astT* const ast_t0 = var_t0->internal.type->tree,
-                * const ast_t1 = var_t1->internal.type->tree;
+  const cth_astT *const ast_t0 = var_t0->internal.type->tree,
+                 *const ast_t1 = var_t1->internal.type->tree;
 
   size_t s_t0_data, s_t1_data;
   char* const restrict t0_data = cth_type_str_construct(ast_t0, variables, &s_t0_data),

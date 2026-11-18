@@ -39,6 +39,14 @@
 2 <= 24 SATISFIABILITY_TOK__LTEQ
 2 -> 25 SATISFIABILITY_TOK__ARROW
 2 :: 26 SATISFIABILITY_TOK__TYPEIS
+2 |= 30 SATISFIABILITY_TOK__ASSIGN_BAR
+2 += 31 SATISFIABILITY_TOK__ASSIGN_PLUS
+2 *= 31 SATISFIABILITY_TOK__ASSIGN_STAR
+2 ^= 32 SATISFIABILITY_TOK__ASSIGN_CARAT
+2 -= 32 SATISFIABILITY_TOK__ASSIGN_MINUS
+2 /= 32 SATISFIABILITY_TOK__ASSIGN_SLASH
+2 %= 34 SATISFIABILITY_TOK__ASSIGN_PERCENT
+2 &= 36 SATISFIABILITY_TOK__ASSIGN_AMPERSAND
 2 -- 35 SATISFIABILITY_TOK__UNARY_DECREMENT
 2 ++ 35 SATISFIABILITY_TOK__UNARY_INCREMENT
 2 /* 45 SATISFIABILITY_TOK__OPENED_MULTI_LINE_COMMENT
@@ -46,14 +54,17 @@
 3 for 23 SATISFIABILITY_TOK__FOR
 3 <<< 23 SATISFIABILITY_TOK__ROL
 3 >>> 23 SATISFIABILITY_TOK__ROR
+3 <<= 30 SATISFIABILITY_TOK__ASSIGN_SHL
+3 >>= 30 SATISFIABILITY_TOK__ASSIGN_SHR
 4 case 24 SATISFIABILITY_TOK__CASE
 4 else 24 SATISFIABILITY_TOK__ELSE
 4 refl 24 SATISFIABILITY_TOK__REFL
-4 true 24 SATISFIABILITY_TOK__TRUE
+4 <<<= 30 SATISFIABILITY_TOK__ASSIGN_ROL
+4 >>>= 30 SATISFIABILITY_TOK__ASSIGN_ROR
 5 break 25 SATISFIABILITY_TOK__BREAK
 5 defer 25 SATISFIABILITY_TOK__DEFER
-5 false 25 SATISFIABILITY_TOK__FALSE
 5 while 25 SATISFIABILITY_TOK__WHILE
+6 @error 25 SATISFIABILITY_TOK__ERROR
 6 @sorry 25 SATISFIABILITY_TOK__SORRY
 6 exists 26 SATISFIABILITY_TOK__EXISTS
 6 return 26 SATISFIABILITY_TOK__RETURN
@@ -66,38 +77,3 @@
 7 typedef 27 SATISFIABILITY_TOK__TYPEDEF
 8 continue 28 SATISFIABILITY_TOK__CONTINUE
 13 @unresolvable 32 SATISFIABILITY_TOK__UNRESOLVABLE
-#
-# novel cth qualifiers:
-#   immut       ~ acts like consteval for functions & values in C++.
-# novel cth types:
-#   type_t      ~ types are first-class. typedef is used for scoped type definitions equivalent to using type_t immut.
-#   subtype_t   ~ subtyping is supported; implicit conversion from a subtype to its master type is allowed _only when necessary_.
-#   cth also lays out qualifiers in a more sensible manner; a ptr to an array of function ptrs taking void & returning void is written as:
-#   void(void)*[]*        // idk what this would look like in C but I don't want to know.
-#   but C ordering or a mixture of the two is also supported.
-# C-inherited types:
-#   int
-#   char
-#   enum
-#   long
-#   void
-#   float
-#   short
-#   union
-#   double
-#   struct
-#   long int
-#   long long
-#   short int
-#   long double
-#   long long int
-# C-inherited qualifiers (therefore defined as qualifiers & not here):
-#   auto
-#   const
-#   extern
-#   signed
-#   static
-#   register
-#   unsigned
-#   volatile
-# cth 1.0.0 is also to lack a preprocessor, which will come later.

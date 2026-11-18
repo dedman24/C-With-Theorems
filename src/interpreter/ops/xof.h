@@ -14,7 +14,7 @@ static cth_variableT* cth_op__typeof(const cth_astT* const restrict node, cth_va
   cth_variableT* const src = cth_interpret(node->data._unary.src, variables, path, err);
   if(!src) return NULL;
 
-  cth_variableT* const type = src->type;
+  cth_variableT* const type = cth_variable_clone(src->type, CTH_VARSTATE__RVALUE | CTH_VARSTATE__FREEALL);
   if(src->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(src);
 
   return type;

@@ -19,7 +19,7 @@
 // some day you'll realise that everything here sux.
 // some day we'll all be fine, consumed by the dust...
 
-static cth_variable_stateT cth_qualifier_op2(const cth_variable_stateT q0, const cth_variable_stateT q1){
+static cth_variable_stateT cth_varstate_op2(const cth_variable_stateT q0, const cth_variable_stateT q1){
   return q0 & q1;
 }
 
@@ -103,6 +103,25 @@ static cth_variableT* cth_variable_init(
   return var;
 }
 
+static void cth_variable_clone__internal(cth_variableT* const restrict dst, cth_variableT* const restrict src){
+  if(dst->type == cth_typevar(CTH_TYPE__TYPE))
+    dst->internal.type = cth_type__internal_acquire(src->internal.type);
+  else if(dst->type == cth_typevar(CTH_TYPE__STRING))
+    dst->internal.string = rc_own(src->internal.string);
+  else
+    dst->internal = src->internal;
+}
+
+static cth_variableT* cth_variable_clone(
+  cth_variableT* const restrict src,
+  const cth_variable_stateT newstate
+){
+  cth_variableT* const restrict dst = cth_variable_init(src->name, src->s_name, src->type, src->state | newstate);
+  cth_variable_clone__internal(dst, src);
+
+  return dst;
+}
+
 static void cth_variable_destroy(cth_variableT* const restrict real){
   if(real->state & CTH_VARSTATE__FREENAME) free((void*)real->name);
   if(real->type == cth_typevar(CTH_TYPE__TYPE))
@@ -120,15 +139,6 @@ static void cth_variable_destroy__rht(vfastrht_objT* const restrict var){
   else if(real->type == cth_typevar(CTH_TYPE__STRING))
     rc_disown(real->internal.string);
   free(real);
-}
-
-static void cth_variable__internal_clone(cth_variableT* const restrict dst, cth_variableT* const restrict src){
-  if(dst->type == cth_typevar(CTH_TYPE__TYPE))
-    dst->internal.type = cth_type__internal_acquire(src->internal.type);
-  else if(dst->type == cth_typevar(CTH_TYPE__STRING))
-    dst->internal.string = rc_own(src->internal.string);
-  else
-    dst->internal = src->internal;
 }
 
 static cth_nameT cth_variable_name(cth_variable_ctxT* restrict ctx){

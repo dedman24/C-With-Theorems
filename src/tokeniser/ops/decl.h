@@ -64,7 +64,6 @@ static const char* cth_tokeniser_op__declaration(
 // used to track 'master' type.
   const struct cth_tokeniser_op__declaration_master_typeS master = cth_tokeniser_op__declaration_master_type(tokeniser, var_type);
 
-
   cth_astT* const decl = cth_ast_init(CTH_TOK__DECLARATION, tokeniser->line, tokeniser->offset, CTH_AST__DECLARATION);
 // declarations are modelled as a state machine.
 // diagram:
@@ -74,7 +73,7 @@ static const char* cth_tokeniser_op__declaration(
 // clears PREV_WAS_NAME bit, sets DECLARATION bit.
   tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__DECLARATION;
 // parse everything until comma
-  do{
+  while(1){
     size_t len;
     const cth_tokT tok = cth_tok(code, &len);
 
@@ -171,12 +170,108 @@ static const char* cth_tokeniser_op__declaration(
       }
       if(tok == CTH_TOK__SEMICOLON) break;
     }
-  } while(1);
+  }
 
   tokeniser->values = vfastarr_append(tokeniser->values, &decl, sizeof(*tokeniser->values));
   tokeniser->state &= ~CTH_TOKENISER__DECLARATION;
   return code;
 }
 
+static const char* cth_tokeniser_op__typedef(
+  cth_tokeniserT* const restrict tokeniser, const char* restrict code,
+  rcT* const restrict path, cth_error_ctxT* const restrict err
+){
+// typedefs have the following structure:
+//  typedef type new-name;
+// they can be handled in a similar manner as declarations, only using the NAME and ASSIGN state.
+// constructs master type.  
+  while(1){
+    size_t len;
+    const cth_tokT tok = cth_tok(code, &len);
+    if(
+      tok == CTH_TOK__OPENED_SINGLE_LINE_COMMENT ||
+      tok == CTH_TOK__OPENED_MULTI_LINE_COMMENT ||
+      tok == CTH_TOK__WHITESPACE ||
+      tok == CTH_TOK__NEWLINE ||
+      tok == CTH_TOK__NAME
+    ){
+      code = cth_tokeniser_dispatch(code, tok, len, tokeniser, path, err);
+      continue;
+    }
+    else break;
+  }
+
+  cth_tokeniser_dispatch(NULL, CTH_TOK__DECLARATION, 0, tokeniser, path, err);
+  const size_t s_values = vfastarr_size(tokeniser->values), s_ops = vfastarr_size(tokeniser->ops);
+  if(s_values != sizeof(*tokeniser->values) || s_ops != 0){
+    cth_error_report(CTH_ERROR__TYPEDEF_WRONG, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+    return code + strcspn(code, ";");
+  }
+  cth_nameT id_master; vfastarr_pop(tokeniser->values, &id_master, sizeof(id_master));
+  cth_variableT* const var_master = cth_variable_search(tokeniser->name.variables, id_master);
+
+  cth_variableT* var_type = NULL;
+  cth_nameT id_type;
+// similar state machine as declarations.
+// NAME --CTH_TOK__NAME-> COMMA --CTH_TOK__SEMICOLON-> QUIT
+//  ^----------------------+-|
+  enum{
+    NAME,
+    COMMA
+  } state = NAME;
+
+  while(1){
+    size_t len;
+    const cth_tokT tok = cth_tok(code, &len);
+    
+    if(
+      tok == CTH_TOK__OPENED_SINGLE_LINE_COMMENT ||
+      tok == CTH_TOK__OPENED_MULTI_LINE_COMMENT ||
+      tok == CTH_TOK__WHITESPACE ||
+      tok == CTH_TOK__NEWLINE
+    ){
+      code = cth_tokeniser_dispatch(code, tok, len, tokeniser, path, err);
+      continue;
+    }
+
+    if(state == NAME){
+      state = COMMA;
+
+      if(tok != CTH_TOK__NAME){
+        cth_error_report(CTH_ERROR__TYPEDEF_EXPECTED_ID, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+        code += strcspn(code, ";");
+        break;
+      }
+// this doesn't work with our current model of purely adding these as aliases.
+      const cth_nameT exists = cth_name_alias(code, len, id_type, &tokeniser->name);
+      if(exists){
+        if(!cth_qualifier_is__id(exists)){
+          cth_error_report__str_size(CTH_ERROR__TYPEDEF_REDEFINITION, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err, code, len);
+          return code + strcspn(code, ";");
+        }
+        cth_variableT* const var_exists = cth_variable_search(tokeniser->name.variables, exists);
+        const struct cth_tokeniser_op__qualifierS qualif = cth_tokeniser_op__qualifier(tokeniser, exists, var_exists, id_type, var_type, true, path, err);
+        id_type = qualif.id;
+        var_type = qualif.var;
+        continue;
+      }
+
+      var_type = var_master;
+      id_type = id_master;
+
+      code += len;
+    }
+    else{
+      if(tok == CTH_TOK__SEMICOLON) break;
+      state = NAME;
+      var_type = var_master;
+      id_type = id_master;
+
+      code += len;
+    }
+  }
+
+  return code;
+}
 
 #endif

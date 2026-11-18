@@ -99,6 +99,21 @@ static struct cth_name_addS cth_name_add(const char* const restrict key, const s
   return (struct cth_name_addS){ .id = id, .var = var };
 }
 
+// adds name alias to given variable.
+// returns 0 if successful, proper name if it isn't.
+static cth_nameT cth_name_alias(const char* const restrict key, const size_t s_key, const cth_nameT aliased, cth_name_ctxT* const restrict name){
+  const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
+
+  vfastbst_str_nodeT** restrict curr_node = NULL;
+  for(size_t i = 0; i < c_scopes; i++){
+    curr_node = vfastbst_str_put_half(&name->names[i], key, s_key);
+    if(*curr_node)
+      return (*curr_node)->obj;
+  }
+  *curr_node = vfastbst_str_node_init(key, s_key, aliased);
+  return 0;
+}
+
 // searches for name by string, returns 0 on error.
 static cth_nameT cth_name_search(const char* const restrict key, const size_t s_key, const cth_name_ctxT* const restrict name){
     const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));

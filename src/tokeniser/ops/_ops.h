@@ -20,8 +20,6 @@ static void cth_tokeniser_dispatch__ast(
   else if(tok == CTH_TOK__DO);
   else if(tok == CTH_TOK__WHILE);
   else if(tok == CTH_TOK__SWITCH);
-  else if(tok == CTH_TOK__TYPEDEF) 
-    cth_tokeniser_op__typedef(tokeniser, path, err);
   else if(tok > CTH_TOK__UNARY_START && tok < CTH_TOK__UNARY_END)
     cth_tokeniser_op__unary(tok, tokeniser, path, err);
   else
@@ -47,6 +45,7 @@ static const char* cth_tokeniser_dispatch(
     case CTH_TOK__CLOSED_CURLY_BRACKET: return cth_tokeniser_op__closed_curly_bracket(tokeniser, code, len, path, err);
     case CTH_TOK__WHITESPACE: return cth_tokeniser_op__whitespace(tokeniser, code, len, path, err);
     case CTH_TOK__NEWLINE: return cth_tokeniser_op__newline(tokeniser, code, len, path, err);
+    case CTH_TOK__TYPEDEF: return cth_tokeniser_op__typedef(tokeniser, code, path, err);
     case CTH_TOK__STRING: cth_tokeniser_op__string(tokeniser, code, len, path, err); break;
     case CTH_TOK__VALUE: cth_tokeniser_op__value(tokeniser, code, len, path, err); break;
     case CTH_TOK__CHAR: cth_tokeniser_op__char(tokeniser, code, len, path, err); break;

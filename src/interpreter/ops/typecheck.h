@@ -193,8 +193,8 @@ static cth_variableT* cth_op__typechecking(const cth_astT* const restrict node, 
 
   if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, v0->type))
     cth_error_report(CTH_ERROR__TYPEIS_SECOND_ARG, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
-  else if(v0->type != v1)
-    cth_error_report__str_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, v0->name, v1->name);
+  else if(v0 != v1->type)
+    cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, variables, v0, v1->type);
 
   if(v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
   if(v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);

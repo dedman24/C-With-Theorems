@@ -11,6 +11,10 @@ static cth_variableT* cth_op__assignment__internal(
   cth_variableT* const v0, cth_variableT* const v1,
   const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
+  if(v1->state & CTH_VARSTATE__RVALUE){
+    cth_error_report(CTH_ERROR__ASSIGNMENT_RVALUE, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
+    return NULL;
+  }
   if(v1->state & CTH_VARSTATE__IMMEDIATE){
     cth_error_report(CTH_ERROR__ASSIGNMENT_IMMEDIATE, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
     return NULL;
@@ -31,7 +35,7 @@ static cth_variableT* cth_op__assignment__internal(
     return NULL;
   }
 
-  cth_variable__internal_clone(v1, v0);
+  cth_variable_clone__internal(v1, v0);
 
   return v1;
 }
@@ -39,10 +43,6 @@ static cth_variableT* cth_op__assignment__internal(
 static cth_variableT* cth_op__assignment(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err){
   if(node->type != CTH_AST__BINARY){
     cth_error_report__u32_2(CTH_ERROR__INTERPRETER_AST_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, node->type, CTH_AST__BINARY);
-    return NULL;
-  }
-  if(node->data._binary.s1->type != CTH_AST__ID){
-    cth_error_report(CTH_ERROR__ASSIGNMENT_RVALUE, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
     return NULL;
   }
 

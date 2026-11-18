@@ -75,7 +75,7 @@ typedef enum{
   CTH_AST__BINARY,
   CTH_AST__FUNCALL,
   CTH_AST__PROGRAM,
-  CTH_AST__DECLARATION
+  CTH_AST__DECLARATION,
 } cth_ast_typeT;
 
 struct cth_astS{

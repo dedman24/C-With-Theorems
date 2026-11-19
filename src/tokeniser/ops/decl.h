@@ -228,9 +228,10 @@ static const char* cth_tokeniser_op__typedef(
     COMMA
   } state = NAME;
 
+  tokeniser->state |= CTH_TOKENISER__PREV_WAS_NAME;
   while(1){
     size_t len;
-    const cth_tokT tok = cth_tok(code, &len);
+    cth_tokT tok = cth_tok(code, &len);
     
     if(
       tok == CTH_TOK__OPENED_SINGLE_LINE_COMMENT ||
@@ -243,16 +244,26 @@ static const char* cth_tokeniser_op__typedef(
     }
 
     if(state == NAME){
-      state = COMMA;
-
+      cth_nameT exists;
+// token-like qualifier, tries adding to variable.
       if(tok != CTH_TOK__NAME){
-        cth_error_report(CTH_ERROR__TYPEDEF_EXPECTED_ID, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
-        code += strcspn(code, ";");
-        break;
+        const cth_nameT id_qualif = cth_tok__get_qualif_id(tok);
+        if(!id_qualif){
+          cth_error_report(CTH_ERROR__TYPEDEF_EXPECTED_ID, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+          return code + strcspn(code, ";");
+        }
+        cth_variableT* const var_qualif = cth_variable_search(tokeniser->name.variables, id_qualif);
+        const struct cth_tokeniser_op__qualifierS qualif = cth_tokeniser_op__qualifier(
+          tokeniser,
+          id_qualif, var_qualif,
+          id_type, var_type,
+          true, path, err
+        );
+        id_type = qualif.id;
+        var_type = qualif.var;
       }
-// this doesn't work with our current model of purely adding these as aliases.
-      const cth_nameT exists = cth_name_alias(code, len, id_type, &tokeniser->name);
-      if(exists){
+// name-like qualifier, tries adding to variable.
+      else if((exists = cth_name_alias(code, len, id_type, &tokeniser->name))){
         if(!cth_qualifier_is__id(exists)){
           cth_error_report__str_size(CTH_ERROR__TYPEDEF_REDEFINITION, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err, code, len);
           return code + strcspn(code, ";");
@@ -262,10 +273,13 @@ static const char* cth_tokeniser_op__typedef(
         id_type = qualif.id;
         var_type = qualif.var;
       }
+// we add our entry as an alias of the type 'var_type' using cth_name_alias.
       else{
         var_type = var_master;
         id_type = id_master; 
+        state = COMMA;
       }
+      tokeniser->state |= CTH_TOKENISER__PREV_WAS_NAME;
       code += len;
     }
     else{
@@ -278,6 +292,7 @@ static const char* cth_tokeniser_op__typedef(
     }
   }
 
+  tokeniser->state &= ~(CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__TYPEDEF);
   return code;
 }
 

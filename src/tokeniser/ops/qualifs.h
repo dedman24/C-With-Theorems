@@ -37,6 +37,7 @@ static struct cth_tokeniser_op__qualifierS cth_tokeniser_op__qualifier(
   memcpy(type_name + 1 + sizeof(cth_nameT), var_type->name, var_type->s_name);
   type_name[1 + sizeof(cth_nameT) + var_type->s_name] = ' ';
   memcpy(type_name + 1 + sizeof(cth_nameT) + var_type->s_name + 1, qualif_name, s_qualif_name);
+  vfastarr_destroy(qualif_name);
 
   const cth_nameT seek = cth_name_search(type_name, s_type_name, &tokeniser->name);
   if(seek){
@@ -94,12 +95,21 @@ static cth_nameT cth_tokeniser_op__make_compound_qualifier(
   return id_compound;
 }
 
+// returns 0 if none can be found otherwise respective qualifier ID.
+static cth_nameT cth_tok__get_qualif_id(const cth_tokT tok){
+  return 
+    tok == CTH_TOK__STAR?      CTH_QUALIFIER__PTR:
+    tok == CTH_TOK__AMPERSAND? CTH_QUALIFIER__REF:
+    0;
+}
+
 // tries to qualify using those qualifiers that specify a different type.
 static bool cth_tokeniser__operand_qualifs(
   const cth_tokT tok, cth_tokeniserT* const restrict tokeniser,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tok != CTH_TOK__STAR && tok != CTH_TOK__AMPERSAND)
+  const cth_nameT qualifier = cth_tok__get_qualif_id(tok);
+  if(!qualifier)
     return false;
 
   const size_t elcnt = vfastarr_elcnt(tokeniser->values, sizeof(*tokeniser->values));
@@ -111,10 +121,6 @@ static bool cth_tokeniser__operand_qualifs(
   cth_variableT* const restrict var_top = cth_variable_search(tokeniser->name.variables, name_top);
   if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_top->type))  // only valid on types.
     return false;
-
-  const cth_nameT qualifier =
-    tok == CTH_TOK__STAR?      CTH_QUALIFIER__PTR:
-    tok == CTH_TOK__AMPERSAND? CTH_QUALIFIER__REF:
                                0;
 // NOTE: possibly remove tokeniser seek, add similar mechanism to cth_typevar.
   cth_variableT* const restrict var_qualifier = cth_variable_search(tokeniser->name.variables, qualifier);

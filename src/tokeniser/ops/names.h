@@ -55,9 +55,7 @@ static const char* cth_tokeniser_op__name(
 // prev & ours are both types; we try joining.
   if(cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_prev->type) && cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var->type)){
     const cth_nameT joined = cth_tokeniser_op__name_join(tokeniser, name, id_prev, path, err);
-    if(joined == CTH_TYPE__NONE)
-      cth_error_report(CTH_ERROR__TYPE_UNJOINABLE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
-    else
+    if(joined != CTH_TYPE__NONE)
       tokeniser->values = vfastarr_append(tokeniser->values, &joined, sizeof(joined));
     return code + len;
   }

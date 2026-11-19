@@ -42,5 +42,3 @@ NOTE: I particularly dislike how basically all modern functional languages have 
 
 ## Disclaimer
 'C With Theorems' is a _hobbyist project_ I started to learn more about compilers, that I work on whenever I have time. I may make it seem something really cool and professionally developed in `meta/`, but it really _isn't_. It may _never even be finished_, so please get your hopes up.
-
-_this project is **All bark, no bite**!_

@@ -11,9 +11,7 @@
 
 > `BEGIN snca;`
 
-ughhh I wanna work harder but I also don't wannaaaa.\
-gta6 comes out today. top10 slop projects anyone who plays it LOVE YOURSELF!\
-jeez imagine lucia naked :furryfeet2:.
+ughhh I wanna work harder but I also don't wannaaaa.
 
 my plan is to add a little each day, so that I'll have a full programming language in a couple weeks' time or so.
 

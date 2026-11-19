@@ -81,7 +81,7 @@ static struct cth_name_addS cth_name_add(const char* const restrict key, const s
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
 
   vfastbst_str_nodeT** restrict curr_node = NULL;
-  for(size_t i = 0; i < c_scopes; i++){
+  for(size_t i = c_scopes - 1; i != -1; i--){
     curr_node = vfastbst_str_put_half(&name->names[i], key, s_key);
     if(*curr_node)
       return (struct cth_name_addS){ .id = (*curr_node)->obj, .var = NULL };
@@ -105,7 +105,7 @@ static cth_nameT cth_name_alias(const char* const restrict key, const size_t s_k
   const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
 
   vfastbst_str_nodeT** restrict curr_node = NULL;
-  for(size_t i = 0; i < c_scopes; i++){
+  for(size_t i = c_scopes - 1; i != -1; i--){
     curr_node = vfastbst_str_put_half(&name->names[i], key, s_key);
     if(*curr_node)
       return (*curr_node)->obj;

@@ -36,7 +36,7 @@ static const char* cth_tokeniser_op__declaration(
   cth_tokeniserT* const restrict tokeniser, const char* restrict code,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->state & CTH_TOKENISER__DECLARATION){
+  if(tokeniser->state & CTH_TOKENISER__DECLARATION || tokeniser->state & CTH_TOKENISER__TYPEDEF){
     cth_error_report(CTH_ERROR__DECLARATION_RECURSIVE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + strcspn(code, ";");
   }
@@ -181,6 +181,11 @@ static const char* cth_tokeniser_op__typedef(
   cth_tokeniserT* const restrict tokeniser, const char* restrict code,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
+  if(tokeniser->state & CTH_TOKENISER__DECLARATION || tokeniser->state & CTH_TOKENISER__TYPEDEF){
+    cth_error_report(CTH_ERROR__DECLARATION_RECURSIVE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+    return code + strcspn(code, ";");
+  }
+  tokeniser->state |= CTH_TOKENISER__TYPEDEF;
 // typedefs have the following structure:
 //  typedef type new-name;
 // they can be handled in a similar manner as declarations, only using the NAME and ASSIGN state.
@@ -192,13 +197,16 @@ static const char* cth_tokeniser_op__typedef(
       tok == CTH_TOK__OPENED_SINGLE_LINE_COMMENT ||
       tok == CTH_TOK__OPENED_MULTI_LINE_COMMENT ||
       tok == CTH_TOK__WHITESPACE ||
-      tok == CTH_TOK__NEWLINE ||
-      tok == CTH_TOK__NAME
-    ){
+      tok == CTH_TOK__NEWLINE
+    )
       code = cth_tokeniser_dispatch(code, tok, len, tokeniser, path, err);
-      continue;
+    else if(tok == CTH_TOK__NAME){
+      if(!cth_name_search(code, len, &tokeniser->name))       // microopt possible here :DDD.
+        break;
+      code = cth_tokeniser_op__name(tokeniser, code, len, path, err);
     }
-    else break;
+    else
+      break;
   }
 
   cth_tokeniser_dispatch(NULL, CTH_TOK__DECLARATION, 0, tokeniser, path, err);
@@ -210,8 +218,8 @@ static const char* cth_tokeniser_op__typedef(
   cth_nameT id_master; vfastarr_pop(tokeniser->values, &id_master, sizeof(id_master));
   cth_variableT* const var_master = cth_variable_search(tokeniser->name.variables, id_master);
 
-  cth_variableT* var_type = NULL;
-  cth_nameT id_type;
+  cth_nameT id_type = id_master;
+  cth_variableT* var_type = var_master;
 // similar state machine as declarations.
 // NAME --CTH_TOK__NAME-> COMMA --CTH_TOK__SEMICOLON-> QUIT
 //  ^----------------------+-|
@@ -253,12 +261,11 @@ static const char* cth_tokeniser_op__typedef(
         const struct cth_tokeniser_op__qualifierS qualif = cth_tokeniser_op__qualifier(tokeniser, exists, var_exists, id_type, var_type, true, path, err);
         id_type = qualif.id;
         var_type = qualif.var;
-        continue;
       }
-
-      var_type = var_master;
-      id_type = id_master;
-
+      else{
+        var_type = var_master;
+        id_type = id_master; 
+      }
       code += len;
     }
     else{

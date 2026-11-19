@@ -13,6 +13,15 @@ static cth_tokT cth_tokeniser_unary_tok(const cth_tokT op){
     case CTH_TOK__SIZEOF: return CTH_TOK__UNARY_SIZEOF;
     case CTH_TOK__TYPEOF: return CTH_TOK__UNARY_TYPEOF;
     case CTH_TOK__COUNTOF: return CTH_TOK__UNARY_COUNTOF;
+// tokens that are valid by themselves as the start of a line (statements) belong here.
+    case CTH_TOK__DO: return CTH_TOK__DO;
+    case CTH_TOK__IF: return CTH_TOK__IF;
+    case CTH_TOK__FOR: return CTH_TOK__FOR;
+    case CTH_TOK__DEFER: return CTH_TOK__DEFER;
+    case CTH_TOK__WHILE: return CTH_TOK__WHILE;
+    case CTH_TOK__SWITCH: return CTH_TOK__SWITCH;
+    case CTH_TOK__TYPEDEF: return CTH_TOK__TYPEDEF;
+// tokens that are not valid by themselves (most operators) belong here.
     default: return CTH_TOK__NONE;
   }
 }

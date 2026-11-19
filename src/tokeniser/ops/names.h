@@ -25,6 +25,7 @@ static cth_nameT cth_tokeniser_op__name_join(
   return combined;
 }
 
+// save for declarations, always returns code + len.
 static const char* cth_tokeniser_op__name(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
@@ -89,7 +90,7 @@ static const char* cth_tokeniser_op__name(
       path, err
     );
     tokeniser->values = vfastarr_append(tokeniser->values, &compound, sizeof(compound));
-    return code+len;
+    return code + len;
   }
   if(tokeniser->state & CTH_TOKENISER__DECLARATION)                   // redefinition error handled somewhere else.
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);

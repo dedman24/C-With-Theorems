@@ -1,9 +1,5 @@
-### Changelog 2026/11/19.
- - reworked how lvalues are differentiated from rvalues for assignment, expressions now may _evaluate to lvalues_.
- - added `cth_variable_clone`.
- - fixed `::` typechecking operator.
- - updated tokens list.
- - added C-style typedefs.
+### Changelog 2026/11/20.
+ - typedefs now work.
 
 ### pending changes.
  - arrays.
@@ -13,12 +9,7 @@
 
 > `BEGIN snca;`
 
-dyer lane, we gon' hunt you down...
 
-I feel like anything over 3 commits/day is either larp or AI.
-
-while typedefs are interesting, we already support declarations of types with the `type` type, so that smth like `type i32_ptr = i32*;` works great.\
-`typedef` exists for _historical reasons_ (ugh a new programming language with technical debt, and it isn't even finished?!).
 
 > `END snca;`
 

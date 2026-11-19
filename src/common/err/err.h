@@ -53,6 +53,7 @@ typedef enum{
   CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE,
 
   CTH_ERROR__TYPEDEF_WRONG,
+  CTH_ERROR__TYPEDEF_RECURSIVE,
   CTH_ERROR__TYPEDEF_EXPECTED_ID,
   CTH_ERROR__TYPEDEF_REDEFINITION,
   CTH_ERROR__TYPEDEF_INCOMPLETE_MASTER,
@@ -120,7 +121,7 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__ASSIGNMENT_IMMEDIATE]           = "assignment to immediate is invalid.\n",
 
   [CTH_ERROR__DECLARATION_WRONG]              = "declaration is not the first thing on this line.\n",
-  [CTH_ERROR__DECLARATION_RECURSIVE]          = "declaration inside declaration is invalid.\n",
+  [CTH_ERROR__DECLARATION_RECURSIVE]          = "declaration or typedef inside declaration is invalid.\n",
   [CTH_ERROR__DECLARATION_EXPECTED_ID]        = "in declaration, expected identifier.\n",
   [CTH_ERROR__DECLARATION_EXPECTED_EQ]        = "in declaration, expected '=' symbol.\n",
   [CTH_ERROR__DECLARATION_REDEFINITION]       = "in declaration, variable '%.*s' is redefined.\n",
@@ -128,6 +129,7 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__DECLARATION_INCOMPATIBLE_TYPE]  = "in declaration, expected type is '%s', while effective type is '%s'.\n",
 
   [CTH_ERROR__TYPEDEF_WRONG]                  = "typedef is not the first thing on this line.\n",
+  [CTH_ERROR__TYPEDEF_RECURSIVE]              = "declaration or typedef inside typedef is invalid.\n",
   [CTH_ERROR__TYPEDEF_EXPECTED_ID]            = "in typedef, expected identifier.\n",
   [CTH_ERROR__TYPEDEF_REDEFINITION]           = "in declaration, variable '%.*s' is redefined.\n",
   [CTH_ERROR__TYPEDEF_INCOMPLETE_MASTER]      = "in typedef, expected type and alias.\n",

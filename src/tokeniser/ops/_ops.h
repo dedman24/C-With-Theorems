@@ -3,6 +3,7 @@
 
 #include "../ctx.h"
 
+#include "if.h"
 #include "misc.h"
 #include "arity.h"
 #include "names.h"
@@ -14,7 +15,10 @@ static void cth_tokeniser_dispatch__ast(
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
 // this scheme isn't great, because unary operators like '--', '++' can be followed by binary operators; certain operators are _unary by themselves_.
-  if(tok == CTH_TOK__IF);
+  if(tok == CTH_TOK__IF || tok == CTH_TOK__QUESTION)
+    cth_tokeniser_op__if_error(tok, tokeniser, path, err);
+  else if(tok == CTH_TOK__COLON || tok == CTH_TOK__ELSE)
+    cth_tokeniser_op__if(tok, tokeniser, path, err);
   else if(tok == CTH_TOK__FOR);
   else if(tok == CTH_TOK__DEFER);
   else if(tok == CTH_TOK__DO);
@@ -60,10 +64,10 @@ static const char* cth_tokeniser_dispatch(
         cth_tokT top = tokeniser->ops[cnt_top - 1];
         if(cth_priority[top] <= cth_priority[tok])
           goto SKIP_PRIO;
-        vfastarr_remove(tokeniser->ops, sizeof(*tokeniser->ops));
         do{
+          vfastarr_remove(tokeniser->ops, sizeof(*tokeniser->ops));
           cth_tokeniser_dispatch__ast(top, tokeniser, path, err);
-          if(!vfastarr_pop(tokeniser->ops, &top, sizeof(top)))
+          if(!vfastarr_top(tokeniser->ops, &top, sizeof(top)))
             break;
         } while(cth_priority[top] > cth_priority[tok]);
       }

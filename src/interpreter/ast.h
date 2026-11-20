@@ -157,6 +157,16 @@ static cth_astT* cth_ast_init(
   return node;
 }
 
+// id id & 1, makes id ast node out of it.
+// otherwise returns id casted to astT.
+static cth_astT* cth_ast_make_id(const cth_nameT id, const cth_fposT line, const cth_fposT offset){
+  if(!(id & 1)) return (cth_astT*)id;
+  cth_astT* const restrict node = cth_ast_init__weak(CTH_TOK__NAME, line, offset, CTH_AST__ID);
+  node->data.id = id;
+
+  return node;
+}
+
 static cth_astT* cth_ast_clone__recursive(cth_astT* const restrict src);
 
 static cth_astT** cth_ast_clone__array(cth_astT** const restrict src){

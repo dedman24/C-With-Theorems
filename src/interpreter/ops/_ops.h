@@ -3,6 +3,7 @@
 
 // all cth ops.
 
+#include "if.h"
 #include "xof.h"
 #include "decl.h"
 #include "misc.h"

@@ -73,7 +73,7 @@ typedef enum{
   CTH_TOK__ASSIGN_SHL = 90,
   CTH_TOK__FOR = 104,
   CTH_TOK__INCLUDE = 22,
-  CTH_TOK__LABEL = 89,
+  CTH_TOK__COLON = 89,
   CTH_TOK__NEQ = 34,
   CTH_TOK__DEFER = 101,
   CTH_TOK__WHILE = 55,
@@ -139,7 +139,7 @@ typedef enum{
   CTH_PRIORITY__COMPLEX_ARITH,                              // '*', '/', '%'.
   CTH_PRIORITY__2,                                          // second highest priority level.
   CTH_PRIORITY__1,                                          // highest priority level.
-  CTH_PRIORITY__HIGHEST
+  CTH_PRIORITY__HIGHEST                                     // highest priority level not assigned to operation; this and __LOWEST mght be useful.
 } cth_priorityT;
 
 #ifndef CTH_IMPLEMENTATION
@@ -170,6 +170,8 @@ const cth_priorityT cth_priority[] ={
   [CTH_TOK__ASSIGN_ROR]           = CTH_PRIORITY__ASSIGNMENT,
 
   [CTH_TOK__IF]                   = CTH_PRIORITY__IF,
+  [CTH_TOK__ELSE]                 = CTH_PRIORITY__IF,
+  [CTH_TOK__COLON]                = CTH_PRIORITY__IF,
   [CTH_TOK__QUESTION]             = CTH_PRIORITY__IF,
 
   [CTH_TOK__ORL]                  = CTH_PRIORITY__LOGICAL_OR,
@@ -300,7 +302,7 @@ static cth_tokT cth_tok__search(const char* const restrict str, const size_t len
     [CTH_TOK__ASSIGN_SHL] = "<<=",
     [CTH_TOK__FOR] = "for",
     [CTH_TOK__INCLUDE] = "include",
-    [CTH_TOK__LABEL] = ":",
+    [CTH_TOK__COLON] = ":",
     [CTH_TOK__NEQ] = "!=",
     [CTH_TOK__DEFER] = "defer",
     [CTH_TOK__WHILE] = "while",

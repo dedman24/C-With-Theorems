@@ -18,13 +18,14 @@ ll_t& ll_init(immut u32 obj){
   return ll;                          // typechecker determines at this point that ll can NEVER be NULL, and that therefore ll_t* is compatible with ll_t&.
 }
 
-// '!' on the argument of a function means that the function acquires said argument and it becomes undefined from the caller's side.
+// NOTE: I don't like this direction; cth would become very ugly.
+// '!' on the argument of a function means that the function 'acquires' said argument and it becomes unassigned from the caller's side.
 // '!' on the return value of a function means that it cannot be ignored.
 
 // pushes data.
 ll_t&! push(ll_t(x)&! ll, immut u32 obj){
   ll_t(x-1)& next = ll_init(obj);
-  next->prev = ll;
+  next->prev = ll;                        // since next->prev :: ll_t(x-1+1), which is just ll_t(x), it is compatible with ll and assignment can happen.
   return next;
 }
 

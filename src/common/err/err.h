@@ -37,8 +37,14 @@ enum{
 typedef enum{
   CTH_ERROR__NONE,
   CTH_ERROR__IMPOSSIBILITY,
-
   CTH_ERROR__AST_TOO_FEW_OPERANDS,
+  CTH_ERROR__EXPECTED_EXPRESSION,
+  CTH_ERROR__EXPECTED_IDENTIFIER,
+
+  CTH_ERROR__IF_WRONG,
+  CTH_ERROR__IF_ELSE_NO_PREV,
+  CTH_ERROR__IF_TERNARY_WRONG,
+  CTH_ERROR__IF_TERNARY_ELSE_NO_PREV,
 
   CTH_ERROR__ASSIGNMENT_CONST,
   CTH_ERROR__ASSIGNMENT_RVALUE,
@@ -113,8 +119,14 @@ const char* const restrict cth_error_strings[] = {
                                                  "(C With Theorems version " CTH_VERSION_STR "). "
                                                  "contact devs. " 
                                                  ANSI_COLOUR_RED "ERROR CODE: %08xh" ANSI_COLOUR_RESET ".\n",
-
   [CTH_ERROR__AST_TOO_FEW_OPERANDS]           = "too few operands present for op to be converted into abstract syntax tree format.\n",
+  [CTH_ERROR__EXPECTED_EXPRESSION]            = "expected expression.\n",
+  [CTH_ERROR__EXPECTED_IDENTIFIER]            = "expected identifier.\n",
+
+  [CTH_ERROR__IF_WRONG]                       = "if statement is constructed erroneously.\n",
+  [CTH_ERROR__IF_ELSE_NO_PREV]                = "'else' keyword not preceded by 'if'.\n",
+  [CTH_ERROR__IF_TERNARY_WRONG]               = "ternary if statement is constructed erroneously.\n",
+  [CTH_ERROR__IF_TERNARY_ELSE_NO_PREV]        = "':' keyword not preceded by '?', not label either.\n",
 
   [CTH_ERROR__ASSIGNMENT_CONST]               = "assignment to value qualified with '%s' is invalid.\n",
   [CTH_ERROR__ASSIGNMENT_RVALUE]              = "assignment to rvalue is invalid.\n",

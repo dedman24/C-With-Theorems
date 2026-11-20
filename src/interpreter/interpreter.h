@@ -24,7 +24,9 @@ static void* cth_interpret(const cth_astT* const restrict node, cth_variable_ctx
     case CTH_AST__ID:
       return cth_op__name(node, variables, path, err);
     case CTH_AST__DECLARATION:
-      return cth_op__declaration(node, variables, path, err);  
+      return cth_op__declaration(node, variables, path, err);
+    case CTH_AST__IF:
+      return cth_op__if(node, variables, path, err);
     default:
       fprintf(stderr, "ERROR: option %d not currently implemented.\n", node->type);
       return NULL;

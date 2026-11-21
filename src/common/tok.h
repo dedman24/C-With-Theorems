@@ -210,6 +210,8 @@ const cth_priorityT cth_priority[] ={
   [CTH_TOK__UNARY_SIZEOF]         = CTH_PRIORITY__2,
   [CTH_TOK__UNARY_TYPEOF]         = CTH_PRIORITY__2,
   [CTH_TOK__UNARY_COUNTOF]        = CTH_PRIORITY__2,
+
+  [CTH_TOK__FUNCALL]              = CTH_PRIORITY__1,
 };
 
 // hash function, generated with vfasttables version 1.1.0.

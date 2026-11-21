@@ -25,7 +25,6 @@ static void cth_tokeniser_op__if(
   const cth_tokT required_prev = tok == CTH_TOK__ELSE? CTH_TOK__IF: CTH_TOK__QUESTION;
   cth_tokT top = CTH_TOK__NONE;
   if(!vfastarr_top(tokeniser->ops, &top, sizeof(top)) || top != required_prev){
-    printf("top is %u, size of ops is %lu.\n", top, vfastarr_size(tokeniser->ops));
     const cth_error_typeT err_type = tok == CTH_TOK__ELSE? CTH_ERROR__IF_ELSE_NO_PREV: CTH_ERROR__IF_TERNARY_ELSE_NO_PREV;
     cth_error_report(err_type, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return;
@@ -52,6 +51,47 @@ static void cth_tokeniser_op__if(
   node->data._if.condition = condition;
 
   tokeniser->values = vfastarr_append(tokeniser->values, &node, sizeof(node));
+}
+
+// tokenises if statement/code correctly.
+static const char* cth_tokenise__if(
+  cth_tokeniserT* const restrict tokeniser, const char* restrict code,
+  rcT* const restrict path, cth_error_ctxT* const restrict err
+){
+  {
+    cth_tokT tok;
+    do{
+      size_t len;
+      tok = cth_tok(code, &len);
+      if(
+        tok == CTH_TOK__OPENED_SINGLE_LINE_COMMENT ||
+        tok == CTH_TOK__OPENED_MULTI_LINE_COMMENT ||
+        tok == CTH_TOK__OPENED_ROUND_BRACKET ||
+        tok == CTH_TOK__WHITESPACE ||
+        tok == CTH_TOK__NEWLINE
+      )
+        code = cth_tokeniser_dispatch(code, tok, len, tokeniser, path, err);
+      else{
+        cth_error_report(CTH_ERROR__IF_NO_ROUND_BRACKET, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+        return code + len;
+      }
+    } while(tok != CTH_TOK__OPENED_ROUND_BRACKET);
+  }
+  {
+    signed depth = 1;
+    do{
+      size_t len;
+      const cth_tokT tok = cth_tok(code, &len);
+      if(tok == CTH_TOK__OPENED_ROUND_BRACKET) depth++; else
+      if(tok == CTH_TOK__CLOSED_ROUND_BRACKET) depth--;
+      code = cth_tokeniser_dispatch(code, tok, len, tokeniser, path, err);
+    } while(depth);
+  }
+  cth_tokT _if = CTH_TOK__IF;
+  tokeniser->ops = vfastarr_append(tokeniser->ops, &_if, sizeof _if);
+  tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
+
+  return code;
 }
 
 #endif

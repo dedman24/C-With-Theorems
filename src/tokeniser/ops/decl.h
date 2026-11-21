@@ -32,7 +32,7 @@ static struct cth_tokeniser_op__declaration_master_typeS cth_tokeniser_op__decla
 }
 
 // handles declarations & their syntax.
-static const char* cth_tokeniser_op__declaration(
+static const char* cth_tokenise__declarations(
   cth_tokeniserT* const restrict tokeniser, const char* restrict code,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
@@ -177,7 +177,7 @@ static const char* cth_tokeniser_op__declaration(
   return code;
 }
 
-static const char* cth_tokeniser_op__typedef(
+static const char* cth_tokenise__typedefs(
   cth_tokeniserT* const restrict tokeniser, const char* restrict code,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){

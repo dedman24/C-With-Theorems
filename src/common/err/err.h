@@ -31,6 +31,7 @@ enum{
   CTH_IMPOSSIBILITY__MISSING_SRC              = 6,
   CTH_IMPOSSIBILITY__TYPECHECK_TOP_LVL        = 7,
   CTH_IMPOSSIBILITY__TYPECHECK_TOP_LVL2       = 8,
+  CTH_IMPOSSIBILITY__PROGRAM_NULL             = 9,
 };
 
 // lovely way of handling errors, isn't it?
@@ -41,8 +42,11 @@ typedef enum{
   CTH_ERROR__EXPECTED_EXPRESSION,
   CTH_ERROR__EXPECTED_IDENTIFIER,
 
+  CTH_ERROR__CLOSED_ROUND_BRACKET,
+
   CTH_ERROR__IF_WRONG,
   CTH_ERROR__IF_ELSE_NO_PREV,
+  CTH_ERROR__IF_NO_ROUND_BRACKET,
   CTH_ERROR__IF_TERNARY_WRONG,
   CTH_ERROR__IF_TERNARY_ELSE_NO_PREV,
 
@@ -123,8 +127,11 @@ const char* const restrict cth_error_strings[] = {
   [CTH_ERROR__EXPECTED_EXPRESSION]            = "expected expression.\n",
   [CTH_ERROR__EXPECTED_IDENTIFIER]            = "expected identifier.\n",
 
+  [CTH_ERROR__CLOSED_ROUND_BRACKET]           = "closed round bracket has no respective opened round bracket.\n",
+
   [CTH_ERROR__IF_WRONG]                       = "if statement is constructed erroneously.\n",
   [CTH_ERROR__IF_ELSE_NO_PREV]                = "'else' keyword not preceded by 'if'.\n",
+  [CTH_ERROR__IF_NO_ROUND_BRACKET]            = "if statement not followed by round bracket.\n",
   [CTH_ERROR__IF_TERNARY_WRONG]               = "ternary if statement is constructed erroneously.\n",
   [CTH_ERROR__IF_TERNARY_ELSE_NO_PREV]        = "':' keyword not preceded by '?', not label either.\n",
 

@@ -35,6 +35,33 @@ static const char* cth_tokeniser_op__closed_curly_bracket(
   return code + len;
 }
 
+static const char* cth_tokeniser_op__opened_round_bracket(
+  cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
+  rcT* const restrict path, cth_error_ctxT* const restrict err
+){
+  tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
+  cth_tokT opened = CTH_TOK__OPENED_ROUND_BRACKET;
+  tokeniser->ops = vfastarr_append(tokeniser->ops, &opened, sizeof opened);
+  return code + len;
+}
+
+static const char* cth_tokeniser_op__closed_round_bracket(
+  cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
+  rcT* const restrict path, cth_error_ctxT* const restrict err
+){
+  tokeniser->state &= ~CTH_TOKENISER__UNARY_ALLOWED;
+  while(1){
+    cth_tokT tok;
+    if(!vfastarr_pop(tokeniser->ops, &tok, sizeof tok)){
+      cth_error_report(CTH_ERROR__CLOSED_ROUND_BRACKET, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+      break;
+    }
+    if(tok == CTH_TOK__OPENED_ROUND_BRACKET) break;
+    cth_tokeniser_dispatch__ast(tok, tokeniser, path, err);
+  }
+  return code + len;
+}
+
 static const char* cth_tokeniser_op__comment_single(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err

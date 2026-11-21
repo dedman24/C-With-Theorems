@@ -34,30 +34,33 @@ static const char* cth_tokeniser_dispatch(
   const char* restrict code, cth_tokT tok, const size_t len, cth_tokeniserT* const restrict tokeniser, 
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(!(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME) && tok < CTH_TOK__NONE && tok != CTH_TOK__SEMICOLON){
-    tok = cth_tokeniser_unary_tok(tok);
-    if(tok == CTH_TOK__NONE){
-      cth_error_report(CTH_ERROR__TOKENISER_INVALID_UNARY, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
-      return code + len;
-    }
-  }
 // special cases to be handled on their own.
   switch(tok){
     case CTH_TOK__OPENED_SINGLE_LINE_COMMENT: return cth_tokeniser_op__comment_single(tokeniser, code, len, path, err);
     case CTH_TOK__OPENED_MULTI_LINE_COMMENT: return cth_tokeniser_op__comment_multi(tokeniser, code, len, path, err);
     case CTH_TOK__OPENED_CURLY_BRACKET: return cth_tokeniser_op__opened_curly_bracket(tokeniser, code, len, path, err);
     case CTH_TOK__CLOSED_CURLY_BRACKET: return cth_tokeniser_op__closed_curly_bracket(tokeniser, code, len, path, err);
+    case CTH_TOK__OPENED_ROUND_BRACKET: return cth_tokeniser_op__opened_round_bracket(tokeniser, code, len, path, err);
+    case CTH_TOK__CLOSED_ROUND_BRACKET: return cth_tokeniser_op__closed_round_bracket(tokeniser, code, len, path, err);
     case CTH_TOK__WHITESPACE: return cth_tokeniser_op__whitespace(tokeniser, code, len, path, err);
     case CTH_TOK__NEWLINE: return cth_tokeniser_op__newline(tokeniser, code, len, path, err);
-    case CTH_TOK__TYPEDEF: return cth_tokeniser_op__typedef(tokeniser, code + len, path, err);
+    case CTH_TOK__TYPEDEF: return cth_tokenise__typedefs(tokeniser, code + len, path, err);
     case CTH_TOK__STRING: cth_tokeniser_op__string(tokeniser, code, len, path, err); break;
     case CTH_TOK__VALUE: cth_tokeniser_op__value(tokeniser, code, len, path, err); break;
     case CTH_TOK__CHAR: cth_tokeniser_op__char(tokeniser, code, len, path, err); break;
     case CTH_TOK__NAME: return cth_tokeniser_op__name(tokeniser, code, len, path, err);
+    case CTH_TOK__IF: return cth_tokenise__if(tokeniser, code + len, path, err);
     case CTH_TOK__NONE:
       cth_error_report(CTH_ERROR__TOKENISER_UNKNOWN_TOKEN, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
       return code + len;
     default:
+      if(tokeniser->state & CTH_TOKENISER__UNARY_ALLOWED && tok != CTH_TOK__SEMICOLON){
+        tok = cth_tokeniser_unary_tok(tok);
+        if(tok == CTH_TOK__NONE){
+          cth_error_report(CTH_ERROR__TOKENISER_INVALID_UNARY, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
+          return code + len;
+        }
+      }
       if(cth_tokeniser__operand_qualifs(tok, tokeniser, path, err)) break;
       const size_t cnt_top = vfastarr_elcnt(tokeniser->ops, sizeof(*tokeniser->ops));
       if(cnt_top){
@@ -72,7 +75,7 @@ static const char* cth_tokeniser_dispatch(
         } while(cth_priority[top] > cth_priority[tok]);
       }
     SKIP_PRIO:
-      tokeniser->state &= ~CTH_TOKENISER__PREV_WAS_NAME;
+      tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
       
       if(tok == CTH_TOK__SEMICOLON) 
           cth_tokeniser_op__semicolon(tokeniser);

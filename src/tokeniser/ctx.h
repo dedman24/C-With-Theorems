@@ -19,13 +19,17 @@ typedef struct{
   cth_fposT offset;
 // tokeniser is a state machine; perhaps this introduces technical debt, but I like it :DDD.
   enum{
-  // example of states; TODO: implement actual state stuff.
     CTH_TOKENISER__NONE           =  0,
+// rough diagram of state machine.
+// CTH_TOKENISER__UNARY_ALLOWED --names-> CTH_TOKENISER__PREV_WAS_NAME
+//              |               <--ops---                  ^ (through names)
+//              \-closed bracket---> CTH_TOKENISER__NONE --/
     CTH_TOKENISER__PREV_WAS_NAME  = (1<<0),
-    CTH_TOKENISER__FOR            = (1<<1),
-    CTH_TOKENISER__WHILE          = (1<<2),
-    CTH_TOKENISER__DECLARATION    = (1<<3),
-    CTH_TOKENISER__TYPEDEF        = (1<<4)
+    CTH_TOKENISER__UNARY_ALLOWED  = (1<<1),
+    CTH_TOKENISER__FOR            = (1<<2),
+    CTH_TOKENISER__WHILE          = (1<<3),
+    CTH_TOKENISER__DECLARATION    = (1<<4),
+    CTH_TOKENISER__TYPEDEF        = (1<<5)
   } state;
 // data in state.
   struct{
@@ -44,9 +48,7 @@ static void cth_tokeniser_init(cth_tokeniserT* const restrict tokeniser){
   tokeniser->line = 0;
   tokeniser->offset = 0;
 
-  tokeniser->state = CTH_TOKENISER__NONE;
-// doesn't really have to be initialised.
-//  tokeniser->type = 0;
+  tokeniser->state = CTH_TOKENISER__UNARY_ALLOWED;
 }
 
 // tokeniser ctx always assumed to be statically allocated.
@@ -72,6 +74,11 @@ static cth_outputT cth_tokeniser_destroy(
 
 static const char* cth_tokeniser_dispatch(
   const char* restrict code, const cth_tokT tok, const size_t len, cth_tokeniserT* const restrict tokeniser, 
+  rcT* const restrict path, cth_error_ctxT* const restrict err
+);
+
+static void cth_tokeniser_dispatch__ast(
+  const cth_tokT tok, cth_tokeniserT* const restrict tokeniser, 
   rcT* const restrict path, cth_error_ctxT* const restrict err
 );
 

@@ -18,7 +18,7 @@
 > `BEGIN snca;`
 
 while not on cth, I'm actually working pretty hard.\
-I want to keep this up.
+I want to keep this up
 
 I broke my github streak TwT...\
 my fault since I couldn't add scopes yesterday but scopes are quite a lot of stuff already.

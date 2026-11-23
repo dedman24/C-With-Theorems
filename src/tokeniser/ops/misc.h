@@ -1,7 +1,7 @@
 #ifndef CTH_TOKENISER_OPS_MISC_H_INCLUDED
 #define CTH_TOKENISER_OPS_MISC_H_INCLUDED
 
-#include "../ctx.h"             // tokeniserT.
+#include "_includes.h"
 
 static const char* cth_tokeniser_op__whitespace(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
@@ -23,6 +23,7 @@ static const char* cth_tokeniser_op__opened_curly_bracket(
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
   cth_name_depth_inc(&tokeniser->name);
+  cth_tokeniser_scope_inc(tokeniser);
   return code + len;
 }
 
@@ -30,7 +31,7 @@ static const char* cth_tokeniser_op__closed_curly_bracket(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(!cth_name_depth_dec(&tokeniser->name))
+  if(!cth_name_depth_dec(&tokeniser->name) || !cth_tokeniser_scope_dec(tokeniser))
     cth_error_report(CTH_ERROR__INDENTATION_DEPTH_NEGATIVE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   return code + len;
 }
@@ -39,9 +40,9 @@ static const char* cth_tokeniser_op__opened_round_bracket(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
+  tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
   cth_tokT opened = CTH_TOK__OPENED_ROUND_BRACKET;
-  tokeniser->ops = vfastarr_append(tokeniser->ops, &opened, sizeof opened);
+  cth_tokeniser_ops_push(tokeniser, opened);
   return code + len;
 }
 
@@ -49,7 +50,7 @@ static const char* cth_tokeniser_op__closed_round_bracket(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  tokeniser->state &= ~CTH_TOKENISER__UNARY_ALLOWED;
+  tokeniser->e_state &= ~CTH_TOKENISER__UNARY_ALLOWED;
   while(1){
     cth_tokT tok;
     if(!vfastarr_pop(tokeniser->ops, &tok, sizeof tok)){
@@ -117,25 +118,16 @@ static const char* cth_tokeniser_op__comment_multi(
 
 // appends whatever value still present to program.
 static void cth_tokeniser_op__semicolon(cth_tokeniserT* const restrict tokeniser){
-  const size_t start_program = vfastarr_elcnt(tokeniser->program->data.program.program, sizeof(*tokeniser->program->data.program.program));
-  const size_t c_elem = vfastarr_elcnt(tokeniser->values, sizeof(*tokeniser->values));
-  tokeniser->program->data.program.program = vfastarr_extend(tokeniser->program->data.program.program, c_elem, sizeof(*tokeniser->program->data.program.program));
-
-  for(size_t i = 0; i < c_elem; i++){
-    const cth_nameT name = tokeniser->values[i];
-    if(name & 1){
-      cth_astT* const restrict node = cth_ast_init(CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
-      tokeniser->program->data.program.program[start_program + i] = node;
-      node->data.id = name;
-    }
-    else{
-      cth_astT* const restrict node = (cth_astT*)name;
-      tokeniser->program->data.program.program[start_program + i] = node;
-    }
-  }
-  vfastarr_remove(tokeniser->values, c_elem*sizeof(*tokeniser->values));
 // all persistent tokeniser state is cleared.
-  tokeniser->state = 0;
+  const size_t c_values = cth_tokeniser_values_count(tokeniser);
+
+  for(size_t i = 0; i < c_values; i++){
+    cth_astT* const node = cth_ast_make_id(tokeniser->values[i], tokeniser->line, tokeniser->offset);
+    cth_tokeniser_program_push(tokeniser, node);
+  }
+
+  vfastarr_remove(tokeniser->values, sizeof(*tokeniser->values)*c_values);
+  tokeniser->e_state = CTH_TOKENISER_STATE_INIT;
 }
 
 #endif

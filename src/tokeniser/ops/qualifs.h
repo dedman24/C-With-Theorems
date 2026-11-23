@@ -1,7 +1,7 @@
 #ifndef CTH_TOKENISER_OPS_QUALIFS_H_INCLUDED
 #define CTH_TOKENISER_OPS_QUALIFS_H_INCLUDED
 
-#include "../ctx.h"
+#include "_includes.h"
 #include "../../interpreter/ops/typecheck.h"
 
 struct cth_tokeniser_op__qualifierS{

@@ -1,22 +1,29 @@
-### Changelog 2026/11/21.
- - added round bracket handling in arithmetic expressions, no funcalls yet but adding them wouldn't be that hard.
- - added full if-operator support, no if statement yet.
- - something like `true if 200 else 300;` (if version of `true? 200: 300;`) doesn't work anymore.
+### Changelog 2026/11/23.
+ - added proof in cth of sqrt(2) being irrational in `examples/sqrt2.cth`.
+ - reworked variable output.
+ - added statement/code block support.
+ - started work on better tokeniser scoping model.
+ - added `!:` token to express an element not being of some type.
+ - removed name ctx, added what remained as separate thing in tokeniser.
 
 ### pending changes.
+ - rework semicolon.
+ - add code block support to `if` statements and in generic expressions (like in rust).
  - arrays.
- - full subtyping system.
- - stricter type compatibility.
+ - proper subtyping.
+ - stricter type compatibility algorithm.
  - reusing old types in `cth_tokeniser_op__declaration_master_type`.
  - certain compound qualifiers (like `immut` & `const`) should be incompatible.
 
 > `BEGIN snca;`
 
-I need to work harder.\
-I truly believe cth can be something huge. after all, what other imperative language supports dependent typing & formal verification?\
-_none_.
+while not on cth, I'm actually working pretty hard.\
+I want to keep this up.
 
-LORD help us all.
+I broke my github streak TwT...\
+my fault since I couldn't add scopes yesterday but scopes are quite a lot of stuff already.
+
+I really want to finish this by tmrw. I'll work hard.
 
 > `END snca;`
 
@@ -32,9 +39,10 @@ LORD help us all.
  - `void`, `void*` types.
  - structs, unions, enums.
  - function types, function calls.
+ - function polymorphism.
  - working include stuff with `include` operator.
  - more ops (arithmetic & non).
  - looping constructs.
- - operator overrides.
+ - operator overriding.
  - subtyping support fully replacing current type compatibility handling.
  - explicit type conversions added in AST at typechecking.

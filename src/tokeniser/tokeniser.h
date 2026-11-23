@@ -1,9 +1,9 @@
 #ifndef CTH_TOKENISER_H_INCLUDED
 #define CTH_TOKENISER_H_INCLUDED
 
-#include "ctx.h"                    // interpreter ctx.
-#include "name.h"                   // name handling.
 #include "ops/_ops.h"               // tokeniser ops.
+#include "name/name.h"              // name handling.
+#include "tokeniser/ctx.h"          // interpreter ctx.
 #include "../common/_common.h"      // tokens et cetera.
 
 // stdlib includes.
@@ -64,8 +64,8 @@ static const char* cth_tokenise__include(
     tokeniser->program = NULL;
     cth_tokenise__single(finalcode.code, tokeniser, finalpath, err);
     cth_load__unmap(finalcode);
-
-    new = tokeniser->program; tokeniser->program = old;
+// I REALLY need to fix this.
+    new = tokeniser->program[0]; tokeniser->program = old;
 //    *success = vfastbst_rc_node_init(finalpath, (cth_nameT)new);
   }
 //  else
@@ -117,8 +117,8 @@ static cth_outputT cth_tokenise__repl(
   cth_tokenise__single(code, tokeniser, rc_path, err);
   rc_disown(rc_path);
 
-  cth_outputT tokenised = (cth_outputT*)tokeniser->program;
-  tokeniser->program = cth_ast_init(CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM);
+  cth_outputT tokenised = (cth_outputT*)tokeniser->program[0];
+  tokeniser->program[0] = cth_ast_init(CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM);
 // result of tokenisation.
   return tokenised;
 }

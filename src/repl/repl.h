@@ -21,78 +21,67 @@
 // posix stuff.
 #include "unistd.h"             // isatty.
 
-static void cth_repl__result(cth_variableT** const restrict variables, cth_variable_ctxT* const restrict ctx){
-  const size_t c_vars = vfastarr_elcnt(variables, sizeof(*variables));
-
-  for(size_t i = 0; i < c_vars; i++){
-    cth_variableT* const var = variables[i];
-    if(var == NULL){
-      fprintf(stdout, "NULL :: NULL");
-      if(i != c_vars - 1)
-        fputs(", ", stdout);
-      continue;
-    }
-    const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(var->type->internal.type->tree);
-    switch(top.dispatch){
-      case CTH_TYPE__U8:  fprintf(stdout, "%u",  var->internal.u8); break;
-      case CTH_TYPE__U16: fprintf(stdout, "%u",  var->internal.u16); break;
-      case CTH_TYPE__U32: fprintf(stdout, "%u",  var->internal.u32); break;
-      case CTH_TYPE__U64: fprintf(stdout, "%lu", var->internal.u64); break;
-
-      case CTH_TYPE__I8:  fprintf(stdout, "%d",  var->internal.i8); break;
-      case CTH_TYPE__I16: fprintf(stdout, "%d",  var->internal.i16); break;
-      case CTH_TYPE__I32: fprintf(stdout, "%d",  var->internal.i32); break;
-      case CTH_TYPE__I64: fprintf(stdout, "%ld", var->internal.i64); break;
-
-      case CTH_TYPE__F32: fprintf(stdout, "%f", var->internal.f32); break;
-      case CTH_TYPE__F64: fprintf(stdout, "%f", var->internal.f64); break;
-
-      case CTH_TYPE__BOOLEAN:
-        if(var->internal.boolean)
-          fputs(cth_variable_name__true, stdout);
-        else
-          fputs(cth_variable_name__false, stdout);
-        break;
-      case CTH_TYPE__QUALIFIER:
-        size_t s_str_qualif;
-        char* const restrict str_qualif = cth_qualif_str_construct(NULL, var, 0, ctx, &s_str_qualif);
-        if(!str_qualif) break;
-
-        fputs(str_qualif, stdout);
-        vfastarr_destroy(str_qualif);
-        break;
-      case CTH_TYPE__TYPE:
-        size_t s_str_type;
-        char* const restrict str_type = cth_type_str_construct(var->internal.type->tree, ctx, &s_str_type);
-
-        fputs(str_type, stdout);
-        vfastarr_destroy(str_type);
-        break;
-      case CTH_QUALIFIER__PTR:
-      case CTH_QUALIFIER__REF:
-        if(var->internal.ptr)
-          fprintf(stdout, "%" PRIuPTR, var->internal.ptr);
-        else
-          fputs("NULL", stdout);
-        break;
-      default:
-        fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
-    }
-    fputs(" :: ", stdout);
-    {
-      size_t s_type_name;
-      char* const restrict type_name = cth_type_str_construct(var->type->internal.type->tree, ctx, &s_type_name);
-      printf("%.*s", (int)s_type_name, type_name);
-      vfastarr_destroy(type_name);
-    }
-
-    if(i != c_vars - 1)
-      fputs(", ", stdout);
-
-    if(var->state & CTH_VARSTATE__FREEALL)
-      cth_variable_destroy(var);
+static void cth_repl__result(cth_variableT* const restrict var, cth_variable_ctxT* const restrict ctx){
+  if(var == NULL){
+    fprintf(stdout, "NULL :: NULL\n");
+    return;
   }
-  if(c_vars) fputc('\n', stdout);
+  const struct cth_typecheck_top_lvl_getS top = cth_typecheck_top_lvl_get(var->type->internal.type->tree);
+  switch(top.dispatch){
+    case CTH_TYPE__U8:  fprintf(stdout, "%u",  var->internal.u8); break;
+    case CTH_TYPE__U16: fprintf(stdout, "%u",  var->internal.u16); break;
+    case CTH_TYPE__U32: fprintf(stdout, "%u",  var->internal.u32); break;
+    case CTH_TYPE__U64: fprintf(stdout, "%lu", var->internal.u64); break;
+
+    case CTH_TYPE__I8:  fprintf(stdout, "%d",  var->internal.i8); break;
+    case CTH_TYPE__I16: fprintf(stdout, "%d",  var->internal.i16); break;
+    case CTH_TYPE__I32: fprintf(stdout, "%d",  var->internal.i32); break;
+    case CTH_TYPE__I64: fprintf(stdout, "%ld", var->internal.i64); break;
+
+    case CTH_TYPE__F32: fprintf(stdout, "%f", var->internal.f32); break;
+    case CTH_TYPE__F64: fprintf(stdout, "%f", var->internal.f64); break;
+
+    case CTH_TYPE__BOOLEAN:
+      if(var->internal.boolean)
+        fputs(cth_variable_name__true, stdout);
+      else
+        fputs(cth_variable_name__false, stdout);
+      break;
+    case CTH_TYPE__QUALIFIER:
+      size_t s_str_qualif;
+      char* const restrict str_qualif = cth_qualif_str_construct(NULL, var, 0, ctx, &s_str_qualif);
+      if(!str_qualif) break;
+
+      fputs(str_qualif, stdout);
+      vfastarr_destroy(str_qualif);
+      break;
+    case CTH_TYPE__TYPE:
+      size_t s_str_type;
+      char* const restrict str_type = cth_type_str_construct(var->internal.type->tree, ctx, &s_str_type);
+
+      fputs(str_type, stdout);
+      vfastarr_destroy(str_type);
+      break;
+    case CTH_QUALIFIER__PTR:
+    case CTH_QUALIFIER__REF:
+      if(var->internal.ptr)
+        fprintf(stdout, "%" PRIuPTR, var->internal.ptr);
+      else
+        fputs("NULL", stdout);
+      break;
+    default:
+      fputs("sorry, output of this type isn't implemented yet :PPP.\n", stderr);
+  }
+  fputs(" :: ", stdout);
+  {
+    size_t s_type_name;
+    char* const restrict type_name = cth_type_str_construct(var->type->internal.type->tree, ctx, &s_type_name);
+    printf("%.*s", (int)s_type_name, type_name);
+    vfastarr_destroy(type_name);
+  }
+  fputc('\n', stdout);
+  if(var->state & CTH_VARSTATE__FREEALL)
+    cth_variable_destroy(var);
 }
 
 static void cth_repl__line(const char* const restrict code, cth_tokeniserT* const restrict tokeniser){
@@ -102,10 +91,9 @@ static void cth_repl__line(const char* const restrict code, cth_tokeniserT* cons
   cth_error_ctxT err; cth_error_ctx_init(&err);
   cth_outputT tokenised = cth_tokenise__repl(code, "repl", tokeniser, &err);
 
-  cth_variableT** const restrict output = cth_interpret(tokenised, tokeniser->name.variables, NULL, &err);
+  cth_variableT* const restrict output = cth_interpret(tokenised, tokeniser->name.variables, NULL, &err);
   cth_repl__result(output, tokeniser->name.variables);
 
-  vfastarr_destroy(output);
   cth_ast_destroy(tokenised);
   cth_error_print(&err, false);
 }

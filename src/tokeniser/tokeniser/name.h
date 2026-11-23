@@ -1,9 +1,11 @@
 #ifndef CTH_TOKENISER_NAME_H_INCLUDED
 #define CTH_TOKENISER_NAME_H_INCLUDED
 
-#include "types/chars.h"                  // char, string escape sequence handling.
-#include "types/vtypes.h"                 // value types.
-#include "../common/_common.h"            // error handling & more.
+#include "ctx.h"
+#include "../types/chars.h"               // char, string escape sequence handling.
+#include "../types/vtypes.h"              // value types.
+#include "../tokeniser/scope.h"           // scopes & stuff.
+#include "../../common/_common.h"         // error handling & more.
 
 // stdlib includes.
 #include "stddef.h"                       // size_t, NULL.
@@ -15,118 +17,6 @@
 enum{
   CTH_NAME_PFIX__TYPE = 0
 };
-
-typedef struct{
-  cth_variable_ctxT* variables;   // NOTE: remember to extract this before deleting the whole name ctx.
-  vfastbst_strT* names;
-  vfastbst_strT values;
-} cth_name_ctxT;
-
-static void cth_name_ctx_init(cth_name_ctxT* const restrict name){
-  name->variables = cth_variable_ctx_init(NULL);
-  name->names = vfastarr_init(sizeof(*name->names));
-  name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
-
-  vfastbst_str_put(&name->names[0], cth_variable_name__NULL,  strlen(cth_variable_name__NULL),  CTH_NAME__NULL);
-  vfastbst_str_put(&name->names[0], cth_variable_name__true,  strlen(cth_variable_name__true),  CTH_NAME__TRUE);
-  vfastbst_str_put(&name->names[0], cth_variable_name__false, strlen(cth_variable_name__false), CTH_NAME__FALSE);
-
-  for(size_t i = CTH_TYPE_MIN; i < CTH_TYPE_MAX; i += 2)
-    vfastbst_str_put(&name->names[0], cth_type__strings[i], strlen(cth_type__strings[i]), i);
-  for(size_t i = CTH_QUALIFIER_MIN; i < CTH_QUALIFIER_MAX; i += 2)
-    vfastbst_str_put(&name->names[0], cth_qualifier__strings[i], strlen(cth_qualifier__strings[i]), i);
-
-  name->values = VFASTBST_STR_INIT;
-}
-
-// destroys name ctx, returns whether ctxdepth is 0 or not.
-static bool cth_name_ctx_destroy(cth_name_ctxT* const restrict name, const bool freectx){
-  const size_t ctxdepth = vfastarr_elcnt(name->names, sizeof(*name->names));
-  for(size_t i = 0; i < ctxdepth; i++)
-    vfastbst_str_destroy(&name->names[i]);
-
-  vfastarr_destroy(name->names);
-  vfastbst_str_destroy(&name->values);
-  if(freectx) free(name);
-
-  return ctxdepth == 1;
-}
-
-static void cth_name_depth_inc(cth_name_ctxT* const restrict name){
-  name->names = vfastarr_append(name->names, &VFASTBST_STR_INIT, sizeof(*name->names));
-}
-
-// returns false if depth goes below 0.
-static bool cth_name_depth_dec(cth_name_ctxT* const restrict name){
-  const size_t elcnt = vfastarr_elcnt(name, sizeof(*name));
-  if(!elcnt) return false;
-
-  vfastbst_str_destroy(&name->names[elcnt-1]);
-  vfastarr_pop(name->names, NULL, sizeof(*name->names));
-  return true;
-}
-
-static size_t cth_name_depth(cth_name_ctxT* const restrict name){
-  return vfastarr_elcnt(name, sizeof(*name));
-}
-
-struct cth_name_addS{
-  cth_nameT id;
-  cth_variableT* var;
-};
-
-// searches for name, creates nameT if it doesn't find any.
-// returns .var field set to NULL if it already exists.
-static struct cth_name_addS cth_name_add(const char* const restrict key, const size_t s_key, const cth_nameT type, const cth_variable_stateT state, cth_name_ctxT* const restrict name){
-  const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
-
-  vfastbst_str_nodeT** restrict curr_node = NULL;
-  for(size_t i = c_scopes - 1; i != -1; i--){
-    curr_node = vfastbst_str_put_half(&name->names[i], key, s_key);
-    if(*curr_node)
-      return (struct cth_name_addS){ .id = (*curr_node)->obj, .var = NULL };
-  }
-
-// 'signed', 'unsigned' are not actual valid types values can assume, they're aliases of 'int' & 'unsigned int' when it's relevant.
-  cth_variableT* const typevar = 
-    type == CTH_TYPE__SIGNED?   cth_typevar(CTH_TYPE__INT):
-    type == CTH_TYPE__UNSIGNED? cth_typevar(CTH_TYPE__UINT):
-    cth_variable_search(name->variables, type);
-
-  const cth_nameT id = cth_variable_name(name->variables);
-  *curr_node = vfastbst_str_node_init(key, s_key, id);
-  cth_variableT* const var = cth_variable_add(name->variables, id, key, s_key, typevar, state);
-  return (struct cth_name_addS){ .id = id, .var = var };
-}
-
-// adds name alias to given variable.
-// returns 0 if successful, proper name if it isn't.
-static cth_nameT cth_name_alias(const char* const restrict key, const size_t s_key, const cth_nameT aliased, cth_name_ctxT* const restrict name){
-  const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
-
-  vfastbst_str_nodeT** restrict curr_node = NULL;
-  for(size_t i = c_scopes - 1; i != -1; i--){
-    curr_node = vfastbst_str_put_half(&name->names[i], key, s_key);
-    if(*curr_node)
-      return (*curr_node)->obj;
-  }
-  *curr_node = vfastbst_str_node_init(key, s_key, aliased);
-  return 0;
-}
-
-// searches for name by string, returns 0 on error.
-static cth_nameT cth_name_search(const char* const restrict key, const size_t s_key, const cth_name_ctxT* const restrict name){
-    const size_t c_scopes = vfastarr_elcnt(name->names, sizeof(*name->names));
-
-  vfastbst_str_nodeT** restrict curr_node = NULL;
-  for(size_t i = 0; i < c_scopes; i++){
-    const cth_nameT seek = vfastbst_str_search(&name->names[i], key, s_key);
-    if(seek)
-      return seek;
-  }
-
-  return 0;
-}
 
 // decodes binary string, returns 1 on success, 0 otherwise.
 static int cth_value_decode__binary(
@@ -253,7 +143,7 @@ static cth_variable__internalT* cth_value_decode(
 // searches for value, creates nameID if it doesn't find any.
 // returns 0 on error.
 static cth_nameT cth_value_add(
-  const char* const restrict data, const size_t s_data, cth_name_ctxT* const restrict name,
+  const char* const restrict data, const size_t s_data, cth_tokeniserT* const restrict tokeniser,
   cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
   size_t s_raw;
@@ -262,15 +152,15 @@ static cth_nameT cth_value_add(
   if(!raw)
     return 0;
 
-  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, (const char*)raw, s_raw);
+  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&tokeniser->immed, (const char*)raw, s_raw);
   if(*curr_node){
     free(raw);
     return (*curr_node)->obj;
   }
 
-  const cth_nameT id = cth_variable_name(name->variables);
+  const cth_nameT id = cth_variable_name(tokeniser->variables);
   *curr_node = vfastbst_str_node_init((char*)raw, s_raw, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables,
+  cth_variableT* const restrict var = cth_variable_add(tokeniser->variables,
     id,
     (const char*)raw, s_raw, cth_typevar(type_raw),                 // typevar is safe to be used here because value_decode is guaranteed to return a normal integer type.
     CTH_VARSTATE__FREENAME | CTH_VARSTATE__IMMEDIATE
@@ -281,43 +171,43 @@ static cth_nameT cth_value_add(
 }
 
 static cth_nameT cth_char_add(
-  const char* const restrict data, const size_t s_data, cth_name_ctxT* const restrict name,
+  const char* const restrict data, const size_t s_data, cth_tokeniserT* const restrict tokeniser,
   cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
   size_t s_raw;
   char* const restrict raw = malloc(1);
   *raw = cth_vtype_char(data, s_data, true, &s_raw, err, path, line, offset);
 
-  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
+  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&tokeniser->immed, raw, s_raw);
   if(*curr_node){
     free(raw);
     return (*curr_node)->obj;
   }
 
-  const cth_nameT id = cth_variable_name(name->variables);
+  const cth_nameT id = cth_variable_name(tokeniser->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, cth_typevar(CTH_TYPE__CHAR8), CTH_VARSTATE__IMMEDIATE);
+  cth_variableT* const restrict var = cth_variable_add(tokeniser->variables, id, raw, s_raw, cth_typevar(CTH_TYPE__CHAR8), CTH_VARSTATE__IMMEDIATE);
   var->internal.char8 = *raw;
 
   return id;
 }
 
 static cth_nameT cth_string_add(
-  const char* const restrict data, const size_t s_data, cth_name_ctxT* const restrict name,
+  const char* const restrict data, const size_t s_data, cth_tokeniserT* const restrict tokeniser,
   cth_error_ctxT* const restrict err, rcT* const restrict path, const cth_fposT line, const cth_fposT offset
 ){
   size_t s_raw;
   char* const restrict raw = cth_vtype_string(data, s_data, &s_raw, err, path, line, offset);
 
-  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&name->values, raw, s_raw);
+  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&tokeniser->immed, raw, s_raw);
   if(*curr_node){
     free(raw);
     return (*curr_node)->obj;
   }
 
-  const cth_nameT id = cth_variable_name(name->variables);
+  const cth_nameT id = cth_variable_name(tokeniser->variables);
   *curr_node = vfastbst_str_node_init(raw, s_raw, id);
-  cth_variableT* const restrict var = cth_variable_add(name->variables, id, raw, s_raw, cth_typevar(CTH_TYPE__STRING), CTH_VARSTATE__IMMEDIATE);
+  cth_variableT* const restrict var = cth_variable_add(tokeniser->variables, id, raw, s_raw, cth_typevar(CTH_TYPE__STRING), CTH_VARSTATE__IMMEDIATE);
   var->internal.string = rc_make(raw);
 
   return id;

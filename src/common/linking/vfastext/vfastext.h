@@ -20,7 +20,10 @@ typedef struct{
 void vfastext_destroy(vfastextT* const restrict ctx);
 void vfastext_init(vfastextT* const restrict ctx, const size_t s_elem);
 void vfastext_append(vfastextT* const restrict ctx, const void* const restrict elem, const size_t s_elem);
+bool vfastext_remove(vfastextT* const restrict ctx, const size_t s_data);
 void* vfastext_extract(vfastextT* const restrict ctx);
+size_t vfastext_sizeof(vfastextT* const restrict ctx);
+size_t vfastext_countof(vfastextT* const restrict ctx, const size_t s_elem);
 
 #endif
 
@@ -50,8 +53,22 @@ void vfastext_append(vfastextT* const restrict ctx, const void* const restrict e
   ctx->size += s_elem;
 }
 
+bool vfastext_remove(vfastextT* const restrict ctx, const size_t s_data){
+  if(ctx->size < s_data) return false;
+  ctx->size -= s_data;
+  return true;
+}
+
 void* vfastext_extract(vfastextT* const restrict ctx){
   return ctx->arr;
+}
+
+size_t vfastext_sizeof(vfastextT* const restrict ctx){
+  return ctx.size;
+}
+
+size_t vfastext_countof(vfastextT* const restrict ctx, const size_t s_elem){
+  return ctx.size/s_elem;
 }
 
 #endif

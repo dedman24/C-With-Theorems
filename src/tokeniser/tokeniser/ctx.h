@@ -3,20 +3,20 @@
 
 // tokeniser ctx.
 
-#include "name.h"
-#include "../common/tok.h"
-#include "../interpreter/ast.h"
+#include "scope.h"
+
+#include "../../common/tok.h"
+#include "../../interpreter/ast.h"
 
 typedef struct{
-  cth_tokT* ops;
-  cth_nameT* values;
-  cth_astT* program;
-
-  cth_name_ctxT name;
+  cth_variable_ctxT* variables;       // variable data.
+  cth_tokeniser_scopeT scope;         // scope data.
+  vfastbst_strT immed;                // raw immediates, have no scope.
   vfastbst_rcT files;
 
   cth_fposT line;
   cth_fposT offset;
+// e_state is the enum holding tokeniser state in cth.
 // tokeniser is a state machine; perhaps this introduces technical debt, but I like it :DDD.
   enum{
     CTH_TOKENISER__NONE           =  0,
@@ -29,26 +29,21 @@ typedef struct{
     CTH_TOKENISER__FOR            = (1<<2),
     CTH_TOKENISER__WHILE          = (1<<3),
     CTH_TOKENISER__DECLARATION    = (1<<4),
-    CTH_TOKENISER__TYPEDEF        = (1<<5)
-  } state;
-// data in state.
-  struct{
-  } d_state;
+    CTH_TOKENISER__TYPEDEF        = (1<<5),
+
+    CTH_TOKENISER_STATE_INIT      = CTH_TOKENISER__UNARY_ALLOWED
+  } e_state;
 } cth_tokeniserT;
 
 static void cth_tokeniser_init(cth_tokeniserT* const restrict tokeniser){
-  tokeniser->ops = vfastarr_init(sizeof(*tokeniser->ops));
-  tokeniser->values = vfastarr_init(sizeof(*tokeniser->values));
-// sets tokeniser->program to this node.
-  tokeniser->program = cth_ast_init(CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM);
-
-  cth_name_ctx_init(&tokeniser->name);
+  cth_tokeniser_scope_init(&tokeniser->scope);
+  tokeniser->immed = VFASTBST_STR_INIT;
   tokeniser->files = VFASTBST_RC_INIT;
 
   tokeniser->line = 0;
   tokeniser->offset = 0;
 
-  tokeniser->state = CTH_TOKENISER__UNARY_ALLOWED;
+  tokeniser->e_state = CTH_TOKENISER_STATE_INIT;
 }
 
 // tokeniser ctx always assumed to be statically allocated.
@@ -60,16 +55,12 @@ static cth_outputT cth_tokeniser_destroy(
   cth_tokeniserT* const restrict tokeniser,  cth_variable_ctxT** variables,
   cth_error_ctxT* const restrict err, rcT* const restrict path
 ){
-  if(variables) *variables = tokeniser->name.variables;
-  else cth_variable_ctx_destroy(tokeniser->name.variables, true);
+  if(variables) *variables = tokeniser->variables;
+  else cth_variable_ctx_destroy(tokeniser->variables, true);
 
-  if(!cth_name_ctx_destroy(&tokeniser->name, false) && err)
-    cth_error_report(CTH_ERROR__INDENTATION_DEPTH_NEGATIVE, CTH_ERROR__COMPILER_DESTRUCTION, path, 0, 0, err);
-  vfastarr_destroy(tokeniser->ops);
-  vfastarr_destroy(tokeniser->values);
+  vfastbst_str_destroy(&tokeniser->immed);
   vfastbst_rc_destroy(&tokeniser->files);
-
-  return (cth_outputT)tokeniser->program;
+  return cth_tokeniser_scope_destroy(&tokeniser->scope);
 }
 
 static const char* cth_tokeniser_dispatch(

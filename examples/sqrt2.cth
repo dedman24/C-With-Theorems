@@ -1,0 +1,40 @@
+// we prove the square root of 2 is irrational assuming the following theorems:
+//  theorem make_nat_is_make_rat(rat_t x) -> make_rat(make_nat(x).num, make_nat(x).den) == x;
+//  theorem make_rat_even_frac(real_t x, theorem num_even(x) -> make_rat(x).num :: even_t, theorem den_even(x) -> make_rat(x).den :: even_t) -> x !: rat_t;
+// and the following functions:
+//  odd_t express_even_as_odd(even_t x);            // basic idea: returns that x == 2*k, with k :: odd_t.
+//
+// the basic proof works as:
+// if sqrt(2) is rational, it can be written as a/b for a::nat_t, b::nat_t.
+// 2 == a^2 / b^2.
+// a^2 == 2b^2.
+// if a^2 is even, a must be even and equal to some 2k.
+// 4k^2 = 2b^2.
+// b^2 = 2k^2 -> b must be even.
+// however if a, b are even, then a/b is not a rational number in its most simplified form and therefore sqrt(2) cannot be rational.
+
+// stdc.math is to be like lean's mathlib.
+namespace math = include stdc.math;
+
+// TODO: formalise steps, prettify proof.
+// however the proof is correct.
+
+theorem sqrt2_irrational() -> math.sqrt(2) !: math.rat_t {
+// what is 'assert' here? why can't one just write 'assert math.sqrt(2) :: math.rat_t == @error; return @refl;'?
+// when is 'assert' valid?
+// needed otherwse make_rat doesn't typecheck.
+  assert math.sqrt(2) :: math.rat_t;
+
+  math.nat_t a, b = math.make_rat(math.sqrt(2));
+// 2b^2 == a^2.
+  theorem equality = 
+    math.make_nat_is_make_rat(math.sqrt(2))
+      ~math.pow(2)
+      *math.pow(b, 2);
+  theorem a_even = even(a, equality);
+
+  theorem equality_even = equality~rewrite(express_even_as_odd(a_even))/2;        // 2k^2 == b^2.
+  theorem b_even = even(b, equality_even);                                        // proof b is even.
+
+  return make_rat_even_frac(math.sqrt(2), a_even, b_even);
+}

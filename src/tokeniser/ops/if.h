@@ -23,20 +23,20 @@ static void cth_tokeniser_op__if(
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
   const cth_tokT required_prev = tok == CTH_TOK__ELSE? CTH_TOK__IF: CTH_TOK__QUESTION;
-  cth_tokT top = CTH_TOK__NONE;
-  if(!vfastarr_top(tokeniser->ops, &top, sizeof(top)) || top != required_prev){
+  const cth_tokT top = cth_tokeniser_scope_ops_top(&tokeniser->scope);
+  if(top == CTH_TOK__NONE || top != required_prev){
     const cth_error_typeT err_type = tok == CTH_TOK__ELSE? CTH_ERROR__IF_ELSE_NO_PREV: CTH_ERROR__IF_TERNARY_ELSE_NO_PREV;
     cth_error_report(err_type, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return;
   }
-  vfastarr_remove(tokeniser->ops, sizeof(*tokeniser->ops));
+  cth_tokeniser_scope_ops_remove(&tokeniser->scope, 1);
 // CTH_TOK__IF, CTH_TOK__QUESTION behave the exact same in operations. we use CTH_TOK__IF for both in the AST node.
   cth_astT* node = cth_ast_init(CTH_TOK__IF, tokeniser->line, tokeniser->offset, CTH_AST__IF);
   cth_nameT id_failure, id_success, id_condition;
   if(
-    !vfastarr_pop(tokeniser->values, &id_failure, sizeof(id_failure)) ||
-    !vfastarr_pop(tokeniser->values, &id_success, sizeof(id_success)) ||
-    !vfastarr_pop(tokeniser->values, &id_condition, sizeof(id_condition))
+    !(id_failure = cth_tokeniser_scope_values_pull(&tokeniser->scope)) ||
+    !(id_success = cth_tokeniser_scope_values_pull(&tokeniser->scope)) ||
+    !(id_condition = cth_tokeniser_scope_values_pull(&tokeniser->scope))
   ){
     cth_error_report(CTH_ERROR__EXPECTED_EXPRESSION, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return;
@@ -46,11 +46,11 @@ static void cth_tokeniser_op__if(
            *const success = cth_ast_make_id(id_success, tokeniser->line, tokeniser->offset),
            *const condition = cth_ast_make_id(id_condition, tokeniser->line, tokeniser->offset);
 
-  node->data._if.failure = vfastarr_append(node->data._if.failure, &failure, sizeof(failure));
-  node->data._if.success = vfastarr_append(node->data._if.success, &success, sizeof(success));
+  node->data._if.failure = vfastarr_append(node->data._if.failure, &failure, sizeof failure);
+  node->data._if.success = vfastarr_append(node->data._if.success, &success, sizeof success);
   node->data._if.condition = condition;
 
-  tokeniser->values = vfastarr_append(tokeniser->values, &node, sizeof(node));
+  cth_tokeniser_scope_values_push(&tokeniser->scope, (cth_nameT)node);
 }
 
 // tokenises if statement/code correctly.
@@ -88,8 +88,8 @@ static const char* cth_tokenise__if(
     } while(depth);
   }
   cth_tokT _if = CTH_TOK__IF;
-  tokeniser->ops = vfastarr_append(tokeniser->ops, &_if, sizeof _if);
-  tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
+  cth_tokeniser_scope_ops_push(&tokeniser->scope, (cth_nameT)_if);
+  tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
 
   return code;
 }

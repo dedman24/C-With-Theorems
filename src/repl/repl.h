@@ -91,8 +91,8 @@ static void cth_repl__line(const char* const restrict code, cth_tokeniserT* cons
   cth_error_ctxT err; cth_error_ctx_init(&err);
   cth_outputT tokenised = cth_tokenise__repl(code, "repl", tokeniser, &err);
 
-  cth_variableT* const restrict output = cth_interpret(tokenised, tokeniser->name.variables, NULL, &err);
-  cth_repl__result(output, tokeniser->name.variables);
+  cth_variableT* const restrict output = cth_interpret(tokenised, tokeniser->variables, NULL, &err);
+  cth_repl__result(output, tokeniser->variables);
 
   cth_ast_destroy(tokenised);
   cth_error_print(&err, false);

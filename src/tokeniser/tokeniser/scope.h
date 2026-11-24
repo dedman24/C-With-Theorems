@@ -61,6 +61,10 @@ static cth_astT* cth_tokeniser_scope_destroy(cth_tokeniser_scopeT* const restric
   return prog0;
 }
 
+static size_t cth_tokeniser_scope_countof(cth_tokeniser_scopeT* const restrict scope){
+  return vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+}
+
 static void cth_tokeniser_scope_inc(cth_tokeniser_scopeT* const restrict scope){
   cth_tokeniser_scope__entryT entry = {
     .program = vfastarr_init_explicit(1, 8, sizeof *entry.program),
@@ -118,14 +122,33 @@ static void cth_tokeniser_scope_ops_push(cth_tokeniser_scopeT* const restrict sc
   );
 }
 
+// returns CTH_TOK__NONE on failure, op otherwise.
 static cth_tokT cth_tokeniser_scope_ops_pull(cth_tokeniser_scopeT* const restrict scope){
   const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
   cth_tokT op;
-  vfastarr_pop(
+  if(!vfastarr_pop(
     ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].ops,
     &op, sizeof op
-  );
+  ))
+    return CTH_TOK__NONE;
   return op;
+}
+
+// returns CTH_TOK__NONE on failure, op otherwise.
+static cth_nameT cth_tokeniser_scope_ops_top(cth_tokeniser_scopeT* const restrict scope){
+  const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+  cth_tokT op;
+  if(!vfastarr_top(
+    ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].ops,
+    &op, sizeof op
+  ))
+    return CTH_TOK__NONE;
+  return op;
+}
+
+static void cth_tokeniser_scope_ops_remove(cth_tokeniser_scopeT* const restrict scope, const size_t c_elems){
+  const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+  vfastarr_remove(((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].ops, c_elems*sizeof(cth_tokT));
 }
 
 
@@ -150,14 +173,36 @@ static void cth_tokeniser_scope_values_push(cth_tokeniser_scopeT* const restrict
   );
 }
 
+// returns 0 on failure, id otherwise.
 static cth_nameT cth_tokeniser_scope_values_pull(cth_tokeniser_scopeT* const restrict scope){
   const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
   cth_nameT value;
-  vfastarr_pop(
+  if(!vfastarr_pop(
     ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].values,
     &value, sizeof value
-  );
+  ))
+    return 0;
   return value;
+}
+
+// returns 0 on failure, id otherwise.
+static cth_nameT cth_tokeniser_scope_values_top(cth_tokeniser_scopeT* const restrict scope){
+  const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+  cth_nameT value;
+  if(!vfastarr_top(
+    ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].values,
+    &value, sizeof value
+  ))
+    return 0;
+  return value;
+}
+
+
+static void cth_tokeniser_scope_values_top_write(cth_tokeniser_scopeT* const restrict scope, const cth_nameT value){
+  const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+  cth_tokeniser_scope__entryT* const level = &((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1];
+  const size_t c_values = vfastarr_elcnt(level->values, sizeof *level->values);
+  level->values[c_values-1] = value;
 }
 
 
@@ -182,15 +227,26 @@ static void cth_tokeniser_scope_program_push(cth_tokeniser_scopeT* const restric
   );
 }
 
+// returns NULL on failure, node otherwise.
 static cth_astT* cth_tokeniser_scope_program_pull(cth_tokeniser_scopeT* const restrict scope){
   const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
   cth_astT* node;
-  vfastarr_pop(
+  if(!vfastarr_pop(
     ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].program->data.program.program,
     &node, sizeof node
-  );
+  ))
+    return NULL;
   return node;
 }
+
+// extracts lowest scope's program.
+static cth_astT* cth_tokeniser_scope_program_extract(cth_tokeniser_scopeT* const restrict scope){
+  cth_tokeniser_scope__entryT* const e_scopes = &((cth_tokeniser_scope__entryT*)scope->internal.arr)[0];
+  cth_astT* const program0 = e_scopes->program;
+  e_scopes->program = cth_ast_init(CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM);
+  return program0;
+}
+
 
 static void cth_tokeniser_scope_name_put(
   cth_tokeniser_scopeT* const restrict scope,

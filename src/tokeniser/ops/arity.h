@@ -21,10 +21,10 @@ static cth_tokT cth_tokeniser_unary_tok(const cth_tokT op){
 }
 
 static cth_astT* cth_tokeniser_op__get_node(cth_tokeniserT* const restrict tokeniser, rcT* const restrict path, cth_error_ctxT* const restrict err){
-  cth_nameT id_src;
-  if(!vfastarr_pop(tokeniser->values, &id_src, sizeof(id_src))){      // not enough operands.
+  const cth_nameT id_src = cth_tokeniser_scope_values_pull(&tokeniser->scope);
+  if(!id_src){            // not enough operands.
     cth_astT* node = cth_ast_init(CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
-    tokeniser->values = vfastarr_append(tokeniser->values, &node, sizeof(node)); 
+    cth_tokeniser_scope_values_push(&tokeniser->scope, (cth_nameT)node);
     cth_error_report(CTH_ERROR__AST_TOO_FEW_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return NULL;
   }
@@ -46,7 +46,7 @@ static void cth_tokeniser_op__unary(
   if(!src) return;
   cth_astT* node = cth_ast_init(tok, tokeniser->line, tokeniser->offset, CTH_AST__UNARY);
   node->data._unary.src = src;
-  tokeniser->values = vfastarr_append(tokeniser->values, (void*)&node, sizeof(cth_nameT));
+  cth_tokeniser_scope_values_push(&tokeniser->scope, (cth_nameT)node);
 }
 
 // generates AST node holding 'tok' as a binary operation.
@@ -62,7 +62,7 @@ static void cth_tokeniser_op__binary(
   cth_astT* node = cth_ast_init(tok, tokeniser->line, tokeniser->offset, CTH_AST__BINARY);
   node->data._binary.s0 = src0;
   node->data._binary.s1 = src1;
-  tokeniser->values = vfastarr_append(tokeniser->values, (void*)&node, sizeof(cth_nameT));
+  cth_tokeniser_scope_values_push(&tokeniser->scope, (cth_nameT)node);
 }
 
 

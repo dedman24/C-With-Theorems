@@ -19,9 +19,9 @@ static cth_nameT cth_tokeniser_op__name_join(
     cth_error_report__type_2(
       CTH_ERROR__TYPE_UNJOINABLE, CTH_ERROR__COMPILER, 
       path, tokeniser->line, tokeniser->offset, err,
-      tokeniser->name.variables,
-      cth_variable_search(tokeniser->name.variables, type),
-      cth_variable_search(tokeniser->name.variables, name)
+      tokeniser->variables,
+      cth_variable_search(tokeniser->variables, type),
+      cth_variable_search(tokeniser->variables, name)
     );
   return combined;
 }
@@ -31,24 +31,24 @@ static const char* cth_tokeniser_op__name(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(!(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME)){
-    tokeniser->state = tokeniser->state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
-    const cth_nameT id = cth_name_search(code, len, &tokeniser->name);
+  if(!(tokeniser->e_state & CTH_TOKENISER__PREV_WAS_NAME)){
+    tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
+    const cth_nameT id = cth_name_search(&tokeniser->scope, code, len);
     if(!id)
       cth_error_report(CTH_ERROR__VALUE_UNDEFINED, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     else
-      tokeniser->values = vfastarr_append(tokeniser->values, &id, sizeof(id));
+      cth_tokeniser_scope_values_push(&tokeniser->scope, id);
     return code + len;
   }
 
-  const cth_nameT name = cth_name_search(code, len, &tokeniser->name);
+  const cth_nameT name = cth_name_search(&tokeniser->scope, code, len);
 // if spec.var == NULL, variable didn't exist previously. name is in spec.name.
   if(!name)
     return cth_tokenise__declarations(tokeniser, code, path, err);
-  cth_variableT* const var = cth_variable_search(tokeniser->name.variables, name);
+  cth_variableT* const var = cth_variable_search(tokeniser->variables, name);
 
-  cth_nameT id_prev; vfastarr_pop(tokeniser->values, &id_prev, sizeof(id_prev));
-  cth_variableT* const var_prev = cth_variable_search(tokeniser->name.variables, id_prev);
+  const cth_nameT id_prev = cth_tokeniser_scope_values_pull(&tokeniser->scope);
+  cth_variableT* const var_prev = cth_variable_search(tokeniser->variables, id_prev);
   if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_prev->type) && !cth_typecheck_top_lvl_is(CTH_TYPE__QUALIFIER, var_prev->type)){
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + len;
@@ -57,7 +57,7 @@ static const char* cth_tokeniser_op__name(
   if(cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_prev->type) && cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var->type)){
     const cth_nameT joined = cth_tokeniser_op__name_join(tokeniser, name, id_prev, path, err);
     if(joined != CTH_TYPE__NONE)
-      tokeniser->values = vfastarr_append(tokeniser->values, &joined, sizeof(joined));
+      cth_tokeniser_scope_values_push(&tokeniser->scope, joined);
     return code + len;
   }
   if(
@@ -75,7 +75,7 @@ static const char* cth_tokeniser_op__name(
       name_type, var_type,
       false, path, err
     );
-    tokeniser->values = vfastarr_append(tokeniser->values, &result.id, sizeof(result.id));
+    cth_tokeniser_scope_values_push(&tokeniser->scope, result.id);
     return code + len;
   }
   if(
@@ -88,10 +88,10 @@ static const char* cth_tokeniser_op__name(
       name,
       path, err
     );
-    tokeniser->values = vfastarr_append(tokeniser->values, &compound, sizeof(compound));
+    cth_tokeniser_scope_values_push(&tokeniser->scope, compound);
     return code + len;
   }
-  if(tokeniser->state & CTH_TOKENISER__DECLARATION)                   // redefinition error handled somewhere else.
+  if(tokeniser->e_state & CTH_TOKENISER__DECLARATION)                   // redefinition error handled somewhere else.
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   return code + len;
 }
@@ -100,39 +100,39 @@ static void cth_tokeniser_op__value(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME)
+  if(tokeniser->e_state & CTH_TOKENISER__PREV_WAS_NAME)
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   else
-    tokeniser->state = tokeniser->state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
+    tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
 
-  const cth_nameT value = cth_value_add(code, len, &tokeniser->name, err, path, tokeniser->line, tokeniser->offset);
-  tokeniser->values = vfastarr_append(tokeniser->values, &value, sizeof(value));
+  const cth_nameT value = cth_value_add(code, len, tokeniser, err, path, tokeniser->line, tokeniser->offset);
+  cth_tokeniser_scope_values_push(&tokeniser->scope, value);
 }
 
 static void cth_tokeniser_op__char(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME)
+  if(tokeniser->e_state & CTH_TOKENISER__PREV_WAS_NAME)
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   else
-    tokeniser->state = tokeniser->state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
+    tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
 
-  const cth_nameT character = cth_char_add(code, len, &tokeniser->name, err, path, tokeniser->line, tokeniser->offset);
-  tokeniser->values = vfastarr_append(tokeniser->values, &character, sizeof(character));
+  const cth_nameT character = cth_char_add(code, len, tokeniser, err, path, tokeniser->line, tokeniser->offset);
+  cth_tokeniser_scope_values_push(&tokeniser->scope, character);
 }
 
 static void cth_tokeniser_op__string(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->state & CTH_TOKENISER__PREV_WAS_NAME)
+  if(tokeniser->e_state & CTH_TOKENISER__PREV_WAS_NAME)
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   else
-    tokeniser->state = tokeniser->state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
+    tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
 
-  const cth_nameT string = cth_string_add(code, len, &tokeniser->name, err, path, tokeniser->line, tokeniser->offset);
-  tokeniser->values = vfastarr_append(tokeniser->values, &string, sizeof(string));
+  const cth_nameT string = cth_string_add(code, len, tokeniser, err, path, tokeniser->line, tokeniser->offset);
+  cth_tokeniser_scope_values_push(&tokeniser->scope, string);
 }
 
 #endif

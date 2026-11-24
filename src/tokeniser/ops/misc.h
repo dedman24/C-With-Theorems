@@ -22,8 +22,7 @@ static const char* cth_tokeniser_op__opened_curly_bracket(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  cth_name_depth_inc(&tokeniser->name);
-  cth_tokeniser_scope_inc(tokeniser);
+  cth_tokeniser_scope_inc(&tokeniser->scope);
   return code + len;
 }
 
@@ -31,7 +30,7 @@ static const char* cth_tokeniser_op__closed_curly_bracket(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(!cth_name_depth_dec(&tokeniser->name) || !cth_tokeniser_scope_dec(tokeniser))
+  if(!cth_tokeniser_scope_dec(&tokeniser->scope))
     cth_error_report(CTH_ERROR__INDENTATION_DEPTH_NEGATIVE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   return code + len;
 }
@@ -42,7 +41,7 @@ static const char* cth_tokeniser_op__opened_round_bracket(
 ){
   tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
   cth_tokT opened = CTH_TOK__OPENED_ROUND_BRACKET;
-  cth_tokeniser_ops_push(tokeniser, opened);
+  cth_tokeniser_scope_ops_push(&tokeniser->scope, opened);
   return code + len;
 }
 
@@ -52,8 +51,8 @@ static const char* cth_tokeniser_op__closed_round_bracket(
 ){
   tokeniser->e_state &= ~CTH_TOKENISER__UNARY_ALLOWED;
   while(1){
-    cth_tokT tok;
-    if(!vfastarr_pop(tokeniser->ops, &tok, sizeof tok)){
+    const cth_tokT tok = cth_tokeniser_scope_ops_pull(&tokeniser->scope);
+    if(tok == CTH_TOK__NONE){
       cth_error_report(CTH_ERROR__CLOSED_ROUND_BRACKET, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
       break;
     }
@@ -119,14 +118,21 @@ static const char* cth_tokeniser_op__comment_multi(
 // appends whatever value still present to program.
 static void cth_tokeniser_op__semicolon(cth_tokeniserT* const restrict tokeniser){
 // all persistent tokeniser state is cleared.
-  const size_t c_values = cth_tokeniser_values_count(tokeniser);
+  const size_t c_scopes = cth_tokeniser_scope_countof(&tokeniser->scope);
+  cth_tokeniser_scope__entryT* const level = &((cth_tokeniser_scope__entryT*)tokeniser->scope.internal.arr)[c_scopes];
+  const size_t c_values = vfastarr_elcnt(level->values, sizeof *level->values);
 
   for(size_t i = 0; i < c_values; i++){
-    cth_astT* const node = cth_ast_make_id(tokeniser->values[i], tokeniser->line, tokeniser->offset);
-    cth_tokeniser_program_push(tokeniser, node);
+    cth_astT* const node = cth_ast_make_id(level->values[i], tokeniser->line, tokeniser->offset);
+    level->program->data.program.program = vfastarr_append(
+      level->program->data.program.program,
+      &node,
+      sizeof *level->program->data.program.program
+    );
   }
 
-  vfastarr_remove(tokeniser->values, sizeof(*tokeniser->values)*c_values);
+  vfastarr_empty(level->ops);
+  vfastarr_empty(level->values);
   tokeniser->e_state = CTH_TOKENISER_STATE_INIT;
 }
 

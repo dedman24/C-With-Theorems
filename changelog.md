@@ -1,14 +1,9 @@
-### Changelog 2026/11/23.
- - added proof in cth of sqrt(2) being irrational in `examples/sqrt2.cth`.
- - reworked variable output.
- - added statement/code block support.
- - started work on better tokeniser scoping model.
- - added `!:` token to express an element not being of some type.
- - removed name ctx, added what remained as separate thing in tokeniser.
+### Changelog 2026/11/24.
+ - finally deprecated `cth_tokenise__single`.
+ - reworked semicolon.
+ - finished code block support.
 
 ### pending changes.
- - rework semicolon.
- - add code block support to `if` statements and in generic expressions (like in rust).
  - arrays.
  - proper subtyping.
  - stricter type compatibility algorithm.
@@ -17,13 +12,7 @@
 
 > `BEGIN snca;`
 
-while not on cth, I'm actually working pretty hard.\
-I want to keep this up.
 
-I broke my github streak TwT...\
-my fault since I couldn't add scopes yesterday but scopes are quite a lot of stuff already.
-
-I really want to finish this by tmrw. I'll work hard.
 
 > `END snca;`
 

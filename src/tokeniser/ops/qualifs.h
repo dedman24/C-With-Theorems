@@ -28,7 +28,7 @@ static struct cth_tokeniser_op__qualifierS cth_tokeniser_op__qualifier(
 // structure of type name:
 // CTH_NAME_PFIX__TYPE underlying_type_nameT " " "space-separated qualifiers".
   size_t s_qualif_name;
-  char* qualif_name = cth_qualif_str_construct(NULL, var_qual, qual, tokeniser->name.variables, &s_qualif_name);
+  char* qualif_name = cth_qualif_str_construct(NULL, var_qual, qual, tokeniser->variables, &s_qualif_name);
 
   size_t s_type_name = 1 + sizeof(cth_nameT) + var_type->s_name + 1 + s_qualif_name;
   char* const restrict type_name = malloc(s_type_name);
@@ -39,15 +39,15 @@ static struct cth_tokeniser_op__qualifierS cth_tokeniser_op__qualifier(
   memcpy(type_name + 1 + sizeof(cth_nameT) + var_type->s_name + 1, qualif_name, s_qualif_name);
   vfastarr_destroy(qualif_name);
 
-  const cth_nameT seek = cth_name_search(type_name, s_type_name, &tokeniser->name);
+  const cth_nameT seek = cth_name_search(&tokeniser->scope, type_name, s_type_name);
   if(seek){
-    cth_variableT* const var_seek = return_var? cth_variable_search(tokeniser->name.variables, seek): NULL;
+    cth_variableT* const var_seek = return_var? cth_variable_search(tokeniser->variables, seek): NULL;
     return (struct cth_tokeniser_op__qualifierS){ .id = seek, .var = var_seek };
   }
 
-  const cth_nameT id_qualified = cth_variable_name(tokeniser->name.variables);
+  const cth_nameT id_qualified = cth_variable_name(tokeniser->variables);
   cth_variableT* const restrict qualified = cth_variable_add(
-    tokeniser->name.variables,
+    tokeniser->variables,
     id_qualified,
     type_name, s_type_name,
     var_type->type,
@@ -82,8 +82,8 @@ static cth_nameT cth_tokeniser_op__make_compound_qualifier(
   const cth_nameT id_qualif1,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  const cth_nameT id_compound = cth_variable_name(tokeniser->name.variables);
-  cth_variableT* const compound = cth_variable_add(tokeniser->name.variables, id_compound, NULL, 0, cth_typevar(CTH_TYPE__QUALIFIER), CTH_VARSTATE__COMPOUNDQ);
+  const cth_nameT id_compound = cth_variable_name(tokeniser->variables);
+  cth_variableT* const compound = cth_variable_add(tokeniser->variables, id_compound, NULL, 0, cth_typevar(CTH_TYPE__QUALIFIER), CTH_VARSTATE__COMPOUNDQ);
 
   cth_astT* const restrict ast0 = var_qualif0->state & CTH_VARSTATE__COMPOUNDQ?
     cth_ast_clone(var_qualif0->internal.qualif):
@@ -112,21 +112,17 @@ static bool cth_tokeniser__operand_qualifs(
   if(!qualifier)
     return false;
 
-  const size_t elcnt = vfastarr_elcnt(tokeniser->values, sizeof(*tokeniser->values));
-  if(!elcnt)
+  const cth_nameT name_top = cth_tokeniser_scope_values_top(&tokeniser->scope);
+  if(!name_top)
     return false;
-  const size_t arr_top = elcnt-1;
-
-  const cth_nameT name_top = tokeniser->values[arr_top];
-  cth_variableT* const restrict var_top = cth_variable_search(tokeniser->name.variables, name_top);
+  cth_variableT* const restrict var_top = cth_variable_search(tokeniser->variables, name_top);
   if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, var_top->type))  // only valid on types.
     return false;
-                               0;
 // NOTE: possibly remove tokeniser seek, add similar mechanism to cth_typevar.
-  cth_variableT* const restrict var_qualifier = cth_variable_search(tokeniser->name.variables, qualifier);
+  cth_variableT* const restrict var_qualifier = cth_variable_search(tokeniser->variables, qualifier);
 
   const struct cth_tokeniser_op__qualifierS qualif = cth_tokeniser_op__qualifier(tokeniser, qualifier, var_qualifier, name_top, var_top, false, path, err);
-  tokeniser->values[arr_top] = qualif.id;
+  cth_tokeniser_scope_values_top_write(&tokeniser->scope, qualif.id);
   return true;
 }
 

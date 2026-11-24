@@ -26,8 +26,8 @@ static struct cth_tokeniser_op__declaration_master_typeS cth_tokeniser_op__decla
 ){
   cth_type__internalT* const c_internal = cth_type__internal_make_master(var->internal.type);
 
-  const cth_nameT id_master = cth_variable_name(tokeniser->name.variables);
-  cth_variableT* var_master = cth_variable_add(tokeniser->name.variables, id_master, NULL, 0, cth_typevar(CTH_TYPE__TYPE), CTH_VARSTATE__NONE);
+  const cth_nameT id_master = cth_variable_name(tokeniser->variables);
+  cth_variableT* var_master = cth_variable_add(tokeniser->variables, id_master, NULL, 0, cth_typevar(CTH_TYPE__TYPE), CTH_VARSTATE__NONE);
   var_master->internal.type = c_internal;
   return (struct cth_tokeniser_op__declaration_master_typeS){ .id = id_master, .var = var_master };
 }
@@ -37,7 +37,7 @@ static const char* cth_tokenise__declarations(
   cth_tokeniserT* const restrict tokeniser, const char* restrict code,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->state & CTH_TOKENISER__DECLARATION || tokeniser->state & CTH_TOKENISER__TYPEDEF){
+  if(tokeniser->e_state & CTH_TOKENISER__DECLARATION || tokeniser->e_state & CTH_TOKENISER__TYPEDEF){
     cth_error_report(CTH_ERROR__DECLARATION_RECURSIVE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + strcspn(code, ";");
   }
@@ -54,25 +54,26 @@ static const char* cth_tokenise__declarations(
 // if(tok == CTH_TOK__ASSIGNMENT) all following is expression for assignment; handle it until COMMA or SEMICOLON is reached.
   cth_tokeniser_dispatch(NULL, CTH_TOK__DECLARATION, 0, tokeniser, path, err);
 
-  const size_t s_values = vfastarr_size(tokeniser->values), s_ops = vfastarr_size(tokeniser->ops);
-  if(s_values != sizeof(*tokeniser->values) || s_ops != 0){
+  const size_t s_values = cth_tokeniser_scope_values_sizeof(&tokeniser->scope),
+               s_ops = cth_tokeniser_scope_ops_sizeof(&tokeniser->scope);
+  if(s_values != sizeof(cth_nameT) || s_ops != 0){
     cth_error_report(CTH_ERROR__DECLARATION_WRONG, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + strcspn(code, ";");
   }
 // used to track current variable type.
-  cth_nameT id_type; vfastarr_pop(tokeniser->values, &id_type, sizeof(id_type));
-  cth_variableT* var_type = cth_variable_search(tokeniser->name.variables, id_type);
+  cth_nameT id_type = cth_tokeniser_scope_values_pull(&tokeniser->scope);
+  cth_variableT* var_type = cth_variable_search(tokeniser->variables, id_type);
 // used to track 'master' type.
   const struct cth_tokeniser_op__declaration_master_typeS master = cth_tokeniser_op__declaration_master_type(tokeniser, var_type);
 
-  cth_astT* const decl = cth_ast_init(CTH_TOK__DECLARATION, tokeniser->line, tokeniser->offset, CTH_AST__DECLARATION);
+  cth_astT* const restrict decl = cth_ast_init(CTH_TOK__DECLARATION, tokeniser->line, tokeniser->offset, CTH_AST__DECLARATION);
 // declarations are modelled as a state machine.
 // diagram:
 //  NAME --CTH_TOK__NAME-> ASSIGN --CTH_TOK__ASSIGNMENT-> EXPR --CTH_TOK__SEMICOLON-> QUIT
 //   ^------------------- CTH_TOK__COMMA -----------------+-|
   enum{ NAME, ASSIGN, EXPR } state = NAME;
 // clears PREV_WAS_NAME bit, sets DECLARATION bit.
-  tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__DECLARATION;
+  tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__DECLARATION;
 // parse everything until comma
   while(1){
     size_t len;
@@ -97,7 +98,7 @@ static const char* cth_tokenise__declarations(
         break;
       }
 // note: to support compound qualifiers, this might have to be changed.
-      const struct cth_name_addS added = cth_name_add(code, len, CTH_TYPE__NONE, CTH_VARSTATE__NONE, &tokeniser->name);
+      const struct cth_name_addS added = cth_name_add(&tokeniser->scope, tokeniser->variables, code, len, CTH_TYPE__NONE, CTH_VARSTATE__NONE);
       if(!added.var){
         if(!cth_qualifier_is__id(added.id)){
           cth_error_report__str_size(CTH_ERROR__DECLARATION_REDEFINITION, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err, code, len);
@@ -110,11 +111,11 @@ static const char* cth_tokenise__declarations(
       }
 
       added.var->type = var_type;
-      decl->data._declaration.vars = vfastarr_append(decl->data._declaration.vars, &added.id, sizeof(added.id));
+      decl->data._declaration.vars = vfastarr_append(decl->data._declaration.vars, &added.id, sizeof added.id);
       
       cth_astT* const ast_type = cth_ast_init(CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
       ast_type->data.id = id_type;
-      decl->data._declaration.types = vfastarr_append(decl->data._declaration.types, &ast_type, sizeof(ast_type));
+      decl->data._declaration.types = vfastarr_append(decl->data._declaration.types, &ast_type, sizeof ast_type);
       var_type = master.var;
       id_type = master.id;
 
@@ -124,7 +125,7 @@ static const char* cth_tokenise__declarations(
 // handles early exits due to smth like `i32 x;` or `i32 x, y;`.
       if(tok == CTH_TOK__COMMA || tok == CTH_TOK__SEMICOLON){
         cth_astT* expr = NULL;
-        decl->data._declaration.expr = vfastarr_append(decl->data._declaration.expr, &expr, sizeof(expr));
+        decl->data._declaration.expr = vfastarr_append(decl->data._declaration.expr, &expr, sizeof expr);
 // 'code += len;' must not be executed on CTH_TOK__SEMICOLON due to how we handle it.
         if(tok == CTH_TOK__SEMICOLON)
           break;
@@ -149,10 +150,9 @@ static const char* cth_tokenise__declarations(
       }
 // NOTE: error is here!
       cth_tokeniser_dispatch(NULL, CTH_TOK__DECLARATION, 0, tokeniser, path, err);
-      cth_nameT id; 
-      const bool there_are_elems = vfastarr_pop(tokeniser->values, &id, sizeof(id));
+      const cth_nameT id = cth_tokeniser_scope_values_pull(&tokeniser->scope);
 
-      const size_t pos_top = vfastarr_elcnt(decl->data._declaration.expr, sizeof(*decl->data._declaration.expr));
+      const size_t pos_top = vfastarr_elcnt(decl->data._declaration.expr, sizeof *decl->data._declaration.expr);
       cth_astT* expr;
       if(id & 1){
         expr = cth_ast_init(CTH_TOK__NAME, tokeniser->line, tokeniser->offset, CTH_AST__ID);
@@ -161,10 +161,10 @@ static const char* cth_tokenise__declarations(
       else
         expr = (cth_astT*)id;
 
-      decl->data._declaration.expr = vfastarr_append(decl->data._declaration.expr, &expr, sizeof(expr));
+      decl->data._declaration.expr = vfastarr_append(decl->data._declaration.expr, &expr, sizeof expr);
 
       if(tok == CTH_TOK__COMMA){
-        tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__DECLARATION;
+        tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__DECLARATION;
         code += len;
         state = NAME;
         continue;
@@ -173,8 +173,8 @@ static const char* cth_tokenise__declarations(
     }
   }
 
-  tokeniser->values = vfastarr_append(tokeniser->values, &decl, sizeof(*tokeniser->values));
-  tokeniser->state &= ~CTH_TOKENISER__DECLARATION;
+  cth_tokeniser_scope_values_push(&tokeniser->scope, (cth_nameT)decl);
+  tokeniser->e_state &= ~CTH_TOKENISER__DECLARATION;
   return code;
 }
 
@@ -182,11 +182,11 @@ static const char* cth_tokenise__typedefs(
   cth_tokeniserT* const restrict tokeniser, const char* restrict code,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->state & CTH_TOKENISER__DECLARATION || tokeniser->state & CTH_TOKENISER__TYPEDEF){
+  if(tokeniser->e_state & CTH_TOKENISER__DECLARATION || tokeniser->e_state & CTH_TOKENISER__TYPEDEF){
     cth_error_report(CTH_ERROR__DECLARATION_RECURSIVE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + strcspn(code, ";");
   }
-  tokeniser->state |= CTH_TOKENISER__TYPEDEF;
+  tokeniser->e_state |= CTH_TOKENISER__TYPEDEF;
 // typedefs have the following structure:
 //  typedef type new-name;
 // they can be handled in a similar manner as declarations, only using the NAME and ASSIGN state.
@@ -202,7 +202,7 @@ static const char* cth_tokenise__typedefs(
     )
       code = cth_tokeniser_dispatch(code, tok, len, tokeniser, path, err);
     else if(tok == CTH_TOK__NAME){
-      if(!cth_name_search(code, len, &tokeniser->name))       // microopt possible here :DDD.
+      if(!cth_name_search(&tokeniser->scope, code, len))        // microopt possible here :DDD.
         break;
       code = cth_tokeniser_op__name(tokeniser, code, len, path, err);
     }
@@ -211,13 +211,13 @@ static const char* cth_tokenise__typedefs(
   }
 
   cth_tokeniser_dispatch(NULL, CTH_TOK__DECLARATION, 0, tokeniser, path, err);
-  const size_t s_values = vfastarr_size(tokeniser->values), s_ops = vfastarr_size(tokeniser->ops);
-  if(s_values != sizeof(*tokeniser->values) || s_ops != 0){
+  const size_t s_values = cth_tokeniser_scope_values_sizeof(&tokeniser->scope), s_ops = cth_tokeniser_scope_ops_sizeof(&tokeniser->scope);
+  if(s_values != sizeof(cth_nameT) || s_ops != 0){
     cth_error_report(CTH_ERROR__TYPEDEF_WRONG, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + strcspn(code, ";");
   }
-  cth_nameT id_master; vfastarr_pop(tokeniser->values, &id_master, sizeof(id_master));
-  cth_variableT* const var_master = cth_variable_search(tokeniser->name.variables, id_master);
+  cth_nameT id_master = cth_tokeniser_scope_values_pull(&tokeniser->scope);
+  cth_variableT* const var_master = cth_variable_search(tokeniser->variables, id_master);
 
   cth_nameT id_type = id_master;
   cth_variableT* var_type = var_master;
@@ -229,7 +229,7 @@ static const char* cth_tokenise__typedefs(
     COMMA
   } state = NAME;
 
-  tokeniser->state |= CTH_TOKENISER__PREV_WAS_NAME;
+  tokeniser->e_state |= CTH_TOKENISER__PREV_WAS_NAME;
   while(1){
     size_t len;
     cth_tokT tok = cth_tok(code, &len);
@@ -253,7 +253,7 @@ static const char* cth_tokenise__typedefs(
           cth_error_report(CTH_ERROR__TYPEDEF_EXPECTED_ID, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
           return code + strcspn(code, ";");
         }
-        cth_variableT* const var_qualif = cth_variable_search(tokeniser->name.variables, id_qualif);
+        cth_variableT* const var_qualif = cth_variable_search(tokeniser->variables, id_qualif);
         const struct cth_tokeniser_op__qualifierS qualif = cth_tokeniser_op__qualifier(
           tokeniser,
           id_qualif, var_qualif,
@@ -264,12 +264,12 @@ static const char* cth_tokenise__typedefs(
         var_type = qualif.var;
       }
 // name-like qualifier, tries adding to variable.
-      else if((exists = cth_name_alias(code, len, id_type, &tokeniser->name))){
+      else if((exists = cth_name_alias(&tokeniser->scope, code, len, id_type))){
         if(!cth_qualifier_is__id(exists)){
           cth_error_report__str_size(CTH_ERROR__TYPEDEF_REDEFINITION, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err, code, len);
           return code + strcspn(code, ";");
         }
-        cth_variableT* const var_exists = cth_variable_search(tokeniser->name.variables, exists);
+        cth_variableT* const var_exists = cth_variable_search(tokeniser->variables, exists);
         const struct cth_tokeniser_op__qualifierS qualif = cth_tokeniser_op__qualifier(tokeniser, exists, var_exists, id_type, var_type, true, path, err);
         id_type = qualif.id;
         var_type = qualif.var;
@@ -280,7 +280,7 @@ static const char* cth_tokenise__typedefs(
         id_type = id_master; 
         state = COMMA;
       }
-      tokeniser->state |= CTH_TOKENISER__PREV_WAS_NAME;
+      tokeniser->e_state |= CTH_TOKENISER__PREV_WAS_NAME;
       code += len;
     }
     else{
@@ -293,7 +293,7 @@ static const char* cth_tokenise__typedefs(
     }
   }
 
-  tokeniser->state &= ~(CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__TYPEDEF);
+  tokeniser->e_state &= ~(CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__TYPEDEF);
   return code;
 }
 

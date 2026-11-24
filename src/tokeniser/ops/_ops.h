@@ -54,7 +54,7 @@ static const char* cth_tokeniser_dispatch(
       cth_error_report(CTH_ERROR__TOKENISER_UNKNOWN_TOKEN, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
       return code + len;
     default:
-      if(tokeniser->state & CTH_TOKENISER__UNARY_ALLOWED && tok != CTH_TOK__SEMICOLON){
+      if(tokeniser->e_state & CTH_TOKENISER__UNARY_ALLOWED && tok != CTH_TOK__SEMICOLON){
         tok = cth_tokeniser_unary_tok(tok);
         if(tok == CTH_TOK__NONE){
           cth_error_report(CTH_ERROR__TOKENISER_INVALID_UNARY, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
@@ -62,25 +62,24 @@ static const char* cth_tokeniser_dispatch(
         }
       }
       if(cth_tokeniser__operand_qualifs(tok, tokeniser, path, err)) break;
-      const size_t cnt_top = vfastarr_elcnt(tokeniser->ops, sizeof(*tokeniser->ops));
-      if(cnt_top){
-        cth_tokT top = tokeniser->ops[cnt_top - 1];
+      cth_tokT top = cth_tokeniser_scope_ops_top(&tokeniser->scope);
+      if(top != CTH_TOK__NONE){
         if(cth_priority[top] <= cth_priority[tok])
           goto SKIP_PRIO;
         do{
-          vfastarr_remove(tokeniser->ops, sizeof(*tokeniser->ops));
+          cth_tokeniser_scope_ops_remove(&tokeniser->scope, 1);
           cth_tokeniser_dispatch__ast(top, tokeniser, path, err);
-          if(!vfastarr_top(tokeniser->ops, &top, sizeof(top)))
+          if(cth_tokeniser_scope_ops_top(&tokeniser->scope) == CTH_TOK__NONE)
             break;
         } while(cth_priority[top] > cth_priority[tok]);
       }
     SKIP_PRIO:
-      tokeniser->state = tokeniser->state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
+      tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
       
       if(tok == CTH_TOK__SEMICOLON) 
           cth_tokeniser_op__semicolon(tokeniser);
       else if(tok != CTH_TOK__DECLARATION)
-        tokeniser->ops = vfastarr_append(tokeniser->ops, &tok, sizeof(tok));
+        cth_tokeniser_scope_ops_push(&tokeniser->scope, tok);
       break;
   }
   return code + len;

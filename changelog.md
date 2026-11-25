@@ -12,8 +12,8 @@
 
 > `BEGIN snca;`
 
-I don't work as much as I'd like to. I want more.\
-I need to finish this.
+the hardest days are thosse where I have as much code added as removed, as reported by `git push`.\
+I want to get this over withhhh.
 
 > `END snca;`
 

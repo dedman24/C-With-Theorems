@@ -4,6 +4,7 @@
 // handles scoping stuff.
 
 #include "ctx.h"
+#include "state.h"
 #include "../../common/_common.h"
 #include "../../interpreter/ast.h"
 
@@ -12,6 +13,7 @@ typedef struct{
   cth_tokT* ops;
   cth_nameT* values;
   vfastbst_strT names;
+  cth_tokeniser_stateE state;
 } cth_tokeniser_scope__entryT;
 
 typedef struct{
@@ -31,6 +33,7 @@ static void cth_tokeniser_scope_init(cth_tokeniser_scopeT* const restrict scope)
     .ops     = vfastarr_init(sizeof *entry.ops),
     .values  = vfastarr_init(sizeof *entry.values),
     .names   = VFASTBST_STR_INIT,
+    .state   = CTH_TOKENISER_STATE_INIT
   };
 
   vfastbst_str_put(&entry.names, cth_variable_name__NULL,  strlen(cth_variable_name__NULL),  CTH_NAME__NULL);
@@ -74,6 +77,7 @@ static void cth_tokeniser_scope_inc(cth_tokeniser_scopeT* const restrict scope){
     .ops     = vfastarr_init(sizeof *entry.ops),
     .values  = vfastarr_init(sizeof *entry.values),
     .names   = VFASTBST_STR_INIT,
+    .state   = CTH_TOKENISER_STATE_INIT
   };
 
   vfastext_append(&scope->internal, &entry, sizeof entry);
@@ -323,8 +327,41 @@ static cth_nameT cth_name_search(
     if(seek)
       return seek;
   }
-
   return 0;
+}
+
+
+// sets tokeniser state to explict value.
+static void cth_tokeniser_scope_state_set(cth_tokeniser_scopeT* const restrict scope, const cth_tokeniser_stateE value){
+  const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+  ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].state = value;
+}
+
+// returns true if state & operand is not 0, false otherwise
+static bool cth_tokeniser_scope_state_test(cth_tokeniser_scopeT* const restrict scope, const cth_tokeniser_stateE operand){
+  const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+  return (((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].state & operand) != 0;
+}
+
+// state = state & operand.
+static void cth_tokeniser_scope_state_and(cth_tokeniser_scopeT* const restrict scope, const cth_tokeniser_stateE operand){
+  const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+  ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].state &= operand;
+}
+
+// state = state | operand.
+static void cth_tokeniser_scope_state_or(cth_tokeniser_scopeT* const restrict scope, const cth_tokeniser_stateE operand){
+  const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+  ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].state |= operand;
+}
+
+// state = state & operand0 | operand1.
+static void cth_tokeniser_scope_state_andor(cth_tokeniser_scopeT* const restrict scope, const cth_tokeniser_stateE operand0, const cth_tokeniser_stateE operand1){
+  const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
+  ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].state = 
+    ((cth_tokeniser_scope__entryT*)scope->internal.arr)[c_scopes-1].state
+      & operand0
+      | operand1;
 }
 
 #endif

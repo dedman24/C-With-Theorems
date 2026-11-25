@@ -1,6 +1,5 @@
 ### Changelog 2026/11/25.
- - code now compiles.
- - rust-like scopes inside expressions now works.
+ - added scoped tokeniser state.
 
 ### pending changes.
  - arrays.

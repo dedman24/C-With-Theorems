@@ -39,7 +39,7 @@ static const char* cth_tokeniser_op__opened_round_bracket(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
+  cth_tokeniser_scope_state_andor(&tokeniser->scope, ~CTH_TOKENISER__PREV_WAS_NAME, CTH_TOKENISER__UNARY_ALLOWED);
   cth_tokT opened = CTH_TOK__OPENED_ROUND_BRACKET;
   cth_tokeniser_scope_ops_push(&tokeniser->scope, opened);
   return code + len;
@@ -49,7 +49,7 @@ static const char* cth_tokeniser_op__closed_round_bracket(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  tokeniser->e_state &= ~CTH_TOKENISER__UNARY_ALLOWED;
+  cth_tokeniser_scope_state_and(&tokeniser->scope, ~CTH_TOKENISER__UNARY_ALLOWED);
   while(1){
     const cth_tokT tok = cth_tokeniser_scope_ops_pull(&tokeniser->scope);
     if(tok == CTH_TOK__NONE){
@@ -133,7 +133,7 @@ static void cth_tokeniser_op__semicolon(cth_tokeniserT* const restrict tokeniser
 
   vfastarr_empty(level->ops);
   vfastarr_empty(level->values);
-  tokeniser->e_state = CTH_TOKENISER_STATE_INIT;
+  cth_tokeniser_scope_state_set(&tokeniser->scope, CTH_TOKENISER_STATE_INIT);
 }
 
 #endif

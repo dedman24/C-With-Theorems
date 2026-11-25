@@ -37,7 +37,10 @@ static const char* cth_tokenise__declarations(
   cth_tokeniserT* const restrict tokeniser, const char* restrict code,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->e_state & CTH_TOKENISER__DECLARATION || tokeniser->e_state & CTH_TOKENISER__TYPEDEF){
+  if(
+    cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__DECLARATION) ||
+    cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__TYPEDEF)
+  ){
     cth_error_report(CTH_ERROR__DECLARATION_RECURSIVE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + strcspn(code, ";");
   }
@@ -73,7 +76,7 @@ static const char* cth_tokenise__declarations(
 //   ^------------------- CTH_TOK__COMMA -----------------+-|
   enum{ NAME, ASSIGN, EXPR } state = NAME;
 // clears PREV_WAS_NAME bit, sets DECLARATION bit.
-  tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__DECLARATION;
+  cth_tokeniser_scope_state_andor(&tokeniser->scope, ~CTH_TOKENISER__PREV_WAS_NAME, CTH_TOKENISER__DECLARATION);
 // parse everything until comma
   while(1){
     size_t len;
@@ -164,7 +167,7 @@ static const char* cth_tokenise__declarations(
       decl->data._declaration.expr = vfastarr_append(decl->data._declaration.expr, &expr, sizeof expr);
 
       if(tok == CTH_TOK__COMMA){
-        tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__DECLARATION;
+        cth_tokeniser_scope_state_andor(&tokeniser->scope, ~CTH_TOKENISER__PREV_WAS_NAME, CTH_TOKENISER__DECLARATION);
         code += len;
         state = NAME;
         continue;
@@ -174,7 +177,7 @@ static const char* cth_tokenise__declarations(
   }
 
   cth_tokeniser_scope_values_push(&tokeniser->scope, (cth_nameT)decl);
-  tokeniser->e_state &= ~CTH_TOKENISER__DECLARATION;
+  cth_tokeniser_scope_state_and(&tokeniser->scope, ~CTH_TOKENISER__DECLARATION);
   return code;
 }
 
@@ -182,11 +185,14 @@ static const char* cth_tokenise__typedefs(
   cth_tokeniserT* const restrict tokeniser, const char* restrict code,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->e_state & CTH_TOKENISER__DECLARATION || tokeniser->e_state & CTH_TOKENISER__TYPEDEF){
+  if(
+    cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__DECLARATION) ||
+    cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__TYPEDEF)
+  ){
     cth_error_report(CTH_ERROR__DECLARATION_RECURSIVE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
     return code + strcspn(code, ";");
   }
-  tokeniser->e_state |= CTH_TOKENISER__TYPEDEF;
+  cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__TYPEDEF);
 // typedefs have the following structure:
 //  typedef type new-name;
 // they can be handled in a similar manner as declarations, only using the NAME and ASSIGN state.
@@ -229,7 +235,7 @@ static const char* cth_tokenise__typedefs(
     COMMA
   } state = NAME;
 
-  tokeniser->e_state |= CTH_TOKENISER__PREV_WAS_NAME;
+  cth_tokeniser_scope_state_or(&tokeniser->scope, CTH_TOKENISER__PREV_WAS_NAME);
   while(1){
     size_t len;
     cth_tokT tok = cth_tok(code, &len);
@@ -280,7 +286,7 @@ static const char* cth_tokenise__typedefs(
         id_type = id_master; 
         state = COMMA;
       }
-      tokeniser->e_state |= CTH_TOKENISER__PREV_WAS_NAME;
+      cth_tokeniser_scope_state_or(&tokeniser->scope, CTH_TOKENISER__PREV_WAS_NAME);
       code += len;
     }
     else{
@@ -293,7 +299,7 @@ static const char* cth_tokenise__typedefs(
     }
   }
 
-  tokeniser->e_state &= ~(CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__TYPEDEF);
+  cth_tokeniser_scope_state_and(&tokeniser->scope, ~(CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__TYPEDEF));
   return code;
 }
 

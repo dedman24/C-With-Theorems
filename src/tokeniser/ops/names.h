@@ -31,8 +31,8 @@ static const char* cth_tokeniser_op__name(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(!(tokeniser->e_state & CTH_TOKENISER__PREV_WAS_NAME)){
-    tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
+  if(!cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__PREV_WAS_NAME)){
+    cth_tokeniser_scope_state_andor(&tokeniser->scope, ~CTH_TOKENISER__UNARY_ALLOWED, CTH_TOKENISER__PREV_WAS_NAME);
     const cth_nameT id = cth_name_search(&tokeniser->scope, code, len);
     if(!id)
       cth_error_report(CTH_ERROR__VALUE_UNDEFINED, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
@@ -91,7 +91,7 @@ static const char* cth_tokeniser_op__name(
     cth_tokeniser_scope_values_push(&tokeniser->scope, compound);
     return code + len;
   }
-  if(tokeniser->e_state & CTH_TOKENISER__DECLARATION)                   // redefinition error handled somewhere else.
+  if(cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__DECLARATION))     // redefinition error handled somewhere else.
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   return code + len;
 }
@@ -100,10 +100,10 @@ static void cth_tokeniser_op__value(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->e_state & CTH_TOKENISER__PREV_WAS_NAME)
+  if(cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__PREV_WAS_NAME))
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   else
-    tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
+    cth_tokeniser_scope_state_andor(&tokeniser->scope, ~CTH_TOKENISER__UNARY_ALLOWED, CTH_TOKENISER__PREV_WAS_NAME);
 
   const cth_nameT value = cth_value_add(code, len, tokeniser, err, path, tokeniser->line, tokeniser->offset);
   cth_tokeniser_scope_values_push(&tokeniser->scope, value);
@@ -113,10 +113,10 @@ static void cth_tokeniser_op__char(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->e_state & CTH_TOKENISER__PREV_WAS_NAME)
+  if(cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__PREV_WAS_NAME))
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   else
-    tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
+    cth_tokeniser_scope_state_andor(&tokeniser->scope, ~CTH_TOKENISER__UNARY_ALLOWED, CTH_TOKENISER__PREV_WAS_NAME);
 
   const cth_nameT character = cth_char_add(code, len, tokeniser, err, path, tokeniser->line, tokeniser->offset);
   cth_tokeniser_scope_values_push(&tokeniser->scope, character);
@@ -126,10 +126,10 @@ static void cth_tokeniser_op__string(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(tokeniser->e_state & CTH_TOKENISER__PREV_WAS_NAME)
+  if(cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__PREV_WAS_NAME))
     cth_error_report(CTH_ERROR__TOKENISER_ADJACENT_OPERANDS, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   else
-    tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
+    cth_tokeniser_scope_state_andor(&tokeniser->scope, ~CTH_TOKENISER__UNARY_ALLOWED, CTH_TOKENISER__PREV_WAS_NAME);
 
   const cth_nameT string = cth_string_add(code, len, tokeniser, err, path, tokeniser->line, tokeniser->offset);
   cth_tokeniser_scope_values_push(&tokeniser->scope, string);

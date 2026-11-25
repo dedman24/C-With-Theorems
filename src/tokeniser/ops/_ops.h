@@ -54,7 +54,7 @@ static const char* cth_tokeniser_dispatch(
       cth_error_report(CTH_ERROR__TOKENISER_UNKNOWN_TOKEN, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
       return code + len;
     default:
-      if(tokeniser->e_state & CTH_TOKENISER__UNARY_ALLOWED && tok != CTH_TOK__SEMICOLON){
+      if(cth_tokeniser_scope_state_test(&tokeniser->scope, CTH_TOKENISER__UNARY_ALLOWED) && tok != CTH_TOK__SEMICOLON){
         tok = cth_tokeniser_unary_tok(tok);
         if(tok == CTH_TOK__NONE){
           cth_error_report(CTH_ERROR__TOKENISER_INVALID_UNARY, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
@@ -74,7 +74,7 @@ static const char* cth_tokeniser_dispatch(
         } while(cth_priority[top] > cth_priority[tok]);
       }
     SKIP_PRIO:
-      tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
+      cth_tokeniser_scope_state_andor(&tokeniser->scope, ~CTH_TOKENISER__PREV_WAS_NAME, CTH_TOKENISER__UNARY_ALLOWED);
       
       if(tok == CTH_TOK__SEMICOLON) 
           cth_tokeniser_op__semicolon(tokeniser);

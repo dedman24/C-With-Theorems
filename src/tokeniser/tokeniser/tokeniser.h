@@ -16,8 +16,6 @@ static void cth_tokeniser_init(cth_tokeniserT* const restrict tokeniser){
 
   tokeniser->line = 0;
   tokeniser->offset = 0;
-
-  tokeniser->e_state = CTH_TOKENISER_STATE_INIT;
 }
 
 // tokeniser ctx always assumed to be statically allocated.

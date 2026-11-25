@@ -83,7 +83,7 @@ static const char* cth_tokenise__if(
     } while(depth);
   }
   cth_tokeniser_scope_ops_push(&tokeniser->scope, CTH_TOK__IF);
-  tokeniser->e_state = tokeniser->e_state & ~CTH_TOKENISER__PREV_WAS_NAME | CTH_TOKENISER__UNARY_ALLOWED;
+  cth_tokeniser_scope_state_andor(&tokeniser->scope, ~CTH_TOKENISER__PREV_WAS_NAME, CTH_TOKENISER__UNARY_ALLOWED);
 
   return code;
 }

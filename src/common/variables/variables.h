@@ -178,7 +178,6 @@ static void cth_variable_ctx_init__type(cth_variable_ctxT* restrict ctx){
   }
 }
 
-// TODO: add initialising all kinds of stuff here.
 static cth_variable_ctxT* cth_variable_ctx_init(cth_variable_ctxT* restrict ctx){
   if(!ctx) ctx = malloc(sizeof(*ctx));
 

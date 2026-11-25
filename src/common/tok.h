@@ -154,7 +154,9 @@ const cth_priorityT cth_priority[] ={
   [CTH_TOK__DECLARATION]          = CTH_PRIORITY__DECLARATION,
 
   [CTH_TOK__COMMA]                = CTH_PRIORITY__COMMA,
+
   [CTH_TOK__TYPEIS]               = CTH_PRIORITY__TYPEIS,
+  [CTH_TOK__TYPEISNT]             = CTH_PRIORITY__TYPEIS,
 
   [CTH_TOK__ASSIGNMENT]           = CTH_PRIORITY__ASSIGNMENT,
   [CTH_TOK__ASSIGN_STAR]          = CTH_PRIORITY__ASSIGNMENT,
@@ -322,7 +324,7 @@ static cth_tokT cth_tok__search(const char* const restrict str, const size_t len
     [CTH_TOK__TYPEDEF] = "typedef",
     [CTH_TOK__ASSIGN_MINUS] = "-=",
     [CTH_TOK__UNRESOLVABLE] = "@unresolvable",
-    [CTH_TOK__TYPE_NOTIS] = "!:"
+    [CTH_TOK__TYPEISNT] = "!:"
   };
   return table[index] && strncmp(table[index], str, len) == 0? index: CTH_TOK__NONE;
 }

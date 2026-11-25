@@ -20,6 +20,7 @@
 
 // posix stuff.
 #include "unistd.h"             // isatty.
+#include <stdio.h>
 
 static void cth_repl__result(cth_variableT* const restrict var, cth_variable_ctxT* const restrict ctx){
   if(var == NULL){
@@ -76,7 +77,7 @@ static void cth_repl__result(cth_variableT* const restrict var, cth_variable_ctx
   {
     size_t s_type_name;
     char* const restrict type_name = cth_type_str_construct(var->type->internal.type->tree, ctx, &s_type_name);
-    printf("%.*s", (int)s_type_name, type_name);
+    fprintf(stdout, "%.*s", (int)s_type_name, type_name);
     vfastarr_destroy(type_name);
   }
   fputc('\n', stdout);

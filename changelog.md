@@ -1,7 +1,6 @@
-### Changelog 2026/11/24.
- - finally deprecated `cth_tokenise__single`.
- - reworked semicolon.
- - finished code block support.
+### Changelog 2026/11/25.
+ - code now compiles.
+ - rust-like scopes inside expressions now works.
 
 ### pending changes.
  - arrays.
@@ -9,10 +8,12 @@
  - stricter type compatibility algorithm.
  - reusing old types in `cth_tokeniser_op__declaration_master_type`.
  - certain compound qualifiers (like `immut` & `const`) should be incompatible.
+ - scoped compiler state; currently I have not observed any issues caused by this, but they _will_ be a pain find & to debug.
 
 > `BEGIN snca;`
 
-
+I don't work as much as I'd like to. I want more.\
+I need to finish this.
 
 > `END snca;`
 

@@ -19,6 +19,7 @@ typedef struct{
 
 void vfastext_destroy(vfastextT* const restrict ctx);
 void vfastext_init(vfastextT* const restrict ctx, const size_t s_elem);
+void vfastext_init_explicit(vfastextT* const restrict ctx, const size_t initialised, const size_t c_elem, const size_t s_elem);
 void vfastext_append(vfastextT* const restrict ctx, const void* const restrict elem, const size_t s_elem);
 bool vfastext_remove(vfastextT* const restrict ctx, const size_t s_data);
 void* vfastext_extract(vfastextT* const restrict ctx);
@@ -37,6 +38,12 @@ void vfastext_init(vfastextT* const restrict ctx, const size_t s_elem){
   ctx->arr = malloc(s_elem*32);
   ctx->size = 0;
   ctx->capacity = s_elem*32;
+}
+
+void vfastext_init_explicit(vfastextT* const restrict ctx, const size_t initialised, const size_t c_elem, const size_t s_elem){
+  ctx->arr = malloc(s_elem*c_elem);
+  ctx->size = s_elem*initialised;
+  ctx->capacity = s_elem*c_elem;
 }
 
 static void vfastext_resize(vfastextT* const restrict ctx, const size_t amt){
@@ -64,11 +71,11 @@ void* vfastext_extract(vfastextT* const restrict ctx){
 }
 
 size_t vfastext_sizeof(vfastextT* const restrict ctx){
-  return ctx.size;
+  return ctx->size;
 }
 
 size_t vfastext_countof(vfastextT* const restrict ctx, const size_t s_elem){
-  return ctx.size/s_elem;
+  return ctx->size/s_elem;
 }
 
 #endif

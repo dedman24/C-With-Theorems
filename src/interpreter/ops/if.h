@@ -17,15 +17,11 @@ static cth_variableT* cth_op__if(const cth_astT* const restrict node, cth_variab
     cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, variables, condition->type, cth_typevar(CTH_TYPE__BOOLEAN));
     return NULL;
   }
-  cth_astT** const program = condition->internal.boolean? node->data._if.success: node->data._if.failure;
-
-  const size_t c_program = vfastarr_elcnt(program, sizeof(*program));
-  cth_variableT* eval;
-  for(size_t i = 0; i < c_program; i++){    
-    cth_variableT* const result = cth_interpret(program[i], variables, path, err);
-    if(i == c_program - 1)
-      eval = result;
-  }
+  cth_variableT* eval = cth_interpret(
+    condition->internal.boolean? node->data._if.success: node->data._if.failure,
+    variables,
+    path, err
+  );
   return eval;
 }
 

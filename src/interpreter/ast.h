@@ -13,8 +13,8 @@ typedef struct cth_astS cth_astT;
 
 typedef struct{
   cth_astT* condition;
-  cth_astT** success;                 // vfastarr.
-  cth_astT** failure;                 // vfastarr.
+  cth_astT* success;
+  cth_astT* failure;
 } cth_ast__ifT;
 
 typedef struct{
@@ -124,10 +124,6 @@ static cth_astT* cth_ast_init(
   cth_astT* const restrict node = cth_ast_init__weak(op, line, offset, type);
 
   switch(type){
-    case CTH_AST__IF:
-      node->data._if.success = vfastarr_init(sizeof(*node->data._if.success));
-      node->data._if.failure = vfastarr_init(sizeof(*node->data._if.failure));
-      break;
     case CTH_AST__FOR:
       node->data._for.code = vfastarr_init(sizeof(*node->data._for.code));
       break;
@@ -195,8 +191,8 @@ static cth_astT* cth_ast_clone__recursive(cth_astT* const restrict src){
       break;
     case CTH_AST__IF:
       node->data._if.condition = cth_ast_clone__recursive(src->data._if.condition);
-      node->data._if.success = cth_ast_clone__array(src->data._if.success);
-      node->data._if.failure = cth_ast_clone__array(src->data._if.failure);
+      node->data._if.success = cth_ast_clone__recursive(src->data._if.success);
+      node->data._if.failure = cth_ast_clone__recursive(src->data._if.failure);
       break;
     case CTH_AST__FOR:
       node->data._for.init = cth_ast_clone__recursive(src->data._for.init);
@@ -263,8 +259,8 @@ static void cth_ast_destroy(cth_astT* const restrict node){
     case CTH_AST__ID: break;
     case CTH_AST__IF:
       cth_ast_destroy(node->data._if.condition);
-      cth_ast_destroy__array(node->data._if.success);
-      cth_ast_destroy__array(node->data._if.failure);
+      cth_ast_destroy(node->data._if.success);
+      cth_ast_destroy(node->data._if.failure);
       break;
     case CTH_AST__FOR:
       cth_ast_destroy(node->data._for.init);
@@ -326,8 +322,8 @@ static void cth_ast_destroy_section(cth_astT* const node, const cth_astT* const 
     case CTH_AST__ID: break;
     case CTH_AST__IF:
       cth_ast_destroy_section(node->data._if.condition, target);
-      cth_ast_destroy_section__array(node->data._if.success, target);
-      cth_ast_destroy_section__array(node->data._if.failure, target);
+      cth_ast_destroy_section(node->data._if.success, target);
+      cth_ast_destroy_section(node->data._if.failure, target);
       break;
     case CTH_AST__FOR:
       cth_ast_destroy_section(node->data._for.init, target);

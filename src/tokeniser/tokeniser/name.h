@@ -1,7 +1,7 @@
 #ifndef CTH_TOKENISER_NAME_H_INCLUDED
 #define CTH_TOKENISER_NAME_H_INCLUDED
 
-#include "ctx.h"
+#include "ctx_full.h"                     // tokeniser ctx.
 #include "../types/chars.h"               // char, string escape sequence handling.
 #include "../types/vtypes.h"              // value types.
 #include "../tokeniser/scope.h"           // scopes & stuff.

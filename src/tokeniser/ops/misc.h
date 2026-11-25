@@ -30,7 +30,7 @@ static const char* cth_tokeniser_op__closed_curly_bracket(
   cth_tokeniserT* const restrict tokeniser, const char* const restrict code, const size_t len,
   rcT* const restrict path, cth_error_ctxT* const restrict err
 ){
-  if(!cth_tokeniser_scope_dec(&tokeniser->scope))
+  if(!cth_tokeniser_scope_dec(&tokeniser->scope, tokeniser, path, err))
     cth_error_report(CTH_ERROR__INDENTATION_DEPTH_NEGATIVE, CTH_ERROR__COMPILER, path, tokeniser->line, tokeniser->offset, err);
   return code + len;
 }
@@ -119,7 +119,7 @@ static const char* cth_tokeniser_op__comment_multi(
 static void cth_tokeniser_op__semicolon(cth_tokeniserT* const restrict tokeniser){
 // all persistent tokeniser state is cleared.
   const size_t c_scopes = cth_tokeniser_scope_countof(&tokeniser->scope);
-  cth_tokeniser_scope__entryT* const level = &((cth_tokeniser_scope__entryT*)tokeniser->scope.internal.arr)[c_scopes];
+  cth_tokeniser_scope__entryT* const level = &((cth_tokeniser_scope__entryT*)tokeniser->scope.internal.arr)[c_scopes - 1];
   const size_t c_values = vfastarr_elcnt(level->values, sizeof *level->values);
 
   for(size_t i = 0; i < c_values; i++){

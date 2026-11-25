@@ -1,7 +1,9 @@
 #ifndef CTH_TOKENISER_SCOPE_H_INCLUDED
 #define CTH_TOKENISER_SCOPE_H_INCLUDED
 
+// handles scoping stuff.
 
+#include "ctx.h"
 #include "../../common/_common.h"
 #include "../../interpreter/ast.h"
 
@@ -24,11 +26,10 @@ static void cth_tokeniser_scope_name_put(
 // initialises scope data.
 static void cth_tokeniser_scope_init(cth_tokeniser_scopeT* const restrict scope){
 // program scope.
-// '8' chosen as optimistic; rarely do programs indent depeer than like 6, so smth like 8 is plenty conservative.
   cth_tokeniser_scope__entryT entry = {
-    .program = vfastarr_init_explicit(1, 8, sizeof *entry.program),
-    .ops     = vfastarr_init_explicit(1, 8, sizeof *entry.ops),
-    .values  = vfastarr_init_explicit(1, 8, sizeof *entry.values),
+    .program = cth_ast_init(CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM),
+    .ops     = vfastarr_init(sizeof *entry.ops),
+    .values  = vfastarr_init(sizeof *entry.values),
     .names   = VFASTBST_STR_INIT,
   };
 
@@ -40,24 +41,26 @@ static void cth_tokeniser_scope_init(cth_tokeniser_scopeT* const restrict scope)
     vfastbst_str_put(&entry.names, cth_type__strings[i], strlen(cth_type__strings[i]), i);
   for(size_t i = CTH_QUALIFIER_MIN; i < CTH_QUALIFIER_MAX; i += 2)
     vfastbst_str_put(&entry.names, cth_qualifier__strings[i], strlen(cth_qualifier__strings[i]), i);
-
-  vfastext_append(&scope->internal, &entry, sizeof entry);
+// no more than 8 scopes; rarely do programs indent much deeper than this, so this is already a plenty conservative figure.
+  vfastext_init_explicit(&scope->internal, 1, 8, sizeof(cth_tokeniser_scope__entryT));
+  memcpy(scope->internal.arr, &entry, sizeof entry);
 }
 
-// destroys scope, returns last element of program of last scope.
+// destroys scope, returns program of last scope.
 static cth_astT* cth_tokeniser_scope_destroy(cth_tokeniser_scopeT* const restrict scope){
-  cth_astT* prog0; vfastarr_top(((cth_tokeniser_scope__entryT*)scope->internal.arr)[0].program, &prog0, sizeof prog0);
+  cth_astT* const prog0 = ((cth_tokeniser_scope__entryT*)scope->internal.arr)[0].program;
+  ((cth_tokeniser_scope__entryT*)scope->internal.arr)[0].program = NULL;
   const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
 
   for(size_t i = 0; i < c_scopes; i++){
-    cth_tokeniser_scope__entryT* const entry = &scope->internal.arr[i];
+    cth_tokeniser_scope__entryT* const entry = &((cth_tokeniser_scope__entryT*)scope->internal.arr)[i];
     vfastarr_destroy(entry->ops);
     vfastarr_destroy(entry->values);
 
-    cth_ast_destroy(entry->program);
     vfastbst_str_destroy(&entry->names);
   }
 
+  vfastext_destroy(&scope->internal);
   return prog0;
 }
 
@@ -67,35 +70,37 @@ static size_t cth_tokeniser_scope_countof(cth_tokeniser_scopeT* const restrict s
 
 static void cth_tokeniser_scope_inc(cth_tokeniser_scopeT* const restrict scope){
   cth_tokeniser_scope__entryT entry = {
-    .program = vfastarr_init_explicit(1, 8, sizeof *entry.program),
-    .ops     = vfastarr_init_explicit(1, 8, sizeof *entry.ops),
-    .values  = vfastarr_init_explicit(1, 8, sizeof *entry.values),
+    .program = cth_ast_init(CTH_TOK__NONE, 0, 0, CTH_AST__PROGRAM),
+    .ops     = vfastarr_init(sizeof *entry.ops),
+    .values  = vfastarr_init(sizeof *entry.values),
     .names   = VFASTBST_STR_INIT,
   };
 
   vfastext_append(&scope->internal, &entry, sizeof entry);
 }
 
-static bool cth_tokeniser_scope_dec(cth_tokeniser_scopeT* const restrict scope){
+static bool cth_tokeniser_scope_dec(
+  cth_tokeniser_scopeT* const restrict scope, cth_tokeniserT* const restrict tokeniser,
+  rcT* const restrict path, cth_error_ctxT* const restrict err
+){
   const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
   if(c_scopes <= 1) return false;
 
   cth_tokeniser_scope__entryT* const e_scopes = scope->internal.arr;
-// cleans up main stuff.
-  vfastarr_destroy(e_scopes[c_scopes - 1].ops);
-  vfastarr_destroy(e_scopes[c_scopes - 1].values);
-  vfastbst_str_destroy(&e_scopes[c_scopes - 1].names);
-// cleans up program fiel, which has special handling.
-  cth_astT* const appended = e_scopes[c_scopes - 1].program;
 // shorthand names.
   cth_astT** a_ast = e_scopes[c_scopes - 2].program->data.program.program; 
   cth_tokT* a_ops = e_scopes[c_scopes - 2].ops;
   cth_nameT* a_val = e_scopes[c_scopes - 2].values;
-  if(!vfastarr_size(a_ops) && !vfastarr_size(a_val))
-    a_ast = vfastarr_append(a_ast, &appended, sizeof *a_ast);
-  else
-    a_val = vfastarr_append(a_val, &appended, sizeof *a_val);
-
+  if(!vfastarr_size(e_scopes[c_scopes - 1].ops) && !vfastarr_size(e_scopes[c_scopes - 1].values))
+    a_ast = vfastarr_append(a_ast, &e_scopes[c_scopes-1].program, sizeof *a_ast);
+  else{
+    cth_tokeniser_dispatch(NULL, CTH_TOK__SEMICOLON, 0, tokeniser, path, err);
+    a_val = vfastarr_append(a_val, &e_scopes[c_scopes - 1].program, sizeof *a_val);
+  }
+// cleans up stuff.
+  vfastarr_destroy(e_scopes[c_scopes - 1].ops);
+  vfastarr_destroy(e_scopes[c_scopes - 1].values);
+  vfastbst_str_destroy(&e_scopes[c_scopes - 1].names);
   vfastext_remove(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
   return true;
 }
@@ -272,12 +277,9 @@ static struct cth_name_addS cth_name_add(
   const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
   cth_tokeniser_scope__entryT* const e_scopes = scope->internal.arr;
 
-  vfastbst_str_nodeT** restrict curr_node = NULL;
-  for(size_t i = c_scopes - 1; i != -1; i--){
-    curr_node = vfastbst_str_put_half(&e_scopes[i].names, key, s_key);
-    if(*curr_node)
-      return (struct cth_name_addS){ .id = (*curr_node)->obj, .var = NULL };
-  }
+  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&e_scopes[c_scopes - 1].names, key, s_key);
+  if(*curr_node)
+    return (struct cth_name_addS){ .id = (*curr_node)->obj, .var = NULL };
 
 // 'signed', 'unsigned' are not actual valid types values can assume, they're aliases of 'int' & 'unsigned int' when it's relevant.
   cth_variableT* const typevar = 
@@ -300,12 +302,9 @@ static cth_nameT cth_name_alias(
   const size_t c_scopes = vfastext_countof(&scope->internal, sizeof(cth_tokeniser_scope__entryT));
   cth_tokeniser_scope__entryT* const e_scopes = scope->internal.arr;
 
-  vfastbst_str_nodeT** restrict curr_node = NULL;
-  for(size_t i = c_scopes - 1; i != -1; i--){
-    curr_node = vfastbst_str_put_half(&e_scopes[i].names, key, s_key);
-    if(*curr_node)
-      return (*curr_node)->obj;
-  }
+  vfastbst_str_nodeT** const restrict curr_node = vfastbst_str_put_half(&e_scopes[c_scopes - 1].names, key, s_key);
+  if(*curr_node)
+    return (*curr_node)->obj;
   *curr_node = vfastbst_str_node_init(key, s_key, aliased);
   return 0;
 }

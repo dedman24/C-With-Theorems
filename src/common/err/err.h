@@ -241,7 +241,8 @@ static void cth_error_ctx_destroy(cth_error_ctxT* restrict ctx, const bool freec
   if(freectx) free(ctx);
 }
 
-static void cth_error_print(cth_error_ctxT* const restrict ctx, const bool freectx){
+// returns 'true' if no errors are present, 'false' otherwise.
+static bool cth_error_print(cth_error_ctxT* const restrict ctx, const bool freectx){
   const size_t cnt_err = vfastarr_elcnt(ctx->errors, sizeof(*ctx->errors));
 
   for(size_t i = 0; i < cnt_err; i++){
@@ -259,6 +260,7 @@ static void cth_error_print(cth_error_ctxT* const restrict ctx, const bool freec
   }
 
   cth_error_ctx_destroy(ctx, freectx);
+  return cnt_err == 0;
 }
 
 static void cth_error_report(

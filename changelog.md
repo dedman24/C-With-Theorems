@@ -1,18 +1,18 @@
 ### Changelog 2026/11/25.
- - added scoped tokeniser state.
+ - started work on fixed testing utils.
 
 ### pending changes.
  - arrays.
  - proper subtyping.
  - stricter type compatibility algorithm.
+ - make `cth` return 1 if it produces errors.
  - reusing old types in `cth_tokeniser_op__declaration_master_type`.
  - certain compound qualifiers (like `immut` & `const`) should be incompatible.
  - scoped compiler state; currently I have not observed any issues caused by this, but they _will_ be a pain find & to debug.
 
 > `BEGIN snca;`
 
-the hardest days are thosse where I have as much code added as removed, as reported by `git push`.\
-I want to get this over withhhh.
+I hope better testing infrastructure leads to quicker bugcatching.
 
 > `END snca;`
 

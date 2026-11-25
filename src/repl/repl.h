@@ -85,9 +85,9 @@ static void cth_repl__result(cth_variableT* const restrict var, cth_variable_ctx
     cth_variable_destroy(var);
 }
 
-static void cth_repl__line(const char* const restrict code, cth_tokeniserT* const restrict tokeniser){
+static bool cth_repl__line(const char* const restrict code, cth_tokeniserT* const restrict tokeniser){
   const size_t s_code = vfastarr_size(code);
-  if(!s_code) return;
+  if(!s_code) return true;
 
   cth_error_ctxT err; cth_error_ctx_init(&err);
   cth_outputT tokenised = cth_tokenise__repl(code, "repl", tokeniser, &err);
@@ -96,7 +96,7 @@ static void cth_repl__line(const char* const restrict code, cth_tokeniserT* cons
   cth_repl__result(output, tokeniser->variables);
 
   cth_ast_destroy(tokenised);
-  cth_error_print(&err, false);
+  return cth_error_print(&err, false);
 }
 
 // loop that evaluates everything coming from stdin.
@@ -148,15 +148,15 @@ static cth_outputT cth_repl(void){
 }
 
 // REPL on string.
-static cth_outputT cth_repl_string(const char* restrict string){
+static bool cth_repl_string(const char* restrict string){
   cth_tokeniserT tokeniser; cth_tokeniser_init(&tokeniser);
   const char* const og_str = string;
 
-  cth_repl__line(string, &tokeniser);
+  const bool success = cth_repl__line(string, &tokeniser);
 
   cth_astT* const restrict program = cth_tokeniser_destroy(&tokeniser, NULL, NULL, NULL);
   cth_ast_destroy(program);
-  return NULL;
+  return success;
 }
 
 #endif

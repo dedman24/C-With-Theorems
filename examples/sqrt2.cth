@@ -20,7 +20,7 @@ namespace math = include stdc.math;
 // however the proof is correct.
 
 theorem sqrt2_irrational() -> math.sqrt(2) !: math.rat_t {
-// what is 'assert' here? why can't one just write 'assert math.sqrt(2) :: math.rat_t == @error; return @refl;'?
+// what is 'assert' here? why can't one just write 'assert math.sqrt(2) !: math.rat_t; return @refl;'?
 // when is 'assert' valid?
 // needed otherwse make_rat doesn't typecheck.
   assert math.sqrt(2) :: math.rat_t;

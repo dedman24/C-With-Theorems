@@ -100,6 +100,7 @@ static bool cth_tokeniser_scope_dec(
   else{
     cth_tokeniser_dispatch(NULL, CTH_TOK__SEMICOLON, 0, tokeniser, path, err);
     a_val = vfastarr_append(a_val, &e_scopes[c_scopes - 1].program, sizeof *a_val);
+    e_scopes[c_scopes - 2].state = e_scopes[c_scopes - 2].state & ~CTH_TOKENISER__UNARY_ALLOWED | CTH_TOKENISER__PREV_WAS_NAME;
   }
 // cleans up stuff.
   vfastarr_destroy(e_scopes[c_scopes - 1].ops);

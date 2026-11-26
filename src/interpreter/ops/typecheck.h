@@ -177,8 +177,10 @@ static bool cth_typecheck_equal(const cth_variableT* const t0, const cth_variabl
   return cth_ast_equal(t0->internal.type->tree, t1->internal.type->tree);
 }
 
-// performs cth type checking.
-static cth_variableT* cth_op__typechecking(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err){
+// TODO: formalise what these options should be.
+
+// performs cth typeis operation.
+static cth_variableT* cth_op__typeis(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err){
   if(node->type != CTH_AST__BINARY){
     cth_error_report__u32_2(CTH_ERROR__INTERPRETER_AST_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, node->type, CTH_AST__BINARY);
     return NULL;
@@ -202,5 +204,53 @@ static cth_variableT* cth_op__typechecking(const cth_astT* const restrict node, 
   return NULL;
 }
 
+// performs cth typeisnt operation.
+static cth_variableT* cth_op__typeisnt(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err){
+  if(node->type != CTH_AST__BINARY){
+    cth_error_report__u32_2(CTH_ERROR__INTERPRETER_AST_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, node->type, CTH_AST__BINARY);
+    return NULL;
+  }
+  cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
+                *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
+  if(!v0 || !v1){
+    if(v0 && v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
+    if(v1 && v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
+    return NULL;
+  }
+
+  if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, v0->type))
+    cth_error_report(CTH_ERROR__TYPEIS_SECOND_ARG, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
+  else if(v0 == v1->type)
+    cth_error_report__type_2(CTH_ERROR__TYPE_INCOMPATIBLE_OP, CTH_ERROR__COMPILER, path, node->line, node->offset, err, variables, v0, v1->type);
+
+  if(v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
+  if(v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
+
+  return NULL;
+}
+
+// performs cth istype operation.
+static cth_variableT* cth_op__istype(const cth_astT* const restrict node, cth_variable_ctxT* const restrict variables, rcT* const restrict path, cth_error_ctxT* const restrict err){
+  if(node->type != CTH_AST__BINARY){
+    cth_error_report__u32_2(CTH_ERROR__INTERPRETER_AST_TYPE, CTH_ERROR__COMPILER, path, node->line, node->offset, err, node->type, CTH_AST__BINARY);
+    return NULL;
+  }
+  cth_variableT *const v0 = cth_interpret(node->data._binary.s0, variables, path, err),
+                *const v1 = cth_interpret(node->data._binary.s1, variables, path, err);
+  if(!v0 || !v1){
+    if(v0 && v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
+    if(v1 && v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
+    return NULL;
+  }
+
+  if(!cth_typecheck_top_lvl_is(CTH_TYPE__TYPE, v0->type))
+    cth_error_report(CTH_ERROR__TYPEIS_SECOND_ARG, CTH_ERROR__COMPILER, path, node->line, node->offset, err);
+  cth_variableT* const restrict result = v0 == v1->type? cth_variable__true: cth_variable__false;
+
+  if(v0->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v0);
+  if(v1->state & CTH_VARSTATE__FREEALL) cth_variable_destroy(v1);
+
+  return result;
+}
 
 #endif

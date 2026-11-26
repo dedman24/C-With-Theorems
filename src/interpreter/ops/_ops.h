@@ -18,7 +18,9 @@ const cth_ast__functionT cth_ast__functions[] = {
   [CTH_TOK__NAME]                 = cth_op__name,
 
   [CTH_TOK__COMMA]                = cth_op__comma,
-  [CTH_TOK__TYPEIS]               = cth_op__typechecking,
+  [CTH_TOK__TYPEIS]               = cth_op__typeis,
+  [CTH_TOK__TYPEISNT]             = cth_op__typeisnt,
+  [CTH_TOK__ISTYPE]               = cth_op__istype,
 
   [CTH_TOK__ASSIGNMENT]           = cth_op__assignment,
   [CTH_TOK__ASSIGN_STAR]          = cth_op__assign_mul,

@@ -69,7 +69,7 @@ static const char* cth_tokeniser_dispatch(
         do{
           cth_tokeniser_scope_ops_remove(&tokeniser->scope, 1);
           cth_tokeniser_dispatch__ast(top, tokeniser, path, err);
-          if(cth_tokeniser_scope_ops_top(&tokeniser->scope) == CTH_TOK__NONE)
+          if((top = cth_tokeniser_scope_ops_top(&tokeniser->scope)) == CTH_TOK__NONE)
             break;
         } while(cth_priority[top] > cth_priority[tok]);
       }

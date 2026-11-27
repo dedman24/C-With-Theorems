@@ -1,6 +1,6 @@
 // we prove the square root of 2 is irrational assuming the following theorems:
-//  theorem make_nat_is_make_rat(rat_t x) -> make_nat(x).num/make_nat(x).den == x;
-//  theorem make_rat_even_frac(real_t x, theorem num_even(x) -> make_rat(x).num :: even_t, theorem den_even(x) -> make_rat(x).den :: even_t) -> x !: rat_t;
+theorem(make_nat(x).num/make_nat(x).den == x) make_nat_is_make_rat(rat_t x);
+theorem(x !: rat_t) make_rat_even_frac(real_t x, theorem(make_rat(x).num :: even_t) x_even, theorem(make_rat(x).den :: even_t) den_even);
 // and the following functions:
 //  odd_t express_even_as_odd(even_t x);            // basic idea: returns that x == 2*k, with k :: odd_t.
 //
@@ -19,22 +19,18 @@ namespace math = include stdc.math;
 // TODO: formalise steps, prettify proof.
 // however the proof is correct.
 
-theorem sqrt2_irrational() -> math.sqrt(2) !: math.rat_t {
+theorem(math.sqrt(2) !: math.rat_t) sqrt2_irrational(){
 // what is 'assert' here? why can't one just write 'assert math.sqrt(2) !: math.rat_t; return @refl;'?
-// when is 'assert' valid?
+// when is 'assert' valid? ensure it doesn't lead to soundness holes.
 // needed otherwse make_rat doesn't typecheck.
   assert math.sqrt(2) :: math.rat_t;
 
   math.nat_t a, b = math.make_rat(math.sqrt(2));
-// 2b^2 == a^2.
-  theorem equality = 
-    math.make_nat_is_make_rat(math.sqrt(2))                                       // a/b == sqrt(2).
-      ~math.pow(2)                                                                // a^2/b^2 == 2.
-      *math.pow(b, 2);                                                            // a^2 == 2b^2.
-  theorem a_even = even(a, equality);                                             // therefore 'a' must be even.
+  auto equality = math.make_nat_is_make_rat(math.sqrt(2))**2 * b**2;              // :: theorem(a**2 == 2*b**2).
+  auto a_even = even(a, equality);                                                // :: theorem(a % 2 == 0).
 
-  theorem equality_even = equality~rewrite(express_even_as_odd(a_even))/2;        // 2k^2 == b^2.
-  theorem b_even = even(b, equality_even);                                        // therefore 'b' must be even.
+  auto equality_even = equality~rewrite(express_even_as_odd(a_even))/2;           // 2k^2 == b^2.
+  auto b_even = even(b, equality_even);                                           // therefore 'b' must be even.
 
   return make_rat_even_frac(math.sqrt(2), a_even, b_even);
 }

@@ -110,6 +110,7 @@ static cth_outputT cth_repl(void){
   }
 
   cth_tokeniserT tokeniser; cth_tokeniser_init(&tokeniser);
+  unsigned lvl_scope = 0;
 
   char* restrict line = vfastarr_init(sizeof(*line));
   while(1){
@@ -124,7 +125,9 @@ static cth_outputT cth_repl(void){
       fwrite("> ", 2, 1, stdout);
       fflush(stdout);
     }
-    else if(c == ';'){          // execute REPLed code, empty line.
+    else if(c == '{') lvl_scope++;
+    else if(c == '}' && lvl_scope) lvl_scope--;
+    else if(c == ';' && !lvl_scope){        // execute REPLed code, empty line.
       line = vfastarr_append(line, "\0", 1);
       cth_repl__line(line, &tokeniser);
       vfastarr_empty(line);

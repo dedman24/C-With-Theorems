@@ -6,28 +6,16 @@ type_t nat_t = enum{
 };
 
 // for normal code, C-style declaration is fine.
-// imperative-style code that wishes to use dependent typing stuff must use arrows to specify what state is updated.
-// all ptrs whose underlying data is not immut are assumed to be updated; they don't have to be explicited.
+// imperative-style code that wishes to use dependent typing stuff have all ptrs to mut data assumed to be updated and returned as params.
 
-// therefore:
-//      void add(nat_t a, nat_t b, nat_t* dst) -> nat_t dst;
-//      void add(nat_t a, nat_t b, nat_t* dst) -> dst;
-//      void add(nat_t a, nat_t b, nat_t* dst);
-// are all equivalent & equally usable in theorem proving.
-// arrows exist to explicit the state that changes, when may not be obvious to the programmer.
-// in theorem proving, functions that change state return said changed state explicitly as if it were their return argument.
-
-void add(nat_t a, nat_t b, nat_t* dst) -> nat_t dst{
+void add(nat_t a, nat_t b, nat_t* dst){
   *dst = switch a
     z = b,
     succ(x) = succ(add(x, b));
 }
 
-// theorems are written as:
-//  theorem th_name(types) -> result;
-// since add has type ... -> dst, in theorems dst is treated as the theorem's _actual return value_.
-// theorems are written using side-effect notation, unlike C functions, because 
-theorem add0(nat_t a) -> add(a, 0, dst) == add(0, a, dst) = 
+// theorem(result type) th_name(input);
+theorem(add(a, 0, dst) == add(0, a, dst)) add0(nat_t a) = 
   switch a
     z = refl,
     succ(x) = succ(add0(x));
